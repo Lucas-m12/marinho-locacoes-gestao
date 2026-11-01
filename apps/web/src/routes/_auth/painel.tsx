@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderScreen } from "@/features/placeholder-screen";
+import { DashboardScreen } from "@/features/dashboard/dashboard-screen";
 
 export const Route = createFileRoute("/_auth/painel")({
-	component: () => <PlaceholderScreen title="Painel" />,
+	component: DashboardScreen,
 });

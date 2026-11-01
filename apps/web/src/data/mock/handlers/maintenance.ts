@@ -55,7 +55,9 @@ export const maintenance = {
 		const windowStart = addHours(now, -24 * 30).getTime();
 		return {
 			orders: [...db.maintenance]
-				.sort((a, b) => toMs(b.openedAt) - toMs(a.openedAt))
+				.sort((a, b) =>
+					b.number.localeCompare(a.number, "pt-BR", { numeric: true }),
+				)
 				.map((order) => orderView(db, order)),
 			inRepair: db.maintenance.filter((order) => order.status === "IN_REPAIR")
 				.length,

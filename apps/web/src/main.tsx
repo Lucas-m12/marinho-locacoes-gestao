@@ -1,10 +1,13 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
+import { z } from "zod";
 
 import { ScreenSkeleton } from "./components/page";
 import { queryClient } from "./lib/query-client";
 import { routeTree } from "./routeTree.gen";
+
+z.config(z.locales.pt());
 
 const router = createRouter({
 	routeTree,

@@ -1,11 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { RoleGate } from "@/features/auth/role-gate";
-import { PlaceholderScreen } from "@/features/placeholder-screen";
+import { MoneyScreen, MoneySearch } from "@/features/money/money-screen";
 
 export const Route = createFileRoute("/_auth/dinheiro")({
-	component: () => (
-		<RoleGate permission="money:read">
-			<PlaceholderScreen title="Dinheiro" />
-		</RoleGate>
-	),
+	validateSearch: MoneySearch,
+	component: function DinheiroRoute() {
+		const search = Route.useSearch();
+		const navigate = useNavigate({ from: Route.fullPath });
+		return (
+			<RoleGate permission="money:read">
+				<MoneyScreen
+					search={search}
+					onSearchChange={(next) => navigate({ search: next, replace: true })}
+				/>
+			</RoleGate>
+		);
+	},
 });

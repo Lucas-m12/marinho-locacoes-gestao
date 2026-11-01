@@ -30,8 +30,8 @@ import { z } from "zod";
 
 export const IsoDateTime = z.iso.datetime({ offset: true });
 export const CalendarDay = z.iso.date();
-export const Cents = z.number().int();
-export const PositiveCents = Cents.positive();
+export const Cents = z.number({ error: "Informe o valor" }).int();
+export const PositiveCents = Cents.positive("Informe um valor maior que zero");
 export const NonNegativeCents = Cents.nonnegative();
 export const Id = z.string().min(1);
 export const FileKey = z.string().min(1);

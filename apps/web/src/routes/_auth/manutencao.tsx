@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RoleGate } from "@/features/auth/role-gate";
-import { PlaceholderScreen } from "@/features/placeholder-screen";
+import { MaintenanceScreen } from "@/features/maintenance/maintenance-screen";
 
 export const Route = createFileRoute("/_auth/manutencao")({
 	component: () => (
 		<RoleGate permission="maintenance:read">
-			<PlaceholderScreen title="Manutenção" />
+			<MaintenanceScreen />
 		</RoleGate>
 	),
 });
