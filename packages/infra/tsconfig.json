@@ -1,0 +1,4 @@
+{
+  "extends": "@marinho-gestao/config/tsconfig.base.json",
+  "include": ["alchemy.run.ts"]
+}
