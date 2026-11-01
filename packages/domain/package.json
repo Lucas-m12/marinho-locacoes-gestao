@@ -1,0 +1,18 @@
+{
+	"name": "@marinho-gestao/domain",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@marinho-gestao/config": "workspace:*",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	}
+}

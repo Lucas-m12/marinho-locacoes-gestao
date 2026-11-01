@@ -1,0 +1,21 @@
+{
+	"name": "@marinho-gestao/contract",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@marinho-gestao/domain": "workspace:*",
+		"@orpc/contract": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@marinho-gestao/config": "workspace:*",
+		"typescript": "catalog:"
+	}
+}

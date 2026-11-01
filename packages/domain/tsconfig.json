@@ -1,0 +1,9 @@
+{
+	"extends": "@marinho-gestao/config/tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM"],
+		"types": [],
+		"noEmit": true
+	},
+	"include": ["src/**/*.ts"]
+}
