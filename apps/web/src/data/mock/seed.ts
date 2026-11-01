@@ -335,6 +335,14 @@ export function buildSeed(now: Date): MockDb {
 	const day = (offset: number, time = "08:00") =>
 		zonedTimeToIso(addCalendarDays(today, offset), time);
 
+	const returnsToday = (time: string, hoursFromNow: number) => {
+		const planned = day(0, time);
+		const stillOpen = addHours(now, hoursFromNow).toISOString();
+		const lastMinute = day(0, "23:59");
+		const latest = planned > stillOpen ? planned : stillOpen;
+		return latest < lastMinute ? latest : lastMinute;
+	};
+
 	const customerBase = {
 		responsible: null,
 		authorizedReceivers: [],
@@ -797,7 +805,7 @@ export function buildSeed(now: Date): MockDb {
 			customerId: "c-rafael",
 			status: "ON_SITE",
 			start: day(-3),
-			end: day(0, "17:00"),
+			end: returnsToday("17:00", 2),
 			items: [{ code: "MAR-006" }],
 			payments: [
 				payment("SIGNAL", 50, "PIX", day(-4, "10:00")),
@@ -821,7 +829,7 @@ export function buildSeed(now: Date): MockDb {
 			customerId: "c-pedro",
 			status: "ON_SITE",
 			start: day(-3),
-			end: day(0, "12:00"),
+			end: returnsToday("12:00", 1),
 			items: [{ code: "MAR-001" }],
 			payments: [
 				payment("SIGNAL", 100, "PIX", day(-4, "15:00")),

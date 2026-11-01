@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { RoleGate } from "@/features/auth/role-gate";
-import { PlaceholderScreen } from "@/features/placeholder-screen";
+import { NewRentalScreen } from "@/features/rentals/new-rental-screen";
 
 export const Route = createFileRoute("/_auth/locacoes/nova")({
 	validateSearch: z.object({
@@ -10,9 +10,12 @@ export const Route = createFileRoute("/_auth/locacoes/nova")({
 		devolucao: z.string().optional(),
 		cliente: z.string().optional(),
 	}),
-	component: () => (
-		<RoleGate permission="rentals:sell">
-			<PlaceholderScreen title="Nova locação" />
-		</RoleGate>
-	),
+	component: function NovaLocacaoRoute() {
+		const search = Route.useSearch();
+		return (
+			<RoleGate permission="rentals:sell">
+				<NewRentalScreen search={search} />
+			</RoleGate>
+		);
+	},
 });

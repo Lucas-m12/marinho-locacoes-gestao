@@ -3,15 +3,17 @@ import { cn } from "@marinho-gestao/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const buttonVariants = cva(
-	"group/button aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border-[1.5px] border-transparent font-bold whitespace-nowrap transition-colors select-none active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
+	"group/button aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border-[1.5px] font-bold whitespace-nowrap transition-colors select-none active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
 	{
 		variants: {
 			variant: {
-				default: "bg-primary text-primary-foreground hover:bg-primary/90",
+				default:
+					"bg-primary text-primary-foreground hover:bg-primary/90 border-transparent",
 				outline:
 					"border-primary bg-card text-primary hover:bg-muted aria-expanded:bg-muted",
 				secondary: "border-primary text-primary hover:bg-card bg-transparent",
-				ghost: "text-foreground hover:bg-muted aria-expanded:bg-muted",
+				ghost:
+					"text-foreground hover:bg-muted aria-expanded:bg-muted border-transparent",
 				dashed:
 					"border-primary text-primary hover:bg-muted border-dashed bg-transparent",
 				destructive:
@@ -20,7 +22,7 @@ const buttonVariants = cva(
 					"bg-highlight text-highlight-foreground hover:bg-highlight/90",
 				"on-navy":
 					"border-on-navy-muted text-on-navy hover:bg-navy-soft bg-transparent",
-				link: "text-primary underline underline-offset-4",
+				link: "text-primary border-transparent underline underline-offset-4",
 			},
 			size: {
 				default: "min-h-11 px-[18px] text-[15px]",

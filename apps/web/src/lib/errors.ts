@@ -4,6 +4,7 @@ import type {
 	PreconditionFailedData,
 } from "@marinho-gestao/contract";
 import { ORPCError } from "@orpc/client";
+import { toast } from "sonner";
 import { PRECONDITION_MESSAGES } from "./labels";
 
 export const LOCALLY_HANDLED_CODES = [
@@ -21,6 +22,10 @@ export function isLocallyHandled(error: unknown): boolean {
 	return (
 		code !== null && (LOCALLY_HANDLED_CODES as readonly string[]).includes(code)
 	);
+}
+
+export function showLocalError(error: unknown): void {
+	if (isLocallyHandled(error)) toast.error(describeError(error));
 }
 
 export function conflictData(error: unknown): ConflictErrorData | null {
@@ -43,7 +48,9 @@ export function describeError(error: unknown): string {
 				: "Essa mudança de status não é permitida agora.";
 		}
 		if (error.code === "CONFLICT") {
-			return "Parte do que foi pedido está ocupado no período.";
+			const { conflicts } = error.data as ConflictErrorData;
+			const codes = conflicts.map((entry) => entry.code).join(", ");
+			return `${codes} ocupado no período escolhido.`;
 		}
 		if (error.code === "FORBIDDEN") {
 			return "Seu acesso não permite esta ação.";
