@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="font-family: 'Archivo', sans-serif; color: #FBF6EC; background: #13294B">
+
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}">
+<nav aria-label="Menu principal" style="width: 248px; min-height: 900px; box-sizing: border-box; padding: 28px 16px 20px; display: flex; flex-direction: column; gap: 28px">
+<a href="Painel.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 0 8px; text-decoration: none; color: #FBF6EC">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="40" height="40" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#FBF6EC"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#13294B" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#B4532A"></rect></svg>
+<span style="display: flex; flex-direction: column"><span style="font-stretch: 125%; font-weight: 800; font-size: 18px; line-height: 20px; letter-spacing: 0.02em">MARINHO</span><span style="font-stretch: 75%; font-weight: 700; font-size: 11px; line-height: 14px; letter-spacing: 0.22em; color: #E58A5F">LOCAÇÕES</span></span>
+</a>
+<a href="NovaLocacao.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 10px; background: #E58A5F; color: #13294B; font-weight: 700; font-size: 15px; text-decoration: none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova locação</a>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{items}}" as="item" hint-placeholder-count="7">
+<li><a href="{{item.href}}" aria-current="{{item.current}}" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 600; background: {{item.bg}}; color: {{item.fg}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg><span style="flex-grow: 1">{{item.label}}</span><sc-if value="{{item.f2}}" hint-placeholder-val="{{false}}"><span style="font-stretch: 75%; font-weight: 700; font-size: 11px; line-height: 14px; padding: 1px 6px; border-radius: 4px; border: 1px solid #E58A5F; color: #E58A5F">F2</span></sc-if></a></li>
+</sc-for>
+</ul>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 12px; padding: 16px 8px 0; border-top: 1px solid #1F3B68">
+<span aria-hidden="true" style="flex: none; width: 40px; height: 40px; border-radius: 50%; background: #1F3B68; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px">L</span>
+<span style="display: flex; flex-direction: column; flex-grow: 1"><span style="font-weight: 700; font-size: 15px">Lucas</span><span style="font-size: 13px; color: #C9D2DF">Gestão</span></span>
+<a href="Entrar.dc.html" style="font-size: 13px; color: #C9D2DF">Sair</a>
+</div>
+</nav>
+</sc-if>
+
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}">
+<nav aria-label="Menu principal" style="width: 88px; min-height: 900px; box-sizing: border-box; padding: 24px 8px; display: flex; flex-direction: column; align-items: center; gap: 20px">
+<a href="Painel.dc.html" aria-label="Marinho Locações, ir para o painel" style="display: flex"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="44" height="44" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#FBF6EC"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#13294B" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#B4532A"></rect></svg></a>
+<a href="NovaLocacao.dc.html" aria-label="Nova locação" style="display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 14px; background: #E58A5F; color: #13294B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; width: 100%">
+<sc-for list="{{items}}" as="item" hint-placeholder-count="7">
+<li><a href="{{item.href}}" aria-current="{{item.current}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 60px; border-radius: 10px; text-decoration: none; font-size: 11px; font-weight: 600; text-align: center; background: {{item.bg}}; color: {{item.fg}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>{{item.short}}</a></li>
+</sc-for>
+</ul>
+<span aria-hidden="true" style="margin-top: auto; width: 40px; height: 40px; border-radius: 50%; background: #1F3B68; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px">L</span>
+</nav>
+</sc-if>
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}">
+<nav aria-label="Menu principal" style="display: flex; align-items: stretch; gap: 4px; padding: 8px 8px 12px; box-sizing: border-box">
+<sc-for list="{{phoneItems}}" as="item" hint-placeholder-count="5">
+<a href="{{item.href}}" aria-current="{{item.current}}" style="flex: 1 1 0; min-width: 0; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 12px; text-decoration: none; font-size: 11px; font-weight: 600; background: {{item.bg}}; color: {{item.fg}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>{{item.label}}</a>
+</sc-for>
+</nav>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"active":{"editor":"enum","options":["painel","agenda","locacoes","estoque","clientes","dinheiro","manutencao","mais"],"default":"painel"},"$preview":{"width":248,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const active = this.props.active || 'painel';
+const I = {
+painel: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+agenda: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5',
+locacoes: 'M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M8 11h8M8 15h8M8 19h5',
+estoque: 'M3 7.5 12 3l9 4.5v9L12 21l-9-4.5zM3 7.5 12 12l9-4.5M12 12v9',
+clientes: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a7 7 0 0 1 14 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.7',
+dinheiro: 'M3 6h15a3 3 0 0 1 3 3v9a2 2 0 0 1-2 2H3zM3 6V5a2 2 0 0 1 2-2h11M16 13.5h2',
+manutencao: 'M15 4a5 5 0 0 0-4.6 6.9L3 18.3 5.7 21l7.4-7.4A5 5 0 0 0 20 9l-3 3-3-3 3-3a5 5 0 0 0-2-2z',
+nova: 'M12 5v14M5 12h14',
+mais: 'M5 12h.01M12 12h.01M19 12h.01'
+};
+const list = [
+['painel', 'Painel', 'Painel', 'Painel.dc.html', false],
+['agenda', 'Agenda', 'Agenda', 'Agenda.dc.html', false],
+['locacoes', 'Locações', 'Locações', 'Locacoes.dc.html', false],
+['estoque', 'Estoque', 'Estoque', 'Estoque.dc.html', false],
+['clientes', 'Clientes', 'Clientes', 'Clientes.dc.html', false],
+['dinheiro', 'Dinheiro', 'Dinheiro', 'Dinheiro.dc.html', false],
+['manutencao', 'Manutenção', 'Manutenç.', 'Manutencao.dc.html', true]
+];
+const on = (id) => id === active;
+const items = list.map(([id, label, short, href, f2]) => ({
+label, short, href, f2, icon: I[id],
+current: on(id) ? 'page' : 'false',
+bg: on(id) ? '#FBF6EC' : 'transparent',
+fg: on(id) ? '#13294B' : '#E4E9F0'
+}));
+const maisAtivo = ['estoque', 'clientes', 'dinheiro', 'manutencao', 'mais'].indexOf(active) >= 0;
+const phoneItems = [
+{ label: 'Painel', href: 'Painel.dc.html', icon: I.painel, sel: active === 'painel' },
+{ label: 'Agenda', href: 'Agenda.dc.html', icon: I.agenda, sel: active === 'agenda' },
+{ label: 'Nova', href: 'NovaLocacao.dc.html', icon: I.nova, sel: false, accent: true },
+{ label: 'Locações', href: 'Locacoes.dc.html', icon: I.locacoes, sel: active === 'locacoes' },
+{ label: 'Mais', href: 'Mais.dc.html', icon: I.mais, sel: maisAtivo }
+].map((x) => ({
+...x,
+current: x.sel ? 'page' : 'false',
+bg: x.accent ? '#E58A5F' : (x.sel ? '#FBF6EC' : 'transparent'),
+fg: x.accent || x.sel ? '#13294B' : '#E4E9F0'
+}));
+return { D: bp === 'desktop', T: bp === 'tablet', P: bp === 'phone', items, phoneItems };
+}
+}
+</script>
+</body>
+</html>

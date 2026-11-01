@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Saída e volta</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: {{dir}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}"><div style="flex: none; width: 248px; background: #13294B"><dc-import name="Nav" bp="desktop" active="locacoes" hint-size="248px,900px"></dc-import></div></sc-if>
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}"><div style="flex: none; width: 88px; background: #13294B"><dc-import name="Nav" bp="tablet" active="locacoes" hint-size="88px,900px"></dc-import></div></sc-if>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px">
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="display: flex; align-items: center; gap: 10px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="32" height="32" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg><span style="font-stretch: 125%; font-weight: 800; font-size: 16px; letter-spacing: 0.02em">MARINHO</span></span><span role="img" aria-label="Lucas" style="width: 36px; height: 36px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">L</span></div></sc-if>
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<a href="Locacao.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 14px; font-weight: 600; color: #13294B; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>LOC-0029</a>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px"><h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: {{h1}}; line-height: 1.1; text-transform: uppercase; color: #13294B">Saída · MAR-002</h1><span style="font-stretch: 75%; font-weight: 700; font-size: 12px; line-height: 16px; padding: 2px 7px; border-radius: 4px; border: 1px solid #B4532A; color: #B4532A">F2</span></div>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #5E544C">Martelo demolidor Bosch GSH 500 · entrega para José Carlos em Capela</p>
+</header>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; justify-content: space-between; gap: 12px; font-size: 15px"><b>{{feitos}} de {{total}} itens conferidos</b><span style="color: #5E544C">mesmo checklist na volta</span></span>
+<span style="height: 10px; border-radius: 5px; background: #E6DAC6; display: flex"><span style="width: {{pct}}; border-radius: 5px; background: #13294B"></span></span>
+</div>
+
+<div style="display: grid; grid-template-columns: {{layoutCols}}; gap: 24px; align-items: start">
+<section aria-labelledby="itens" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<h2 id="itens" style="margin: 0 0 8px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Checklist do martelo demolidor</h2>
+<sc-for list="{{itens}}" as="it" hint-placeholder-count="8">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 0; border-top: 1px solid #E6DAC6">
+<span style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; line-height: 21px">{{it.nome}}</b><span style="font-size: 13px; color: #5E544C">{{it.nota}}</span></span>
+<div role="group" aria-label="{{it.nome}}" style="display: flex; gap: 6px">
+<sc-for list="{{it.opcoes}}" as="o" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="min-width: 64px; min-height: 44px; padding: 0 12px; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 700; border: 1.5px solid {{o.border}}; background: {{o.bg}}; color: {{o.fg}}">{{o.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section aria-labelledby="fotos" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 12px">
+<h2 id="fotos" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Fotos e vídeo</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{fotos}}" as="f" hint-placeholder-count="6">
+<button type="button" style="aspect-ratio: 1; border-radius: 10px; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 6px; font-size: 12px; font-weight: 600; border: 1.5px {{f.borda}} #C2B39A; background: {{f.bg}}; color: {{f.fg}}">{{f.icone}}<span>{{f.nome}}</span></button>
+</sc-for>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 19px; color: #5E544C">Mesmos ângulos da foto de entrada. Na volta, o sistema mostra as duas lado a lado.</p>
+</section>
+
+<section aria-labelledby="aceite" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 12px">
+<h2 id="aceite" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Na entrega</h2>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 15px"><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: #13294B">Termo assinado por José Carlos</label>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 15px"><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: #13294B">Saldo de R$ 500 recebido por Pix</label>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 15px"><input type="checkbox" style="width: 22px; height: 22px; accent-color: #13294B">Caução de [CAUÇÃO] recebida, com recibo</label>
+<button type="button" style="min-height: 52px; border: none; border-radius: 10px; background: #13294B; color: #FBF6EC; font-family: inherit; font-weight: 800; font-size: 16px">Concluir saída</button>
+<p style="margin: 0; font-size: 13px; line-height: 19px; color: #5E544C">Fotos, vídeo e respostas ficam guardados na LOC-0029 para comparar na volta.</p>
+</section>
+</div>
+</div>
+
+</main>
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="position: sticky; bottom: 0; background: #13294B"><dc-import name="Nav" bp="phone" active="locacoes" hint-size="390px,76px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+const marcas = (this.state && this.state.marcas) || { 0: 'OK', 1: 'OK', 2: 'OK', 3: 'OK', 4: 'OK', 5: 'OK' };
+const base = [
+{ nome: 'Liga e funciona', nota: 'Testado na frente do cliente' },
+{ nome: 'Rompe com força normal', nota: 'Teste curto em bloco de concreto' },
+{ nome: 'Cabo sem emenda ou corte', nota: 'Conferir perto do plugue' },
+{ nome: 'Plugue inteiro', nota: 'Pinos firmes, sem queimado' },
+{ nome: 'Carcaça', nota: 'Risco na lateral esquerda já registrado' },
+{ nome: 'Maleta fecha', nota: 'Travas funcionando' },
+{ nome: 'Acessórios', nota: '[ACESSÓRIOS] conferidos e na maleta' },
+{ nome: 'Limpo', nota: 'Sem pó de concreto ou argamassa' }
+];
+const cores = {
+'OK': ['#13294B', '#FBF6EC', '#13294B'],
+'Não OK': ['#8A3A1A', '#FFFFFF', '#8A3A1A'],
+'N/A': ['#5E544C', '#FFFFFF', '#5E544C']
+};
+const itens = base.map((it, i) => ({
+...it,
+opcoes: ['OK', 'Não OK', 'N/A'].map((o) => {
+const sel = marcas[i] === o;
+return {
+label: o,
+pressed: sel ? 'true' : 'false',
+bg: sel ? cores[o][0] : '#FFFFFF',
+fg: sel ? cores[o][1] : '#13294B',
+border: sel ? cores[o][2] : '#8C8070',
+pick: () => this.setState({ marcas: { ...marcas, [i]: o } })
+};
+})
+}));
+const feitos = Object.keys(marcas).length;
+const fotos = [
+['Frente', true], ['Verso', true], ['Lado esquerdo', true], ['Lado direito', true], ['Placa e série', false], ['Vídeo do teste', false]
+].map(([nome, ok]) => ({ nome, icone: ok ? '[FOTO]' : '+', borda: ok ? 'solid' : 'dashed', bg: ok ? '#F2E8D7' : '#FFFFFF', fg: ok ? '#5E544C' : '#13294B' }));
+return {
+D, T, P, notP: !P,
+dir: P ? 'column' : 'row',
+minH: h ? h + 'px' : '100vh',
+pad: D ? '32px 40px 48px' : (T ? '28px 28px 40px' : '16px 16px 28px'),
+cardPad: P ? '16px' : '20px',
+h1: P ? '28px' : '36px',
+layoutCols: D ? 'minmax(0, 1.3fr) minmax(0, 1fr)' : 'minmax(0, 1fr)',
+itens, fotos, feitos, total: base.length, pct: Math.round((feitos / base.length) * 100) + '%'
+};
+}
+}
+</script>
+</body>
+</html>
