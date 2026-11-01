@@ -1,6 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderScreen } from "@/features/placeholder-screen";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AgendaScreen, AgendaSearch } from "@/features/agenda/agenda-screen";
 
 export const Route = createFileRoute("/_auth/agenda")({
-	component: () => <PlaceholderScreen title="Agenda" />,
+	validateSearch: AgendaSearch,
+	component: function AgendaRoute() {
+		const search = Route.useSearch();
+		const navigate = useNavigate({ from: Route.fullPath });
+		return (
+			<AgendaScreen
+				search={search}
+				onSearchChange={(next) => navigate({ search: next })}
+			/>
+		);
+	},
 });

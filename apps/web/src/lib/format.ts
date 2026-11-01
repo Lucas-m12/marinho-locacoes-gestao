@@ -2,6 +2,7 @@ import { TZDate } from "@date-fns/tz";
 import {
 	BUSINESS_TIME_ZONE,
 	calendarDay,
+	calendarDaysBetween,
 	type DateInput,
 	formatBRLShort,
 } from "@marinho-gestao/domain";
@@ -36,12 +37,16 @@ export function formatDateAndTime(value: DateInput): string {
 	return `${formatDate(value)} · ${formatTime(value)}`;
 }
 
+function weekdayAbbreviation(value: DateInput): string {
+	return capitalize(formatZoned(value, "EEEE")).slice(0, 3);
+}
+
 export function formatWeekdayDateTime(value: DateInput): string {
-	return `${capitalize(formatZoned(value, "EEE, dd/MM"))} · ${formatTime(value)}`;
+	return `${weekdayAbbreviation(value)}, ${formatDate(value)} · ${formatTime(value)}`;
 }
 
 export function formatWeekdayFullDateTime(value: DateInput): string {
-	return `${capitalize(formatZoned(value, "EEE, dd/MM/yyyy"))} · ${formatTime(value)}`;
+	return `${weekdayAbbreviation(value)}, ${formatFullDate(value)} · ${formatTime(value)}`;
 }
 
 export function formatLongDay(value: DateInput): string {
@@ -54,7 +59,7 @@ export function formatMonthName(value: DateInput): string {
 }
 
 export function formatWeekdayShort(day: string): string {
-	return capitalize(formatZoned(`${day}T12:00:00-03:00`, "EEE"));
+	return weekdayAbbreviation(`${day}T12:00:00-03:00`);
 }
 
 export function formatDayOfMonth(day: string): string {
@@ -69,6 +74,14 @@ export function formatPeriod(start: DateInput, end: DateInput): string {
 
 export function isSameBusinessDay(a: DateInput, b: DateInput): boolean {
 	return calendarDay(a) === calendarDay(b);
+}
+
+export function relativeDay(value: DateInput, now: DateInput): string {
+	const difference = calendarDaysBetween(now, value);
+	if (difference === 0) return "hoje";
+	if (difference === 1) return "amanhã";
+	if (difference === -1) return "ontem";
+	return formatDate(value);
 }
 
 export function greeting(now: DateInput): string {

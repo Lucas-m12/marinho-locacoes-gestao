@@ -94,6 +94,14 @@
 						]
 					}
 				}
+			},
+			"a11y": {
+				"noLabelWithoutControl": {
+					"level": "error",
+					"options": {
+						"inputComponents": ["RadioGroupItem", "Checkbox", "Input"]
+					}
+				}
 			}
 		}
 	},

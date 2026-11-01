@@ -8,6 +8,7 @@ import {
 	MaintenanceLocation,
 	MaintenanceStatus,
 	NonNegativeCents,
+	PaymentMethod,
 	UnitStatus,
 } from "../common";
 
@@ -53,7 +54,8 @@ export type OpenMaintenanceInput = z.input<typeof OpenMaintenanceInput>;
 export const CompleteMaintenanceInput = z.object({
 	number: OrderNumber,
 	finalCostCents: NonNegativeCents,
-	unitStatusAfter: UnitStatus.default("AVAILABLE"),
+	method: PaymentMethod,
+	unitStatusAfter: UnitStatus,
 });
 export type CompleteMaintenanceInput = z.input<typeof CompleteMaintenanceInput>;
 

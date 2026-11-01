@@ -51,9 +51,9 @@ export const CreateLedgerEntryInput = z.object({
 	occurredAt: IsoDateTime,
 	method: PaymentMethod,
 	description: z.string().trim().min(3, "Descreva o lançamento"),
-	rentalNumber: RentalNumber.nullable().default(null),
-	unitCode: ItemCode.nullable().default(null),
-	receiptFileKey: FileKey.nullable().default(null),
+	rentalNumber: RentalNumber.nullable(),
+	unitCode: ItemCode.nullable(),
+	receiptFileKey: FileKey.nullable(),
 });
 export type CreateLedgerEntryInput = z.input<typeof CreateLedgerEntryInput>;
 

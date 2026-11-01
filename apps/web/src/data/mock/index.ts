@@ -7,7 +7,7 @@ import { mockRouter } from "./router";
 export function createMockClient(): AppClient {
 	return createRouterClient(mockRouter, {
 		context: () => ({ session: readMockSession() }),
-	}) as unknown as AppClient;
+	});
 }
 
 export function restoreSampleData(): void {

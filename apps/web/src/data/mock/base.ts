@@ -5,7 +5,9 @@ import {
 } from "@marinho-gestao/contract";
 import { can, type Permission } from "@marinho-gestao/domain";
 import { implement, ORPCError } from "@orpc/server";
+import { mockNow } from "./clock";
 import { getDb, persistDb } from "./db";
+import { expireSignals } from "./flows";
 
 export type MockContext = { session: Session | null };
 
@@ -30,6 +32,8 @@ export const os = implement(contract).$context<MockContext>();
 export const api = os.use(async ({ next }) => {
 	await simulateLatency();
 	const db = getDb();
+	expireSignals(db, mockNow());
+	persistDb();
 	const result = await next();
 	if (persistDb()) {
 		db.touchedByUser = true;

@@ -170,7 +170,7 @@ export const ListRentalsOutput = z.object({
 export const QuoteItemInput = z.object({
 	kind: ItemKind,
 	code: ItemCode,
-	quantity: z.number().int().positive().default(1),
+	quantity: z.number().int().positive(),
 });
 export type QuoteItemInput = z.input<typeof QuoteItemInput>;
 
@@ -185,8 +185,9 @@ export const CreateQuoteInput = z
 		siteCity: z.string().trim().nullable(),
 		sitePinUrl: z.string().trim().nullable(),
 		deliveryFeeCents: NonNegativeCents.nullable(),
-		discountCents: NonNegativeCents.default(0),
+		discountCents: NonNegativeCents,
 		notes: z.string().trim().nullable(),
+		send: z.boolean(),
 	})
 	.refine((input) => Date.parse(input.startAt) < Date.parse(input.endAt), {
 		message: "A devolução precisa ser depois da saída",
@@ -238,7 +239,7 @@ export type LostDemandGroup = z.infer<typeof LostDemandGroup>;
 
 export const RecordLostDemandInput = z.object({
 	item: z.string().trim().min(2, "Informe o que foi pedido"),
-	typeId: Id.nullable().default(null),
+	typeId: Id.nullable(),
 	reason: z.string().trim().min(2, "Informe o motivo"),
 	city: z.string().trim().nullable(),
 	requestedOn: CalendarDay,

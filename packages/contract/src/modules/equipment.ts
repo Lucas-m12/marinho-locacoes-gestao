@@ -40,11 +40,11 @@ export type EquipmentType = z.infer<typeof EquipmentType>;
 
 export const CreateTypeInput = z.object({
 	name: z.string().trim().min(2, "Informe o nome do tipo"),
-	nicknames: z.array(z.string().trim().min(1)).default([]),
+	nicknames: z.array(z.string().trim().min(1)),
 	description: z.string().trim().nullable(),
 	dailyPriceCents: NonNegativeCents.nullable(),
 	depositCents: NonNegativeCents.nullable(),
-	turnaroundHours: z.number().int().nonnegative().default(12),
+	turnaroundHours: z.number().int().nonnegative(),
 	accessories: z.string().trim().nullable(),
 });
 export type CreateTypeInput = z.input<typeof CreateTypeInput>;
@@ -168,14 +168,14 @@ export type UnitDetail = z.infer<typeof UnitDetail>;
 
 export const CreateUnitInput = z.object({
 	typeId: Id,
-	code: ItemCode.nullable().default(null),
+	code: ItemCode.nullable(),
 	name: z.string().trim().min(2, "Informe o nome da unidade"),
-	shortName: z.string().trim().nullable().default(null),
+	shortName: z.string().trim().nullable(),
 	voltage: z.string().trim().nullable(),
 	serialNumber: z.string().trim().nullable(),
 	accessories: z.string().trim().nullable(),
 	owner: z.string().trim().nullable(),
-	labelApplied: z.boolean().default(false),
+	labelApplied: z.boolean(),
 	purchaseValueCents: NonNegativeCents.nullable(),
 	replacementValueCents: NonNegativeCents.nullable(),
 	notes: z.string().trim().nullable(),
@@ -209,7 +209,7 @@ export const AddUnitPhotoInput = z.object({
 export const AddKnownDamageInput = z.object({
 	code: ItemCode,
 	description: z.string().trim().min(3, "Descreva o dano"),
-	fileKey: FileKey.nullable().default(null),
+	fileKey: FileKey.nullable(),
 });
 export type AddKnownDamageInput = z.input<typeof AddKnownDamageInput>;
 
