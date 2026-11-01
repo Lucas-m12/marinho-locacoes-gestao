@@ -10,6 +10,7 @@ import {
 	type PaymentMethod,
 	type RentalStatus,
 	type Role,
+	toMs,
 	zonedTimeToIso,
 } from "@marinho-gestao/domain";
 import type {
@@ -336,11 +337,11 @@ export function buildSeed(now: Date): MockDb {
 		zonedTimeToIso(addCalendarDays(today, offset), time);
 
 	const returnsToday = (time: string, hoursFromNow: number) => {
-		const planned = day(0, time);
-		const stillOpen = addHours(now, hoursFromNow).toISOString();
-		const lastMinute = day(0, "23:59");
-		const latest = planned > stillOpen ? planned : stillOpen;
-		return latest < lastMinute ? latest : lastMinute;
+		const stillOpen = Math.max(
+			toMs(day(0, time)),
+			addHours(now, hoursFromNow).getTime(),
+		);
+		return new Date(Math.min(stillOpen, toMs(day(0, "23:59")))).toISOString();
 	};
 
 	const customerBase = {

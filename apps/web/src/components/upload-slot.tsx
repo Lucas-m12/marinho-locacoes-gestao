@@ -42,9 +42,11 @@ export function useUploader({
 	const [state, setState] = useState<SlotState>({ phase: "idle" });
 
 	const busy = state.phase === "uploading";
+	const notifyBusy = useRef(onBusyChange);
+	notifyBusy.current = onBusyChange;
 	useEffect(() => {
-		onBusyChange?.(busy);
-	}, [busy, onBusyChange]);
+		notifyBusy.current?.(busy);
+	}, [busy]);
 
 	const start = async (file: File) => {
 		setState({ phase: "uploading", progress: 0 });

@@ -19,7 +19,7 @@ const buttonVariants = cva(
 				destructive:
 					"border-destructive text-destructive hover:bg-alert bg-transparent",
 				highlight:
-					"bg-highlight text-highlight-foreground hover:bg-highlight/90",
+					"bg-highlight text-highlight-foreground hover:bg-highlight/90 border-transparent",
 				"on-navy":
 					"border-on-navy-muted text-on-navy hover:bg-navy-soft bg-transparent",
 				link: "text-primary border-transparent underline underline-offset-4",
