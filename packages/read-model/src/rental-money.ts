@@ -4,10 +4,10 @@ import {
 	rentalBalanceCents,
 	sumCents,
 } from "@marinho-gestao/domain";
-import type { MockDb, RentalItemRecord, RentalRecord } from "./db";
+import type { RentalItemRecord, RentalRecord, Snapshot } from "./records";
 
 export function itemTablePrice(
-	db: MockDb,
+	db: Snapshot,
 	item: Pick<RentalItemRecord, "kind" | "code">,
 ): { dailyPriceCents: number | null; depositCents: number | null } {
 	if (item.kind === "LOT") {
@@ -26,7 +26,7 @@ export function itemTablePrice(
 }
 
 export function itemPrice(
-	db: MockDb,
+	db: Snapshot,
 	rental: Pick<RentalRecord, "priceFrozenAt">,
 	item: RentalItemRecord,
 ): { dailyPriceCents: number | null; depositCents: number | null } {
@@ -40,7 +40,7 @@ export function itemPrice(
 }
 
 export function rentalTotals(
-	db: MockDb,
+	db: Snapshot,
 	rental: Pick<
 		RentalRecord,
 		| "priceFrozenAt"
@@ -66,7 +66,7 @@ export function rentalTotals(
 	};
 }
 
-export function rentalTotalCents(db: MockDb, rental: RentalRecord): number {
+export function rentalTotalCents(db: Snapshot, rental: RentalRecord): number {
 	return rentalTotals(db, rental).totalCents;
 }
 
@@ -82,7 +82,7 @@ export function activePayments(rental: RentalRecord) {
 	return rental.payments.filter((payment) => payment.reversedAt === null);
 }
 
-export function rentalBalance(db: MockDb, rental: RentalRecord): number {
+export function rentalBalance(db: Snapshot, rental: RentalRecord): number {
 	return rentalBalanceCents({
 		totalCents: rentalTotalCents(db, rental),
 		chargesCents: Math.max(

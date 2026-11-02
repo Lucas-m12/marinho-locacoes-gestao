@@ -1,0 +1,19 @@
+model MaintenanceOrder {
+  id                 String              @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  code               String              @unique
+  unitId             String              @map("unit_id") @db.Uuid
+  reason             String
+  location           MaintenanceLocation
+  locationName       String?             @map("location_name")
+  estimatedCostCents Int?                @map("estimated_cost_cents")
+  finalCostCents     Int?                @map("final_cost_cents")
+  expectedBackAt     DateTime?           @map("expected_back_at") @db.Timestamptz(3)
+  status             MaintenanceStatus
+  openedAt           DateTime            @map("opened_at") @db.Timestamptz(3)
+  completedAt        DateTime?           @map("completed_at") @db.Timestamptz(3)
+  unit               Unit                @relation(fields: [unitId], references: [id])
+  ledgerEntries      LedgerEntry[]
+
+  @@index([unitId, status])
+  @@map("maintenance_order")
+}

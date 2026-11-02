@@ -1,6 +1,19 @@
 import { BUSINESS_TIME_ZONE, calendarDay, type DateInput } from "./dates";
-import type { LedgerCategory, LedgerDirection, PaymentMethod } from "./enums";
+import type {
+	LedgerCategory,
+	LedgerDirection,
+	PaymentKind,
+	PaymentMethod,
+} from "./enums";
 import { LEDGER_CATEGORY_LABELS, PAYMENT_METHOD_LABELS } from "./labels";
+
+export const PAYMENT_LEDGER_CATEGORY: Record<PaymentKind, LedgerCategory> = {
+	SIGNAL: "RENTAL",
+	BALANCE: "RENTAL",
+	DELIVERY_FEE: "DELIVERY",
+	CONSUMABLE: "CONSUMABLE_SOLD",
+	EXTRA_DAILY: "EXTRA_FEES",
+};
 
 export type ReversibleEntry = { id: string; reversalOfId: string | null };
 

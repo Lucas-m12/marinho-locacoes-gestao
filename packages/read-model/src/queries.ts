@@ -9,15 +9,15 @@ import {
 	startOfZonedDay,
 	toMs,
 } from "@marinho-gestao/domain";
+import { notFound } from "./errors";
 import type {
 	LotRecord,
 	MaintenanceRecord,
-	MockDb,
 	RentalRecord,
+	Snapshot,
 	TypeRecord,
 	UnitRecord,
-} from "./db";
-import { notFound } from "./errors";
+} from "./records";
 
 export type Booking = {
 	start: string;
@@ -26,32 +26,32 @@ export type Booking = {
 	rental: RentalRecord;
 };
 
-export function requireUnit(db: MockDb, code: string): UnitRecord {
+export function requireUnit(db: Snapshot, code: string): UnitRecord {
 	const unit = db.units.find((entry) => entry.code === code);
 	if (!unit) throw notFound("unit", code);
 	return unit;
 }
 
-export function requireLot(db: MockDb, code: string): LotRecord {
+export function requireLot(db: Snapshot, code: string): LotRecord {
 	const lot = db.lots.find((entry) => entry.code === code);
 	if (!lot) throw notFound("lot", code);
 	return lot;
 }
 
-export function requireType(db: MockDb, id: string): TypeRecord {
+export function requireType(db: Snapshot, id: string): TypeRecord {
 	const type = db.types.find((entry) => entry.id === id);
 	if (!type) throw notFound("type", id);
 	return type;
 }
 
-export function requireRental(db: MockDb, number: string): RentalRecord {
+export function requireRental(db: Snapshot, number: string): RentalRecord {
 	const rental = db.rentals.find((entry) => entry.number === number);
 	if (!rental) throw notFound("rental", number);
 	return rental;
 }
 
 export function bookingsFor(
-	db: MockDb,
+	db: Snapshot,
 	code: string,
 	now: Date,
 	excludeRental?: string,
@@ -78,7 +78,7 @@ export function bookingsFor(
 }
 
 export function openOrderFor(
-	db: MockDb,
+	db: Snapshot,
 	code: string,
 ): MaintenanceRecord | null {
 	return (
@@ -95,7 +95,7 @@ type RequestedItem = {
 };
 
 function unitConflict(
-	db: MockDb,
+	db: Snapshot,
 	item: RequestedItem,
 	start: string,
 	end: string,
@@ -140,7 +140,7 @@ function unitConflict(
 }
 
 function lotConflict(
-	db: MockDb,
+	db: Snapshot,
 	item: RequestedItem,
 	start: string,
 	end: string,
@@ -170,7 +170,7 @@ function lotConflict(
 }
 
 export function findConflicts(
-	db: MockDb,
+	db: Snapshot,
 	items: readonly RequestedItem[],
 	start: string,
 	end: string,
@@ -186,7 +186,7 @@ export function findConflicts(
 	});
 }
 
-export function fileRefOf(db: MockDb, fileKey: string): FileRef {
+export function fileRefOf(db: Snapshot, fileKey: string): FileRef {
 	return (
 		db.files[fileKey] ?? {
 			fileKey,
@@ -197,7 +197,7 @@ export function fileRefOf(db: MockDb, fileKey: string): FileRef {
 	);
 }
 
-export function lotView(db: MockDb, lot: LotRecord, now: Date): Lot {
+export function lotView(db: Snapshot, lot: LotRecord, now: Date): Lot {
 	const bookings = bookingsFor(db, lot.code, now);
 	const usable = lot.total - lot.inMaintenance - lot.retired;
 	const freeToday = availableLotQuantity({

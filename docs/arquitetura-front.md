@@ -67,7 +67,7 @@ As mensagens em pt-BR ficam no front (`lib/labels.ts`). Se criar um `reason` nov
 
 ## O que implementar, por procedimento
 
-Permissões vêm de `packages/domain/src/permissions.ts`. Regras puras vêm de `packages/domain`. Use as duas no backend, sem reescrever. A implementação de referência de cada procedimento está em `apps/web/src/data/mock/handlers/`, e os fluxos esperados estão em `mock-flows.test.ts`.
+Permissões vêm de `packages/domain/src/permissions.ts`. Regras puras vêm de `packages/domain`. As respostas (locação, cliente, agenda, painel, caixa) são montadas por `packages/read-model` a partir de registros planos: o mock lê esses registros do `localStorage` e o servidor do Postgres (`packages/api/src/services/snapshot.ts`). Os fluxos esperados estão em `packages/scenarios`, que roda contra os dois.
 
 ### session, users
 
@@ -195,11 +195,6 @@ Antes do sinal, os preços acompanham a tabela. Orçamento `AWAITING_DEPOSIT` co
 | `uploads.completeUpload` | sessão | Confere o objeto no bucket. Se faltar, `UPLOAD_MISSING` |
 | `files.getDownloadUrl` | sessão | URL temporária. Restrinja por `purpose` e papel: `CUSTOMER_DOCUMENT` é dado pessoal |
 
-## Ligar o backend
+## Backend real
 
-1. Em `packages/api`, implemente o contrato com `implement(contract)` de `@orpc/server`. O TypeScript acusa o que faltar.
-2. Exponha em `/rpc` com `RPCHandler`.
-3. Crie os endpoints de presigned URL, com CORS no bucket liberando `PUT` da origem do front.
-4. Configure `session.me` e o papel do usuário no Better Auth.
-5. Defina `VITE_DATA_SOURCE=http` e `VITE_SERVER_URL` no build do front.
-6. Porte os cenários de `mock-flows.test.ts` para os testes do backend, para garantir o mesmo comportamento.
+O backend está em `packages/api` (services e routers) e `apps/server` (Hono). O passo a passo para subir tudo e as regras de cada camada estão no `CLAUDE.md`, seção "Backend". Para o bucket de arquivos, veja `docs/operacao/r2.md`.

@@ -2,23 +2,25 @@ import type { SessionUser } from "@marinho-gestao/contract";
 import {
 	addHours,
 	depositHeldCents,
-	type LedgerCategory,
+	isQuoteExpired,
+	PAYMENT_LEDGER_CATEGORY,
 	type PaymentKind,
 	type PaymentMethod,
 	type RentalStatus,
-	rentalStatusMachine,
-	toMs,
 } from "@marinho-gestao/domain";
-import { money } from "@/lib/format";
-import { PAYMENT_KIND_LABELS, PAYMENT_METHOD_LABELS } from "@/lib/labels";
+import {
+	assertRentalTransition,
+	itemTablePrice,
+	LEDGER_DESCRIPTIONS,
+	precondition,
+	RENTAL_EVENTS,
+} from "@marinho-gestao/read-model";
 import {
 	type LedgerRecord,
 	type MockDb,
 	nextId,
 	type RentalRecord,
 } from "./db";
-import { invalidTransition, precondition } from "./errors";
-import { itemTablePrice } from "./rental-money";
 
 export function addEvent(
 	db: MockDb,
@@ -76,40 +78,26 @@ export function hasPaidSignal(rental: RentalRecord): boolean {
 }
 
 export function moveRental(rental: RentalRecord, to: RentalStatus): void {
-	if (!rentalStatusMachine.canTransition(rental.status, to)) {
-		throw invalidTransition({
-			entity: "RENTAL",
-			from: rental.status,
-			to,
-			allowed: [...rentalStatusMachine.allowedFrom(rental.status)],
-		});
-	}
+	assertRentalTransition(rental, to);
 	rental.status = to;
 }
 
 export function expireSignals(db: MockDb, now: Date): void {
 	for (const rental of db.rentals) {
-		const overdue =
-			rental.status === "AWAITING_DEPOSIT" &&
-			rental.signalDueAt !== null &&
-			toMs(rental.signalDueAt) <= now.getTime();
-		if (overdue && !hasPaidSignal(rental)) {
+		const expired = isQuoteExpired(
+			{ ...rental, hasPaidSignal: hasPaidSignal(rental) },
+			now,
+		);
+		if (expired) {
 			moveRental(rental, "EXPIRED");
-			addEvent(
-				db,
-				rental,
-				null,
-				"Orçamento expirou sem sinal e a agenda foi liberada",
-				now.toISOString(),
-			);
+			addEvent(db, rental, null, RENTAL_EVENTS.quoteExpired, now.toISOString());
 		}
 	}
 }
 
 export function holdUnits(db: MockDb, rental: RentalRecord, now: Date): void {
 	moveRental(rental, "AWAITING_DEPOSIT");
-	const sentAt = now.toISOString();
-	rental.sentAt = sentAt;
+	rental.sentAt = now.toISOString();
 	rental.signalDueAt = addHours(
 		now,
 		db.settings.signalDeadlineHours,
@@ -129,14 +117,6 @@ export function freezePrices(
 	}
 	rental.priceFrozenAt = at;
 }
-
-const PAYMENT_CATEGORY: Record<PaymentKind, LedgerCategory> = {
-	SIGNAL: "RENTAL",
-	BALANCE: "RENTAL",
-	DELIVERY_FEE: "DELIVERY",
-	CONSUMABLE: "CONSUMABLE_SOLD",
-	EXTRA_DAILY: "EXTRA_FEES",
-};
 
 function firstUnitCode(rental: RentalRecord): string | null {
 	return rental.items.find((item) => item.kind === "UNIT")?.code ?? null;
@@ -166,15 +146,14 @@ export function recordPayment(
 	});
 	if (payment.kind === "SIGNAL") freezePrices(db, rental, payment.paidAt);
 
-	const label = PAYMENT_KIND_LABELS[payment.kind];
 	postLedger(db, {
 		account: "CASH",
 		direction: "IN",
-		category: PAYMENT_CATEGORY[payment.kind],
+		category: PAYMENT_LEDGER_CATEGORY[payment.kind],
 		amountCents: payment.amountCents,
 		occurredAt: payment.paidAt,
 		method: payment.method,
-		description: `${label} da ${rental.number}`,
+		description: LEDGER_DESCRIPTIONS.payment(payment.kind, rental.number),
 		rentalNumber: rental.number,
 		unitCode: firstUnitCode(rental),
 		receiptFileKey: payment.receiptFileKey ?? null,
@@ -186,7 +165,11 @@ export function recordPayment(
 		db,
 		rental,
 		actor,
-		`${label} de ${money(payment.amountCents)} recebido por ${PAYMENT_METHOD_LABELS[payment.method]}`,
+		RENTAL_EVENTS.paymentReceived(
+			payment.kind,
+			payment.amountCents,
+			payment.method,
+		),
 		payment.paidAt,
 	);
 }
@@ -209,7 +192,7 @@ export function receiveDeposit(
 		amountCents,
 		occurredAt: at,
 		method,
-		description: `Caução da ${rental.number}`,
+		description: LEDGER_DESCRIPTIONS.depositReceived(rental.number),
 		rentalNumber: rental.number,
 		unitCode: firstUnitCode(rental),
 		receiptFileKey: null,
@@ -220,7 +203,7 @@ export function receiveDeposit(
 		db,
 		rental,
 		actor,
-		`Caução de ${money(amountCents)} recebida por ${PAYMENT_METHOD_LABELS[method]}`,
+		RENTAL_EVENTS.depositReceived(amountCents, method),
 		at,
 	);
 }

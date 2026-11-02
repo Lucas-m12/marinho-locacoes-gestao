@@ -1,25 +1,32 @@
 {
-  "name": "@marinho-gestao/api",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
-  },
-  "scripts": {
-    "build": "tsc -b",
-    "check-types": "tsc -b"
-  },
-  "dependencies": {
-    "@marinho-gestao/auth": "workspace:*",
-    "@marinho-gestao/db": "workspace:*",
-    "@orpc/client": "catalog:",
-    "@orpc/openapi": "catalog:",
-    "@orpc/server": "catalog:",
-    "@orpc/zod": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@marinho-gestao/config": "workspace:*",
-    "typescript": "catalog:"
-  }
+	"name": "@marinho-gestao/api",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit",
+		"test": "vitest run",
+		"test:server": "vitest run --config vitest.server.config.ts"
+	},
+	"dependencies": {
+		"@marinho-gestao/auth": "workspace:*",
+		"@marinho-gestao/contract": "workspace:*",
+		"@marinho-gestao/db": "workspace:*",
+		"@marinho-gestao/domain": "workspace:*",
+		"@marinho-gestao/read-model": "workspace:*",
+		"@orpc/client": "catalog:",
+		"@orpc/server": "catalog:",
+		"aws4fetch": "^1.0.20",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@marinho-gestao/config": "workspace:*",
+		"@marinho-gestao/scenarios": "workspace:*",
+		"@types/bun": "catalog:",
+		"better-auth": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	}
 }

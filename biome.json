@@ -30,11 +30,9 @@
 			"!docs",
 			"!.agents",
 			"!skills-lock.json",
-			"!apps/server",
-			"!packages/api",
-			"!packages/auth",
-			"!packages/db",
-			"!packages/infra"
+			"!**/prisma/generated",
+			"!**/src/env.ts",
+			"!**/*.prisma"
 		]
 	},
 	"formatter": {
@@ -89,7 +87,7 @@
 									"**/data/mock/**",
 									"**/data/http/**"
 								],
-								"message": "Telas não importam o mock nem o link HTTP: use @/data/client."
+								"message": "Telas n\u00e3o importam o mock nem o link HTTP: use @/data/client."
 							}
 						]
 					}
@@ -117,7 +115,7 @@
 	},
 	"overrides": [
 		{
-			"includes": ["apps/web/src/data/**"],
+			"includes": ["apps/web/src/data/**", "apps/server/**", "packages/**"],
 			"linter": {
 				"rules": {
 					"style": {

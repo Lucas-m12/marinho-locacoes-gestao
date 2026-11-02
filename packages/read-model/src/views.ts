@@ -10,6 +10,7 @@ import {
 	type CustomerRentalHistory,
 	calendarDaysBetween,
 	customerTier,
+	DOCUMENT_KIND_LABELS,
 	type DocumentKind,
 	depositHeldCents,
 	isRentalOverdue,
@@ -18,15 +19,14 @@ import {
 	sumCents,
 	toMs,
 } from "@marinho-gestao/domain";
-import { DOCUMENT_KIND_LABELS } from "@/lib/labels";
-import type {
-	CustomerRecord,
-	MockDb,
-	RentalItemRecord,
-	RentalRecord,
-} from "./db";
 import { notFound } from "./errors";
 import { fileRefOf } from "./queries";
+import type {
+	CustomerRecord,
+	RentalItemRecord,
+	RentalRecord,
+	Snapshot,
+} from "./records";
 import {
 	activePayments,
 	itemPrice,
@@ -38,7 +38,7 @@ import {
 
 const REQUIRED_DOCUMENTS: readonly DocumentKind[] = ["PHOTO_ID", "TAX_ID"];
 
-export function requireCustomer(db: MockDb, id: string): CustomerRecord {
+export function requireCustomer(db: Snapshot, id: string): CustomerRecord {
 	const customer = db.customers.find((entry) => entry.id === id);
 	if (!customer) throw notFound("customer", id);
 	return customer;
@@ -58,18 +58,18 @@ function lateDaysOf(rental: RentalRecord, now: Date): number {
 	return 0;
 }
 
-function rentalsOf(db: MockDb, customerId: string): RentalRecord[] {
+function rentalsOf(db: Snapshot, customerId: string): RentalRecord[] {
 	return db.rentals.filter((rental) => rental.customerId === customerId);
 }
 
-function countedRentals(db: MockDb, customerId: string): RentalRecord[] {
+function countedRentals(db: Snapshot, customerId: string): RentalRecord[] {
 	return rentalsOf(db, customerId).filter((rental) =>
 		COUNTED_RENTAL_STATUSES.includes(rental.status),
 	);
 }
 
 function historyOf(
-	db: MockDb,
+	db: Snapshot,
 	rental: RentalRecord,
 	now: Date,
 ): CustomerRentalHistory {
@@ -88,7 +88,7 @@ function historyOf(
 }
 
 export function customerView(
-	db: MockDb,
+	db: Snapshot,
 	customer: CustomerRecord,
 	now: Date,
 ): Customer {
@@ -156,7 +156,7 @@ export function customerView(
 }
 
 export function customerDocumentView(
-	db: MockDb,
+	db: Snapshot,
 	document: CustomerRecord["documents"][number],
 ) {
 	return {
@@ -169,7 +169,7 @@ export function customerDocumentView(
 }
 
 export function customerDetail(
-	db: MockDb,
+	db: Snapshot,
 	customer: CustomerRecord,
 	now: Date,
 ): CustomerDetail {
@@ -192,7 +192,7 @@ export function customerDetail(
 }
 
 export function itemNames(
-	db: MockDb,
+	db: Snapshot,
 	item: Pick<RentalItemRecord, "kind" | "code">,
 ): {
 	name: string;
@@ -219,13 +219,13 @@ export function itemNames(
 	};
 }
 
-export function itemLabel(db: MockDb, item: RentalItemRecord): string {
+export function itemLabel(db: Snapshot, item: RentalItemRecord): string {
 	const names = itemNames(db, item);
 	if (item.kind === "UNIT") return `${item.code} · ${names.name}`;
 	return names.perPiece ? `${names.name} · ${item.quantity} peças` : names.name;
 }
 
-export function equipmentSummary(db: MockDb, rental: RentalRecord): string {
+export function equipmentSummary(db: Snapshot, rental: RentalRecord): string {
 	const [first, ...others] = rental.items;
 	if (!first) return "";
 	const names = itemNames(db, first);
@@ -246,7 +246,7 @@ export function equipmentSummary(db: MockDb, rental: RentalRecord): string {
 }
 
 export function rentalListItem(
-	db: MockDb,
+	db: Snapshot,
 	rental: RentalRecord,
 	now: Date,
 ): RentalListItem {
@@ -265,7 +265,7 @@ export function rentalListItem(
 	};
 }
 
-function signalRequired(db: MockDb, totalCents: number): number | null {
+function signalRequired(db: Snapshot, totalCents: number): number | null {
 	const { mode, valueCents, percent } = db.settings.signal;
 	if (mode === "FIXED") return valueCents;
 	if (mode === "PERCENT" && percent !== null) {
@@ -274,7 +274,7 @@ function signalRequired(db: MockDb, totalCents: number): number | null {
 	return null;
 }
 
-function allUnitsSeparated(db: MockDb, rental: RentalRecord): boolean {
+function allUnitsSeparated(db: Snapshot, rental: RentalRecord): boolean {
 	if (rental.status === "SEPARATED") return true;
 	return rental.items.every((item) => {
 		if (item.kind !== "UNIT") return false;
@@ -285,7 +285,7 @@ function allUnitsSeparated(db: MockDb, rental: RentalRecord): boolean {
 }
 
 export function rentalView(
-	db: MockDb,
+	db: Snapshot,
 	rental: RentalRecord,
 	now: Date,
 ): Rental {

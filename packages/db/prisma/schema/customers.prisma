@@ -1,0 +1,39 @@
+model Customer {
+  id                  String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  kind                CustomerKind
+  name                String
+  taxId               String?            @map("tax_id")
+  responsible         String?
+  authorizedReceivers String[]           @default([]) @map("authorized_receivers")
+  whatsapp            String?
+  alternatePhone      String?            @map("alternate_phone")
+  address             String?
+  neighborhood        String?
+  city                String?
+  occupation          String?
+  origin              CustomerOrigin?
+  referredBy          String?            @map("referred_by")
+  acceptsPromotions   Boolean            @default(false) @map("accepts_promotions")
+  notes               String?
+  blockedAt           DateTime?          @map("blocked_at") @db.Timestamptz(3)
+  blockedReason       String?            @map("blocked_reason")
+  archivedAt          DateTime?          @map("archived_at") @db.Timestamptz(3)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  documents           CustomerDocument[]
+  rentals             Rental[]
+
+  @@map("customer")
+}
+
+model CustomerDocument {
+  id         String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  customerId String       @map("customer_id") @db.Uuid
+  kind       DocumentKind
+  fileKey    String       @map("file_key")
+  receivedAt DateTime     @map("received_at") @db.Timestamptz(3)
+  customer   Customer     @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("customer_document")
+}

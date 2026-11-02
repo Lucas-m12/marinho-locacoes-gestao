@@ -1,0 +1,22 @@
+{
+	"name": "@marinho-gestao/scenarios",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@marinho-gestao/contract": "workspace:*",
+		"@marinho-gestao/domain": "workspace:*",
+		"@orpc/client": "catalog:",
+		"vitest": "catalog:"
+	},
+	"devDependencies": {
+		"@marinho-gestao/config": "workspace:*",
+		"typescript": "catalog:"
+	}
+}

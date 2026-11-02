@@ -1,0 +1,31 @@
+model LedgerEntry {
+  id                 String            @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  account            LedgerAccount
+  direction          LedgerDirection
+  category           LedgerCategory
+  amountCents        Int               @map("amount_cents")
+  occurredAt         DateTime          @map("occurred_at") @db.Timestamptz(3)
+  method             PaymentMethod
+  description        String
+  rentalId           String?           @map("rental_id") @db.Uuid
+  unitId             String?           @map("unit_id") @db.Uuid
+  maintenanceOrderId String?           @map("maintenance_order_id") @db.Uuid
+  paymentKind        PaymentKind?      @map("payment_kind")
+  receiptFileKey     String?           @map("receipt_file_key")
+  pairId             String?           @map("pair_id") @db.Uuid
+  reversalOfId       String?           @unique @map("reversal_of_id") @db.Uuid
+  reason             String?
+  recordedById       String            @map("recorded_by_id")
+  recordedByName     String            @map("recorded_by_name")
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  rental             Rental?           @relation(fields: [rentalId], references: [id], onDelete: Restrict)
+  unit               Unit?             @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  maintenanceOrder   MaintenanceOrder? @relation(fields: [maintenanceOrderId], references: [id], onDelete: Restrict)
+  reversalOf         LedgerEntry?      @relation("Reversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy         LedgerEntry?      @relation("Reversal")
+
+  @@index([account, occurredAt])
+  @@index([rentalId])
+  @@index([pairId])
+  @@map("ledger_entry")
+}

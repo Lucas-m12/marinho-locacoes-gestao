@@ -3,7 +3,7 @@ import type {
 	InvalidTransitionData,
 	PreconditionReason,
 } from "@marinho-gestao/contract";
-import { ORPCError } from "@orpc/server";
+import { ORPCError } from "@orpc/client";
 
 export function notFound(
 	resource: string,

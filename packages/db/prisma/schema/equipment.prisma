@@ -1,0 +1,122 @@
+model EquipmentType {
+  id              String          @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name            String
+  nicknames       String[]        @default([])
+  category        String?
+  description     String?
+  dailyPriceCents Int?            @map("daily_price_cents")
+  depositCents    Int?            @map("deposit_cents")
+  turnaroundHours Int             @map("turnaround_hours")
+  accessories     String?
+  recommendedPpe  String?         @map("recommended_ppe")
+  archivedAt      DateTime?       @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  units           Unit[]
+  checklist       ChecklistItem[]
+  lostDemands     LostDemand[]
+
+  @@map("equipment_type")
+}
+
+model ChecklistItem {
+  id             String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  typeId         String?        @map("type_id") @db.Uuid
+  lotId          String?        @map("lot_id") @db.Uuid
+  key            String
+  position       Int
+  label          String
+  note           String
+  occurrenceKind OccurrenceKind @map("occurrence_kind")
+  type           EquipmentType? @relation(fields: [typeId], references: [id], onDelete: Cascade)
+  lot            Lot?           @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  @@unique([typeId, key])
+  @@unique([lotId, key])
+  @@map("checklist_item")
+}
+
+model Unit {
+  id                String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  code              String             @unique
+  typeId            String             @map("type_id") @db.Uuid
+  name              String
+  shortName         String             @map("short_name")
+  brand             String?
+  model             String?
+  serialNumber      String?            @map("serial_number")
+  voltage           String?
+  owner             String?
+  accessories       String?
+  labelApplied      Boolean            @default(true) @map("label_applied")
+  status            UnitStatus         @default(AVAILABLE)
+  statusReason      String?            @map("status_reason")
+  location          String?
+  purchasedAt       DateTime?          @map("purchased_at") @db.Timestamptz(3)
+  acquiredAt        DateTime?          @map("acquired_at") @db.Timestamptz(3)
+  purchaseCents     Int?               @map("purchase_cents")
+  replacementCents  Int?               @map("replacement_cents")
+  notes             String?
+  returnedAt        DateTime?          @map("returned_at") @db.Timestamptz(3)
+  archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(3)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  type              EquipmentType      @relation(fields: [typeId], references: [id])
+  photos            UnitPhoto[]
+  knownDamages      KnownDamage[]
+  rentalItems       RentalItem[]
+  maintenanceOrders MaintenanceOrder[]
+  ledgerEntries     LedgerEntry[]
+
+  @@index([typeId])
+  @@map("unit")
+}
+
+model UnitPhoto {
+  id        String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  unitId    String        @map("unit_id") @db.Uuid
+  slot      UnitPhotoSlot
+  fileKey   String        @map("file_key")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  unit      Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, slot])
+  @@map("unit_photo")
+}
+
+model KnownDamage {
+  id             String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  unitId         String   @map("unit_id") @db.Uuid
+  description    String
+  fileKey        String?  @map("file_key")
+  recordedById   String   @map("recorded_by_id")
+  recordedByName String   @map("recorded_by_name")
+  recordedAt     DateTime @map("recorded_at") @db.Timestamptz(3)
+  unit           Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId])
+  @@map("known_damage")
+}
+
+model Lot {
+  id              String          @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  code            String          @unique
+  name            String
+  nicknames       String[]        @default([])
+  pricing         LotPricing
+  total           Int
+  inMaintenance   Int             @default(0) @map("in_maintenance")
+  retired         Int             @default(0)
+  dailyPriceCents Int?            @map("daily_price_cents")
+  depositCents    Int?            @map("deposit_cents")
+  kitComposition  String?         @map("kit_composition")
+  assetCode       String?         @map("asset_code")
+  turnaroundHours Int             @map("turnaround_hours")
+  archivedAt      DateTime?       @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  checklist       ChecklistItem[]
+  rentalItems     RentalItem[]
+
+  @@map("lot")
+}

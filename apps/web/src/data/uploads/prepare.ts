@@ -1,13 +1,14 @@
-import type { UploadPurpose } from "@marinho-gestao/domain";
+import {
+	MAX_DOCUMENT_BYTES,
+	MAX_IMAGE_BYTES,
+	MAX_VIDEO_BYTES,
+	MAX_VIDEO_SECONDS,
+	type UploadPurpose,
+} from "@marinho-gestao/domain";
 import { UploadError } from "./types";
 
 const MAX_IMAGE_SIDE = 2000;
 const JPEG_QUALITY = 0.85;
-const MEGABYTE = 1024 * 1024;
-const MAX_IMAGE_BYTES = 10 * MEGABYTE;
-const MAX_DOCUMENT_BYTES = 10 * MEGABYTE;
-const MAX_VIDEO_BYTES = 50 * MEGABYTE;
-const MAX_VIDEO_SECONDS = 30;
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 	return new Promise((resolve, reject) => {

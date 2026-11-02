@@ -129,6 +129,7 @@ export const PreconditionReason = z.enum([
 	"INVALID_DATE",
 	"DUPLICATE",
 	"UPLOAD_MISSING",
+	"UPLOAD_INVALID",
 	"ALREADY_REVERSED",
 	"IS_REVERSAL",
 ]);

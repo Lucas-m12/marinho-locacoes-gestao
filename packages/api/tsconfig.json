@@ -1,12 +1,7 @@
 {
-  "extends": "@marinho-gestao/config/tsconfig.base.json",
-  "compilerOptions": {
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": true,
-    "outDir": "dist"
-  },
-  "include": ["src/**/*.ts"],
-  "references": [{ "path": "../db" }, { "path": "../auth" }]
+	"extends": "@marinho-gestao/config/tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true
+	},
+	"include": ["src/**/*.ts"]
 }

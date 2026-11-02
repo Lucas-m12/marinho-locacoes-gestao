@@ -1,0 +1,79 @@
+model Rental {
+  id                String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  code              String        @unique
+  customerId        String        @map("customer_id") @db.Uuid
+  status            RentalStatus  @default(QUOTE)
+  deliveryMode      DeliveryMode  @map("delivery_mode")
+  siteAddress       String?       @map("site_address")
+  siteCity          String?       @map("site_city")
+  sitePinUrl        String?       @map("site_pin_url")
+  receiverName      String?       @map("receiver_name")
+  termSigned        Boolean       @default(false) @map("term_signed")
+  notes             String?
+  startsAt          DateTime      @map("starts_at") @db.Timestamptz(3)
+  endsAt            DateTime      @map("ends_at") @db.Timestamptz(3)
+  depositDeadlineAt DateTime?     @map("deposit_deadline_at") @db.Timestamptz(3)
+  deliveryFeeCents  Int?          @map("delivery_fee_cents")
+  discountCents     Int           @default(0) @map("discount_cents")
+  discountReason    String?       @map("discount_reason")
+  priceFrozenAt     DateTime?     @map("price_frozen_at") @db.Timestamptz(3)
+  cancelReason      String?       @map("cancel_reason")
+  lateNoticeGiven   Boolean       @default(false) @map("late_notice_given")
+  sentAt            DateTime?     @map("sent_at") @db.Timestamptz(3)
+  confirmedAt       DateTime?     @map("confirmed_at") @db.Timestamptz(3)
+  separatedAt       DateTime?     @map("separated_at") @db.Timestamptz(3)
+  deliveredAt       DateTime?     @map("delivered_at") @db.Timestamptz(3)
+  returnedAt        DateTime?     @map("returned_at") @db.Timestamptz(3)
+  closedAt          DateTime?     @map("closed_at") @db.Timestamptz(3)
+  createdAt         DateTime      @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  customer          Customer      @relation(fields: [customerId], references: [id])
+  items             RentalItem[]
+  occurrences       Occurrence[]
+  ledgerEntries     LedgerEntry[]
+
+  @@index([status])
+  @@index([customerId])
+  @@map("rental")
+}
+
+model RentalItem {
+  id              String       @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  rentalId        String       @map("rental_id") @db.Uuid
+  position        Int
+  unitId          String?      @map("unit_id") @db.Uuid
+  lotId           String?      @map("lot_id") @db.Uuid
+  quantity        Int          @default(1)
+  dailyPriceCents Int?         @map("daily_price_cents")
+  depositCents    Int?         @map("deposit_cents")
+  startsAt        DateTime     @map("starts_at") @db.Timestamptz(3)
+  blockedUntil    DateTime     @map("blocked_until") @db.Timestamptz(3)
+  holdsCalendar   Boolean      @default(false) @map("holds_calendar")
+  checkoutDoneAt  DateTime?    @map("checkout_done_at") @db.Timestamptz(3)
+  returnDoneAt    DateTime?    @map("return_done_at") @db.Timestamptz(3)
+  rental          Rental       @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  unit            Unit?        @relation(fields: [unitId], references: [id])
+  lot             Lot?         @relation(fields: [lotId], references: [id])
+  inspections     Inspection[]
+  occurrences     Occurrence[]
+
+  @@index([rentalId])
+  @@index([lotId, holdsCalendar])
+  @@map("rental_item")
+}
+
+model LostDemand {
+  id             String         @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  item           String
+  typeId         String?        @map("type_id") @db.Uuid
+  reason         String
+  city           String?
+  requestedOn    DateTime       @map("requested_on") @db.Date
+  recordedById   String         @map("recorded_by_id")
+  recordedByName String         @map("recorded_by_name")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  type           EquipmentType? @relation(fields: [typeId], references: [id])
+
+  @@index([requestedOn])
+  @@map("lost_demand")
+}

@@ -1,0 +1,24 @@
+{
+	"name": "@marinho-gestao/read-model",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./seed": "./src/seed/index.ts",
+		"./errors": "./src/errors.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@marinho-gestao/contract": "workspace:*",
+		"@marinho-gestao/domain": "workspace:*",
+		"@orpc/client": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@marinho-gestao/config": "workspace:*",
+		"typescript": "catalog:"
+	}
+}

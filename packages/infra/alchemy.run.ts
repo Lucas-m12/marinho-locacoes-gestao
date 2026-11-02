@@ -5,29 +5,33 @@ import * as Effect from "effect/Effect";
 import "varlock/auto-load";
 
 export default Alchemy.Stack(
-  "marinho-gestao",
-  {
-    providers: Cloudflare.providers(),
-    state: Cloudflare.state(),
-  },
-  Effect.gen(function* () {
-    const webWorker = yield* Cloudflare.Website.Vite("web", {
-      rootDir: "../../apps/web",
-      assets: {
-        htmlHandling: "auto-trailing-slash",
-        notFoundHandling: "single-page-application",
-      },
-      env: {
-        VITE_DATA_SOURCE: Config.String("VITE_DATA_SOURCE").pipe(Config.withDefault("mock")),
-        VITE_SERVER_URL: Config.String("VITE_SERVER_URL").pipe(Config.withDefault("")),
-      },
-      dev: {
-        port: 3001,
-      },
-    });
+	"marinho-gestao",
+	{
+		providers: Cloudflare.providers(),
+		state: Cloudflare.state(),
+	},
+	Effect.gen(function* () {
+		const webWorker = yield* Cloudflare.Website.Vite("web", {
+			rootDir: "../../apps/web",
+			assets: {
+				htmlHandling: "auto-trailing-slash",
+				notFoundHandling: "single-page-application",
+			},
+			env: {
+				VITE_DATA_SOURCE: Config.String("VITE_DATA_SOURCE").pipe(
+					Config.withDefault("mock"),
+				),
+				VITE_SERVER_URL: Config.String("VITE_SERVER_URL").pipe(
+					Config.withDefault(""),
+				),
+			},
+			dev: {
+				port: 3001,
+			},
+		});
 
-    return {
-      web: webWorker.url,
-    };
-  }),
+		return {
+			web: webWorker.url,
+		};
+	}),
 );

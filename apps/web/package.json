@@ -17,6 +17,7 @@
 		"@fontsource-variable/archivo": "^5.3.0",
 		"@marinho-gestao/contract": "workspace:*",
 		"@marinho-gestao/domain": "workspace:*",
+		"@marinho-gestao/read-model": "workspace:*",
 		"@marinho-gestao/ui": "workspace:*",
 		"@orpc/client": "catalog:",
 		"@orpc/contract": "catalog:",
@@ -39,6 +40,7 @@
 	},
 	"devDependencies": {
 		"@marinho-gestao/config": "workspace:*",
+		"@marinho-gestao/scenarios": "workspace:*",
 		"@tanstack/react-query-devtools": "^5.104.2",
 		"@tanstack/react-router-devtools": "^1.167.2",
 		"@tanstack/router-plugin": "^1.168.45",

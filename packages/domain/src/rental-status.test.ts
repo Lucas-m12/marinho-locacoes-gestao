@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	holdsBooking,
+	isQuoteExpired,
 	isRentalOverdue,
 	rentalDisplayStatus,
 	rentalStatusMachine,
@@ -97,5 +98,24 @@ describe("holdsBooking", () => {
 		expect(holdsBooking("CONFIRMED")).toBe(true);
 		expect(holdsBooking("SEPARATED")).toBe(true);
 		expect(holdsBooking("ON_SITE")).toBe(true);
+	});
+});
+
+describe("isQuoteExpired", () => {
+	const quote = {
+		status: "AWAITING_DEPOSIT" as const,
+		signalDueAt: "2026-11-02T12:00:00.000Z",
+		hasPaidSignal: false,
+	};
+
+	it("vence depois do prazo, sem sinal", () => {
+		expect(isQuoteExpired(quote, "2026-11-02T12:00:00.001Z")).toBe(true);
+		expect(isQuoteExpired(quote, "2026-11-02T12:00:00.000Z")).toBe(false);
+	});
+
+	it("não vence com sinal pago nem fora de aguardando sinal", () => {
+		const late = "2026-11-03T00:00:00.000Z";
+		expect(isQuoteExpired({ ...quote, hasPaidSignal: true }, late)).toBe(false);
+		expect(isQuoteExpired({ ...quote, status: "CONFIRMED" }, late)).toBe(false);
 	});
 });
