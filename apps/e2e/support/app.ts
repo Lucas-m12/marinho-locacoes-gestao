@@ -66,3 +66,33 @@ export async function goToSection(
 export function heading(page: Page, name: string | RegExp) {
 	return page.getByRole("heading", { level: 1, name });
 }
+
+export function checklistItems(page: Page) {
+	return page
+		.getByRole("region", { name: /^Checklist/ })
+		.locator("fieldset")
+		.filter({ has: page.locator("legend") });
+}
+
+export async function answerChecklist(
+	page: Page,
+	options: { notOk?: string; only?: number } = {},
+): Promise<void> {
+	const items = checklistItems(page);
+	await expect(items.first()).toBeVisible();
+	const total = options.only ?? (await items.count());
+	for (let index = 0; index < total; index += 1) {
+		const item = items.nth(index);
+		const label = (await item.locator("legend").textContent()) ?? "";
+		const answer = label === options.notOk ? "Não OK" : "OK";
+		const button = item.getByRole("button", { name: answer, exact: true });
+		await button.click();
+		await expect(button).toHaveAttribute("aria-pressed", "true");
+	}
+}
+
+export async function toast(page: Page, text: string | RegExp) {
+	await expect(
+		page.getByRole("listitem").filter({ hasText: text }).first(),
+	).toBeVisible();
+}
