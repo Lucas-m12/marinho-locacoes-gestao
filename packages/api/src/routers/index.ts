@@ -4,6 +4,7 @@ import { availability } from "./availability";
 import { customers } from "./customers";
 import { equipment } from "./equipment";
 import { pending } from "./pending";
+import { rentals } from "./rentals";
 import { session } from "./session";
 import { settings } from "./settings";
 import { users } from "./users";
@@ -30,7 +31,7 @@ export const appRouter = os.router({
 	availability,
 	equipment,
 	customers,
-	rentals: pendingModule("rentals"),
+	rentals,
 	inspections: pendingModule("inspections"),
 	deposits: pendingModule("deposits"),
 	ledger: pendingModule("ledger"),

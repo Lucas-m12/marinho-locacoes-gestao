@@ -1497,4 +1497,110 @@ export function defineScenarios(harness: ScenarioHarness): void {
 			expect(error.code).toBe("BAD_REQUEST");
 		});
 	});
+
+	async function settledErrors(
+		promises: Promise<unknown>[],
+	): Promise<{ ok: number; errors: ORPCError<string, unknown>[] }> {
+		const results = await Promise.allSettled(promises);
+		const errors = results.flatMap((result) => {
+			if (result.status === "fulfilled") return [];
+			if (result.reason instanceof ORPCError) return [result.reason];
+			throw result.reason;
+		});
+		return { ok: results.length - errors.length, errors };
+	}
+
+	describe("reservas ao mesmo tempo", () => {
+		it("duas reservas da mesma unidade em paralelo: só uma passa", async () => {
+			const input = {
+				...quote,
+				startAt: day(20),
+				endAt: day(22),
+				items: [{ kind: "UNIT" as const, code: "MAR-003", quantity: 1 }],
+				send: true,
+			};
+			const { ok, errors } = await settledErrors([
+				clientAs("ATTENDANT").rentals.createQuote(input),
+				clientAs("MANAGER").rentals.createQuote(input),
+			]);
+			expect(ok).toBe(1);
+			expect(errors.map((error) => error.code)).toEqual(["CONFLICT"]);
+			expect(errors[0]?.data).toMatchObject({
+				conflicts: [{ code: "MAR-003" }],
+			});
+		});
+
+		it("duas reservas de andaime em paralelo que passam do total: só uma passa", async () => {
+			const input = {
+				...quote,
+				startAt: day(20),
+				endAt: day(21),
+				items: [{ kind: "LOT" as const, code: "ANDAIME", quantity: 12 }],
+				send: true,
+			};
+			const { ok, errors } = await settledErrors([
+				clientAs("ATTENDANT").rentals.createQuote(input),
+				clientAs("MANAGER").rentals.createQuote(input),
+			]);
+			expect(ok).toBe(1);
+			expect(errors.map((error) => error.code)).toEqual(["CONFLICT"]);
+			expect(errors[0]?.data).toMatchObject({
+				conflicts: [
+					{ code: "ANDAIME", freeQuantity: 8, requestedQuantity: 12 },
+				],
+			});
+		});
+
+		it("sinal vencido libera a agenda para outra reserva", async () => {
+			const client = clientAs("ATTENDANT");
+			const input = {
+				...quote,
+				startAt: day(1, "09:00"),
+				endAt: day(1, "16:00"),
+				items: [{ kind: "LOT" as const, code: "CARROCINHA", quantity: 1 }],
+				send: true,
+			};
+			const busy = await errorOf(client.rentals.createQuote(input));
+			expect(busy.code).toBe("CONFLICT");
+
+			harness.setNow(new Date(NOW.getTime() + 6 * 3_600_000));
+			const rental = await client.rentals.createQuote(input);
+			expect(rental.status).toBe("AWAITING_DEPOSIT");
+			const expired = await client.rentals.get({ number: "LOC-0031" });
+			expect(expired.status).toBe("EXPIRED");
+		});
+
+		it("unidade com sinal vencido pode ser reservada de novo", async () => {
+			const client = clientAs("ATTENDANT");
+			const input = {
+				...quote,
+				startAt: day(10),
+				endAt: day(11),
+				items: [{ kind: "UNIT" as const, code: "MAR-004", quantity: 1 }],
+				send: true,
+			};
+			await client.rentals.createQuote(input);
+			expect((await errorOf(client.rentals.createQuote(input))).code).toBe(
+				"CONFLICT",
+			);
+			harness.setNow(new Date(NOW.getTime() + 25 * 3_600_000));
+			const again = await client.rentals.createQuote(input);
+			expect(again.status).toBe("AWAITING_DEPOSIT");
+		});
+	});
+
+	describe("transição de status", () => {
+		it("recusa separar locação encerrada", async () => {
+			const error = await errorOf(
+				clientAs("MANAGER").rentals.markSeparated({ number: "LOC-0009" }),
+			);
+			expect(error.code).toBe("INVALID_TRANSITION");
+			expect(error.data).toMatchObject({
+				entity: "RENTAL",
+				from: "CLOSED",
+				to: "SEPARATED",
+				allowed: [],
+			});
+		});
+	});
 }
