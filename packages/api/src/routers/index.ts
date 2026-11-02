@@ -1,7 +1,11 @@
 import { contract } from "@marinho-gestao/contract";
 import { api, os } from "../procedures";
+import { availability } from "./availability";
+import { customers } from "./customers";
+import { equipment } from "./equipment";
 import { pending } from "./pending";
 import { session } from "./session";
+import { settings } from "./settings";
 import { users } from "./users";
 
 type Module = keyof typeof contract;
@@ -23,15 +27,15 @@ export const appRouter = os.router({
 	session,
 	users,
 	dashboard: pendingModule("dashboard"),
-	availability: pendingModule("availability"),
-	equipment: pendingModule("equipment"),
-	customers: pendingModule("customers"),
+	availability,
+	equipment,
+	customers,
 	rentals: pendingModule("rentals"),
 	inspections: pendingModule("inspections"),
 	deposits: pendingModule("deposits"),
 	ledger: pendingModule("ledger"),
 	maintenance: pendingModule("maintenance"),
-	settings: pendingModule("settings"),
+	settings,
 	uploads: pendingModule("uploads"),
 	files: pendingModule("files"),
 });

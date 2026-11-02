@@ -125,13 +125,20 @@ export const equipment = {
 		requirePermission(context, "catalog:manage");
 		const db = getDb();
 		const unit = requireUnit(db, input.code);
-		const { code: _code, dailyPriceCents, depositCents, ...changes } = input;
+		const {
+			code: _code,
+			dailyPriceCents,
+			depositCents,
+			shortName,
+			...changes
+		} = input;
 		Object.assign(
 			unit,
 			Object.fromEntries(
 				Object.entries(changes).filter(([, value]) => value !== undefined),
 			),
 		);
+		if (shortName !== undefined) unit.shortName = shortName ?? unit.name;
 		const type = requireType(db, unit.typeId);
 		if (dailyPriceCents !== undefined) type.dailyPriceCents = dailyPriceCents;
 		if (depositCents !== undefined) type.depositCents = depositCents;
