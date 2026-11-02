@@ -28,6 +28,7 @@
 		"build": "turbo run build",
 		"check-types": "turbo run check-types",
 		"test": "turbo run test",
+		"test:server": "bun run db:test:start && cd packages/api && bun run test:server",
 		"dev:web": "turbo run dev:bare -F web --",
 		"dev:server": "turbo run dev -F server --",
 		"db:push": "turbo run db:push -F @marinho-gestao/db --",
