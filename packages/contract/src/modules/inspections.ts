@@ -42,7 +42,12 @@ export const InspectionMedia = z.object({
 });
 export type InspectionMedia = z.infer<typeof InspectionMedia>;
 
-export const ReturnOutcome = z.enum(["AVAILABLE", "IN_MAINTENANCE", "DAMAGED"]);
+export const ReturnOutcome = z.enum([
+	"AVAILABLE",
+	"IN_INSPECTION",
+	"IN_MAINTENANCE",
+	"DAMAGED",
+]);
 export type ReturnOutcome = z.infer<typeof ReturnOutcome>;
 
 export const Inspection = z.object({

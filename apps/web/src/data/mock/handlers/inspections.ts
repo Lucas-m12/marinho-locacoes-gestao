@@ -228,7 +228,7 @@ export const inspections = {
 				unit.returnedAt = at;
 				if (input.outcome === "DAMAGED") {
 					moveUnit(unit, "DAMAGED", RETURN_TEXTS.damagedReason(rental.number));
-				} else {
+				} else if (input.outcome !== "IN_INSPECTION") {
 					moveUnit(unit, input.outcome);
 				}
 				if (input.outcome === "IN_MAINTENANCE") {

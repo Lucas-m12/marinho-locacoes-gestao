@@ -711,6 +711,24 @@ export function defineScenarios(harness: ScenarioHarness): void {
 			expect(rental.occurrences).toEqual([]);
 		});
 
+		it("conferir depois deixa a unidade em inspeção, fora da agenda", async () => {
+			const client = clientAs("EQUIPMENT");
+			const inspection = await answerAll(
+				client,
+				"LOC-0026",
+				"MAR-006",
+				"RETURN",
+			);
+			const { rental, unitStatus } = await client.inspections.complete({
+				inspectionId: inspection.id,
+				outcome: "IN_INSPECTION",
+			});
+			expect(rental.status).toBe("RETURNED");
+			expect(unitStatus).toBe("IN_INSPECTION");
+			const unit = await client.equipment.getUnit({ code: "MAR-006" });
+			expect(unit.status).toBe("IN_INSPECTION");
+		});
+
 		it("registra o atraso com a regra provisória", async () => {
 			const client = clientAs("EQUIPMENT");
 			const inspection = await answerAll(

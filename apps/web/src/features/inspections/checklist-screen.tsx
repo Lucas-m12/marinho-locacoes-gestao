@@ -88,6 +88,11 @@ const OUTCOMES: { value: ReturnOutcome; label: string; hint: string }[] = [
 		hint: "Aprovada na inspeção, volta para a agenda",
 	},
 	{
+		value: "IN_INSPECTION",
+		label: "Em inspeção",
+		hint: "Conferir depois; só volta para a agenda quando for aprovada",
+	},
+	{
 		value: "IN_MAINTENANCE",
 		label: "Em manutenção",
 		hint: "Abre uma ordem de serviço",
