@@ -123,7 +123,7 @@ function ResultRow({
 	})();
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-t py-4">
+		<li className="flex flex-wrap items-center gap-x-5 gap-y-3 border-t py-4">
 			<span className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
 				<b className="text-base/[22px]">
 					{result.kind === "UNIT"
@@ -153,6 +153,7 @@ function ResultRow({
 					<Link
 						to="/locacoes/nova"
 						search={{ item: result.code, saida: start, devolucao: end }}
+						aria-label={`Reservar ${result.kind === "UNIT" ? result.code : result.name}`}
 						className={buttonVariants({ size: "default" })}
 					>
 						Reservar
@@ -173,7 +174,7 @@ function ResultRow({
 						/>
 					</>
 				))}
-		</div>
+		</li>
 	);
 }
 
@@ -213,7 +214,11 @@ function ResultsCard({
 				</p>
 			)}
 			{results.isFetching && !results.data && (
-				<div className="flex flex-col gap-3 border-t py-4">
+				<div
+					role="status"
+					aria-label="Carregando"
+					className="flex flex-col gap-3 border-t py-4"
+				>
 					<Skeleton className="h-6 w-3/4" />
 					<Skeleton className="h-6 w-1/2" />
 				</div>
@@ -228,17 +233,20 @@ function ResultsCard({
 					description="Confira o nome ou tente pelo código. Se não temos o equipamento, registre como demanda perdida."
 				/>
 			)}
-			{query &&
-				results.data?.results.map((result) => (
-					<ResultRow
-						key={result.code}
-						result={result}
-						dailies={results.data.dailies}
-						start={start}
-						end={end}
-						canSell={canSell}
-					/>
-				))}
+			{query && results.data && results.data.results.length > 0 && (
+				<ul className="flex flex-col">
+					{results.data.results.map((result) => (
+						<ResultRow
+							key={result.code}
+							result={result}
+							dailies={results.data.dailies}
+							start={start}
+							end={end}
+							canSell={canSell}
+						/>
+					))}
+				</ul>
+			)}
 		</Card>
 	);
 }
@@ -329,7 +337,7 @@ function CalendarCard({ today }: { today: string }) {
 	return (
 		<Card
 			aria-labelledby="cal"
-			className="gap-2.5 px-(--card-spacing) [--label-column:92px] md:[--label-column:170px] xl:[--label-column:200px]"
+			className="gap-2.5 px-(--card-spacing) [--label-column:84px] md:[--label-column:170px] xl:[--label-column:200px]"
 		>
 			<div className="flex flex-wrap items-center justify-between gap-3 pb-1.5">
 				<h2 id="cal" className="type-title text-xl/6">
@@ -358,7 +366,13 @@ function CalendarCard({ today }: { today: string }) {
 			{calendar.isError && (
 				<ErrorState error={calendar.error} onRetry={() => calendar.refetch()} />
 			)}
-			{calendar.isPending && <Skeleton className="h-96 rounded-lg" />}
+			{calendar.isPending && (
+				<Skeleton
+					role="status"
+					aria-label="Carregando"
+					className="h-96 rounded-lg"
+				/>
+			)}
 			{calendar.data && (
 				<div className="flex flex-col gap-1">
 					<div

@@ -1,0 +1,26 @@
+{
+	"name": "e2e",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"e2e": "playwright test",
+		"e2e:ui": "playwright test --ui",
+		"e2e:mock": "E2E_DATA_SOURCE=mock playwright test tests/fluxos",
+		"check-types": "tsc --noEmit",
+		"e2e:visual": "E2E_VISUAL_CAPTURE=1 playwright test && bun scripts/visual-report.ts",
+		"e2e:visual:report": "bun scripts/visual-report.ts",
+		"e2e:update": "scripts/update-snapshots.sh"
+	},
+	"devDependencies": {
+		"@axe-core/playwright": "4.14.0",
+		"@marinho-gestao/config": "workspace:*",
+		"@playwright/test": "1.64.1",
+		"@types/node": "^26.6.5",
+		"@types/pngjs": "6.0.5",
+		"aws4fetch": "^1.0.20",
+		"pixelmatch": "8.0.0",
+		"pngjs": "7.0.0",
+		"typescript": "catalog:"
+	}
+}

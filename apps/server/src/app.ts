@@ -23,6 +23,8 @@ export type AppServices = {
 	corsOrigin: string;
 	exposeApiReference: boolean;
 	clock?: () => Date;
+	testRoutes?: Hono;
+	reportError?: (error: unknown, tags?: Record<string, string>) => void;
 };
 
 type Variables = { userId: string | null };
@@ -40,6 +42,7 @@ export function createApp(services: AppServices) {
 			onError((error) => {
 				if (isUnexpected(error)) {
 					log("error", "unexpected error", errorFields(error));
+					services.reportError?.(error, { layer: "rpc" });
 				}
 			}),
 		],
@@ -94,6 +97,8 @@ export function createApp(services: AppServices) {
 		services.auth.handler(c.req.raw),
 	);
 
+	if (services.testRoutes) app.route("/__test", services.testRoutes);
+
 	app.use("/*", async (c, next) => {
 		const path = new URL(c.req.url).pathname;
 		const isRpc = path.startsWith("/rpc/");
@@ -132,6 +137,10 @@ export function createApp(services: AppServices) {
 		log("error", "unhandled error", {
 			requestId: c.get("requestId"),
 			...errorFields(error),
+		});
+		services.reportError?.(error, {
+			layer: "http",
+			requestId: c.get("requestId"),
 		});
 		return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
 	});

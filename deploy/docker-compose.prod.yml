@@ -1,0 +1,72 @@
+name: marinho
+
+x-app: &app
+  image: ${SERVER_IMAGE:?defina SERVER_IMAGE no .env}:${IMAGE_TAG:?defina IMAGE_TAG no .env}
+  init: true
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: postgresql://marinho:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/marinho
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?defina API_DOMAIN no .env}
+      ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL no .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      server:
+        condition: service_started
+
+  server:
+    <<: *app
+
+  jobs:
+    <<: *app
+    command: ["bun", "dist/jobs.mjs"]
+    stop_grace_period: 90s
+    healthcheck:
+      disable: true
+
+  migrate:
+    <<: *app
+    profiles: ["migrate"]
+    restart: "no"
+    working_dir: /app/packages/db
+    command: ["bun", "run", "db:migrate:deploy"]
+    healthcheck:
+      disable: true
+
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    shm_size: 256mb
+    environment:
+      POSTGRES_DB: marinho
+      POSTGRES_USER: marinho
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marinho -d marinho"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

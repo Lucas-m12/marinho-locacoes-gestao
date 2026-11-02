@@ -1,21 +1,24 @@
-import { R2Storage } from "@marinho-gestao/api";
 import { createAuth } from "@marinho-gestao/auth";
 import { createPrismaClient } from "@marinho-gestao/db";
 import { createApp } from "./app";
 import { ENV } from "./env.server";
+import { initSentry, reportError } from "./sentry";
+import { uploadsStorage } from "./storage";
+import { loadTestHooks } from "./test-hooks";
 
 const db = createPrismaClient(ENV);
-const auth = createAuth(ENV, db);
+const storage = uploadsStorage(ENV);
+const testHooks = await loadTestHooks(ENV, { db, storage });
+const sentryEnabled = initSentry(ENV, "api");
+const auth = createAuth(ENV, db, { rateLimit: testHooks === null });
 
 export default createApp({
 	db,
 	auth,
-	storage: new R2Storage({
-		accountId: ENV.R2_ACCOUNT_ID,
-		accessKeyId: ENV.R2_ACCESS_KEY_ID,
-		secretAccessKey: ENV.R2_SECRET_ACCESS_KEY,
-		bucket: ENV.R2_BUCKET,
-	}),
+	storage,
 	corsOrigin: ENV.CORS_ORIGIN,
 	exposeApiReference: ENV.NODE_ENV !== "production",
+	clock: testHooks?.clock.now,
+	testRoutes: testHooks?.routes,
+	reportError: sentryEnabled ? reportError : undefined,
 });

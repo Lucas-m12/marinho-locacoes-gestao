@@ -1,5 +1,14 @@
+import { contract } from "@marinho-gestao/contract";
 import { describe, expect, it } from "vitest";
-import { isExclusionViolation, isUniqueViolation, isUuid } from "./errors";
+import {
+	conflict,
+	invalidTransition,
+	isExclusionViolation,
+	isUniqueViolation,
+	isUuid,
+	notFound,
+	precondition,
+} from "./errors";
 
 function prismaError(code: string, originalCode: string) {
 	const error = new Error("Prisma error") as Error & {
@@ -54,5 +63,34 @@ describe("isUuid", () => {
 	it("aceita só UUID", () => {
 		expect(isUuid("01a19c57-6196-7b93-802c-dea38c767cdf")).toBe(true);
 		expect(isUuid("c-maria")).toBe(false);
+	});
+});
+
+describe("erros de negócio", () => {
+	const contractStatus = (code: string) =>
+		(
+			contract.rentals.markSeparated["~orpc"].errorMap as Record<
+				string,
+				{ status?: number }
+			>
+		)[code]?.status;
+
+	it.each([
+		["NOT_FOUND", notFound("unit", "MAR-999")],
+		["CONFLICT", conflict([])],
+		[
+			"INVALID_TRANSITION",
+			invalidTransition({
+				entity: "UNIT",
+				from: "RENTED",
+				to: "SEPARATED",
+				allowed: [],
+			}),
+		],
+		["PRECONDITION_FAILED", precondition("SIGNAL_REQUIRED")],
+	])("%s sai com o status do contrato, não 500", (code, error) => {
+		expect(error.code).toBe(code);
+		expect(error.status).toBe(contractStatus(code));
+		expect(error.status).toBeLessThan(500);
 	});
 });

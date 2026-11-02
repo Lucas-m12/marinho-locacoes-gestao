@@ -364,7 +364,7 @@ async function completeReturn(
 				"DAMAGED",
 				RETURN_TEXTS.damagedReason(rental.number),
 			);
-		} else {
+		} else if (input.outcome !== "IN_INSPECTION") {
 			await moveUnitStatus(tx, unitId, input.outcome);
 		}
 		if (input.outcome === "IN_MAINTENANCE") {

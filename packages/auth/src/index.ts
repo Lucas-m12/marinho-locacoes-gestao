@@ -25,7 +25,13 @@ const roles = {
 	EQUIPMENT: accessControl.newRole({ user: [], session: [] }),
 };
 
-export function createAuth(env: AuthConfig, database: Database) {
+export type AuthOptions = { rateLimit?: boolean };
+
+export function createAuth(
+	env: AuthConfig,
+	database: Database,
+	options: AuthOptions = {},
+) {
 	return betterAuth({
 		database: prismaAdapter(database, { provider: "postgresql" }),
 		secret: env.BETTER_AUTH_SECRET,
@@ -40,7 +46,7 @@ export function createAuth(env: AuthConfig, database: Database) {
 			expiresIn: 60 * 60 * 24 * SESSION_DAYS,
 			updateAge: 60 * 60 * 24,
 		},
-		rateLimit: { enabled: true },
+		rateLimit: { enabled: options.rateLimit ?? true },
 		plugins: [
 			username(),
 			admin({

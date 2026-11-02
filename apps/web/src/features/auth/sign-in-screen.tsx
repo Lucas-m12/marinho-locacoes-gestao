@@ -91,7 +91,7 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 					>
 						<FieldGroup className="gap-[18px]">
 							{submitError && (
-								<Alert variant="destructive">
+								<Alert variant="destructive" role="alert">
 									<AlertDescription>{submitError}</AlertDescription>
 								</Alert>
 							)}

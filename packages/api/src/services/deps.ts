@@ -9,6 +9,8 @@ export type ServiceDeps = {
 	actor: SessionUser;
 };
 
+export type SystemDeps = Pick<ServiceDeps, "db" | "storage" | "clock">;
+
 const TRANSACTION_OPTIONS = { maxWait: 10_000, timeout: 20_000 };
 
 export function inTransaction<T>(

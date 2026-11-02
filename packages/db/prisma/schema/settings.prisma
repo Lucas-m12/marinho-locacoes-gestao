@@ -1,11 +1,12 @@
 model Settings {
-  id                     Int         @id @default(1)
-  signalMode             SignalMode? @map("signal_mode")
-  signalValueCents       Int?        @map("signal_value_cents")
-  signalPercent          Float?      @map("signal_percent")
-  signalDeadlineHours    Int         @map("signal_deadline_hours")
-  defaultTurnaroundHours Int         @map("default_turnaround_hours")
-  updatedAt              DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                      Int         @id @default(1)
+  signalMode              SignalMode? @map("signal_mode")
+  signalValueCents        Int?        @map("signal_value_cents")
+  signalPercent           Float?      @map("signal_percent")
+  signalDeadlineHours     Int         @map("signal_deadline_hours")
+  defaultTurnaroundHours  Int         @map("default_turnaround_hours")
+  documentRetentionMonths Int         @default(24) @map("document_retention_months")
+  updatedAt               DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("settings")
 }

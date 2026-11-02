@@ -84,7 +84,7 @@ function CustomerTable({ customers }: { customers: Customer[] }) {
 					to="/clientes/$id"
 					params={{ id: customer.id }}
 					className={cn(
-						"hover:bg-background/50 grid min-h-[60px] items-center gap-4 border-t py-2 text-[15px]",
+						"hover:bg-background/50 grid min-h-[76px] items-center gap-4 border-t py-2 text-[15px]",
 						TABLE_COLUMNS,
 					)}
 				>

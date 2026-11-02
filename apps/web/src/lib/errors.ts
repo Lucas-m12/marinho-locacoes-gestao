@@ -1,11 +1,22 @@
 import type {
 	ConflictErrorData,
+	ConflictingItem,
 	InvalidTransitionData,
 	PreconditionFailedData,
 } from "@marinho-gestao/contract";
 import { ORPCError } from "@orpc/client";
 import { toast } from "sonner";
-import { PRECONDITION_MESSAGES } from "./labels";
+import {
+	PRECONDITION_MESSAGES,
+	RENTAL_STATUS_LABELS,
+	UNIT_STATUS_LABELS,
+} from "./labels";
+
+function statusLabel(entity: InvalidTransitionData["entity"], status: string) {
+	const labels: Record<string, string> =
+		entity === "UNIT" ? UNIT_STATUS_LABELS : RENTAL_STATUS_LABELS;
+	return labels[status] ?? status;
+}
 
 export const LOCALLY_HANDLED_CODES = [
 	"CONFLICT",
@@ -35,6 +46,17 @@ export function conflictData(error: unknown): ConflictErrorData | null {
 	return null;
 }
 
+function describeConflict(entry: ConflictingItem): string {
+	if (entry.freeQuantity !== null && entry.requestedQuantity !== null) {
+		const free =
+			entry.freeQuantity === 1
+				? "1 peça livre"
+				: `${entry.freeQuantity} peças livres`;
+		return `${entry.name}: só ${free} no período (pediu ${entry.requestedQuantity})`;
+	}
+	return `${entry.code} ocupado no período escolhido`;
+}
+
 export function describeError(error: unknown): string {
 	if (error instanceof ORPCError) {
 		if (error.code === "PRECONDITION_FAILED") {
@@ -43,14 +65,15 @@ export function describeError(error: unknown): string {
 		}
 		if (error.code === "INVALID_TRANSITION") {
 			const data = error.data as InvalidTransitionData;
-			return data.allowed.length === 0
-				? "Este registro não aceita mais mudanças de status."
-				: "Essa mudança de status não é permitida agora.";
+			if (data.allowed.length === 0) {
+				return "Este registro não aceita mais mudanças de status.";
+			}
+			const subject = data.entity === "UNIT" ? "A unidade" : "A locação";
+			return `${subject} está ${statusLabel(data.entity, data.from)}: não dá para passar para ${statusLabel(data.entity, data.to)} agora.`;
 		}
 		if (error.code === "CONFLICT") {
 			const { conflicts } = error.data as ConflictErrorData;
-			const codes = conflicts.map((entry) => entry.code).join(", ");
-			return `${codes} ocupado no período escolhido.`;
+			return `${conflicts.map(describeConflict).join("; ")}.`;
 		}
 		if (error.code === "FORBIDDEN") {
 			return "Seu acesso não permite esta ação.";

@@ -1,6 +1,10 @@
 import { addHours, canReadFile, isUploadAllowed } from "@marinho-gestao/domain";
 import { fileRefOf, notFound, precondition } from "@marinho-gestao/read-model";
-import { isSeedFile } from "@marinho-gestao/read-model/seed";
+import {
+	isSeedFile,
+	SEED_FILE_CONTENT_TYPE,
+	seedFileSvg,
+} from "@marinho-gestao/read-model/seed";
 import { ORPCError } from "@orpc/server";
 import { api, requireUser } from "../base";
 import { mockNow } from "../clock";
@@ -12,9 +16,7 @@ const UPLOAD_URL_MINUTES = 10;
 const DOWNLOAD_URL_MINUTES = 10;
 
 function placeholderDocument(fileKey: string): string {
-	const label = fileKey.replace("seed/", "").replace(/[^a-zA-Z0-9-]/g, " ");
-	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320"><rect width="480" height="320" fill="#F2E8D7"/><text x="240" y="150" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#13294B">Arquivo de exemplo</text><text x="240" y="182" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#5E544C">${label}</text></svg>`;
-	return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+	return `data:${SEED_FILE_CONTENT_TYPE},${encodeURIComponent(seedFileSvg(fileKey))}`;
 }
 
 function minutesFromNow(minutes: number): string {

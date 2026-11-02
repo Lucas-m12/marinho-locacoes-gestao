@@ -1,0 +1,158 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  COMMIT_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+  API_URL: https://api.marinholocacoes.com
+  APP_DIR: /opt/marinho
+
+jobs:
+  image:
+    name: Imagem do servidor
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+
+      - name: Nome e tag da imagem
+        id: meta
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "image=ghcr.io/${owner}/marinho-gestao-server" >> "$GITHUB_OUTPUT"
+          echo "tag=sha-${COMMIT_SHA::12}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build e push para o GHCR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          platforms: ${{ vars.VPS_PLATFORM || 'linux/amd64' }}
+          push: true
+          build-args: GIT_SHA=${{ env.COMMIT_SHA }}
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  api:
+    name: API na VPS
+    needs: image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: ${{ env.API_URL }}/health
+    permissions:
+      contents: read
+      packages: read
+    env:
+      TAG: ${{ needs.image.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+
+      - name: Chave SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            echo "::warning::Sem VPS_KNOWN_HOSTS: confiando na chave que a VPS apresentar agora (ssh-keyscan)."
+            ssh-keyscan -H "$VPS_HOST" > ~/.ssh/known_hosts
+          fi
+          printf 'Host vps\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_deploy\n  IdentitiesOnly yes\n  ServerAliveInterval 30\n' \
+            "$VPS_HOST" "$VPS_USER" > ~/.ssh/config
+
+      - name: Copiar compose, Caddyfile e deploy.sh
+        run: |
+          scp deploy/docker-compose.prod.yml "vps:$APP_DIR/docker-compose.yml"
+          scp deploy/Caddyfile deploy/deploy.sh "vps:$APP_DIR/"
+          ssh vps "chmod +x $APP_DIR/deploy.sh"
+
+      - name: Login no GHCR na VPS
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ssh vps "docker login ghcr.io -u '$GHCR_USER' --password-stdin" <<< "$GHCR_TOKEN"
+
+      - name: Migrations, server e jobs
+        id: deploy
+        run: ssh vps "$APP_DIR/deploy.sh $TAG"
+
+      - name: Conferir /health pela internet
+        id: public
+        run: curl -fsS --retry 10 --retry-delay 6 --retry-all-errors "$API_URL/health"
+
+      - name: Voltar para a versão anterior
+        if: failure() && steps.deploy.outcome == 'success' && steps.public.outcome == 'failure'
+        run: ssh vps "$APP_DIR/deploy.sh rollback"
+
+      - name: Logout do GHCR na VPS
+        if: always()
+        run: ssh vps "docker logout ghcr.io" || true
+
+  web:
+    name: Front na Cloudflare
+    needs: api
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://sistema.marinholocacoes.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
+
+      - name: Deploy com o Alchemy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          VITE_SENTRY_RELEASE: ${{ env.COMMIT_SHA }}
+        run: bun run --cwd packages/infra deploy --stage prod --yes --no-input

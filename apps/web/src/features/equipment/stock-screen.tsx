@@ -42,7 +42,7 @@ const TABLE_COLUMNS =
 	"grid-cols-[76px_minmax(0,1.6fr)_72px_140px_minmax(0,1fr)] xl:grid-cols-[88px_minmax(0,2fr)_80px_150px_minmax(0,1.5fr)]";
 
 function DailyPrice({ cents }: { cents: number | null }) {
-	return cents === null ? <ToDefine /> : <>{money(cents)}</>;
+	return cents === null ? <ToDefine /> : money(cents);
 }
 
 function UnitTable({ units, now }: { units: UnitListItem[]; now: Date }) {
@@ -66,7 +66,7 @@ function UnitTable({ units, now }: { units: UnitListItem[]; now: Date }) {
 					to="/estoque/$codigo"
 					params={{ codigo: unit.code }}
 					className={cn(
-						"hover:bg-background/50 grid min-h-[52px] items-center gap-4 border-t py-1.5 text-[15px]",
+						"hover:bg-background/50 grid min-h-16 items-center gap-4 border-t py-1.5 text-[15px]",
 						TABLE_COLUMNS,
 					)}
 				>

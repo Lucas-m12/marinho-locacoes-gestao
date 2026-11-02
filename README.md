@@ -93,34 +93,14 @@ Run standalone Node/Bun tools that use Varlock from the owning app directory so 
 
 ## Deployment
 
-### Alchemy
+Production is deployed by GitHub Actions (`.github/workflows/deploy.yml`) after CI passes on `main`:
 
-- Target: web on Cloudflare
-- Configure provider accounts: `cd packages/infra && bunx alchemy profile edit`
-- Dev: bun run dev
-- Deploy: bun run deploy
-- Destroy: bun run destroy
+- API, Postgres and scheduled jobs run on a VPS with Docker Compose behind Caddy (`deploy/`).
+- The web app is deployed to Cloudflare with Alchemy (`packages/infra`), stage `prod`, at `sistema.marinholocacoes.com`. Other stages get only a `workers.dev` URL.
 
-`alchemy profile edit` stores the selected Axiom, Cloudflare, Neon, PlanetScale, and/or Prisma provider profiles under `~/.alchemy`; no provider-specific setup command is required by this scaffold.
+Step-by-step guides (in Portuguese) live in `docs/operacao/`: `primeiro-deploy.md`, `rotina.md`, `backup-e-restauracao.md` and `r2.md`.
 
-Deploys are staged and default to a personal `dev_<username>` stage. For production, run the deploy with an explicit stage from `packages/infra`:
-
-```bash
-cd packages/infra && bunx alchemy deploy --stage production
-```
-
-### Docker Compose
-
-- Target: server
-- Config: `docker-compose.yml` (app Dockerfiles live in `apps/*/Dockerfile`)
-- Build images: bun run docker:build
-- Start: bun run docker:up
-- Logs: bun run docker:logs
-- Stop: bun run docker:down
-
-Environment variables are read from each app's `.env` file (baked into web builds for public variables) and overridden in `docker-compose.yml` for container networking.
-
-For more details, see the guide on [Deploying with Docker Compose](https://www.better-t-stack.dev/docs/guides/docker).
+The root `docker-compose.yml` is for local development only (Postgres, the test database and a local build of the server image).
 
 ## Git Hooks and Formatting
 

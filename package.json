@@ -22,15 +22,25 @@
 			"vitest": "^5.0.5"
 		}
 	},
+	"overrides": {
+		"@effect/platform-node-shared": "4.0.6"
+	},
 	"type": "module",
 	"scripts": {
 		"dev": "turbo run dev",
 		"build": "turbo run build",
 		"check-types": "turbo run check-types",
 		"test": "turbo run test",
-		"test:server": "bun run db:test:start && cd packages/api && bun run test:server",
+		"test:server": "bun run db:test:start && bun run --cwd packages/api test:server && bun run --cwd apps/server test:server",
+		"e2e": "bun run --cwd apps/e2e e2e",
+		"e2e:ui": "bun run --cwd apps/e2e e2e:ui",
+		"e2e:mock": "bun run --cwd apps/e2e e2e:mock",
+		"e2e:visual": "bun run --cwd apps/e2e e2e:visual",
+		"e2e:update": "apps/e2e/scripts/update-snapshots.sh",
 		"dev:web": "turbo run dev:bare -F web --",
 		"dev:server": "turbo run dev -F server --",
+		"jobs": "bun run --cwd apps/server jobs",
+		"job": "bun run --cwd apps/server job",
 		"db:push": "turbo run db:push -F @marinho-gestao/db --",
 		"db:studio": "turbo run db:studio -F @marinho-gestao/db --",
 		"db:generate": "turbo run db:generate -F @marinho-gestao/db --",
@@ -44,6 +54,8 @@
 		"db:down": "docker compose down postgres",
 		"db:test:start": "docker compose --profile test up -d --wait postgres-test",
 		"db:test:stop": "docker compose --profile test rm -sf postgres-test",
+		"storage:start": "docker compose --profile dev up -d --wait minio && bun apps/e2e/scripts/minio.ts",
+		"storage:stop": "docker compose --profile dev stop minio",
 		"deploy": "turbo run deploy -F @marinho-gestao/infra --",
 		"destroy": "turbo run destroy -F @marinho-gestao/infra --",
 		"docker:build": "docker compose build",
