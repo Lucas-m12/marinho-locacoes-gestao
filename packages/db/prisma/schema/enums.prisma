@@ -1,0 +1,219 @@
+enum Role {
+  MANAGER
+  ATTENDANT
+  EQUIPMENT
+
+  @@map("role")
+}
+
+enum UnitStatus {
+  AVAILABLE
+  SEPARATED
+  RENTED
+  IN_INSPECTION
+  IN_MAINTENANCE
+  DAMAGED
+  NOT_RETURNED
+  BLOCKED
+  RETIRED
+
+  @@map("unit_status")
+}
+
+enum RentalStatus {
+  QUOTE
+  AWAITING_DEPOSIT
+  CONFIRMED
+  SEPARATED
+  ON_SITE
+  RETURNED
+  CLOSED
+  CANCELED
+  EXPIRED
+
+  @@map("rental_status")
+}
+
+enum CustomerKind {
+  INDIVIDUAL
+  PROFESSIONAL
+  COMPANY
+
+  @@map("customer_kind")
+}
+
+enum CustomerOrigin {
+  INSTAGRAM
+  GOOGLE
+  REFERRAL
+  PARTNER_STORE
+
+  @@map("customer_origin")
+}
+
+enum DocumentKind {
+  PHOTO_ID
+  TAX_ID
+  PROOF_OF_ADDRESS
+  OTHER
+
+  @@map("document_kind")
+}
+
+enum DeliveryMode {
+  DELIVERY
+  PICKUP
+
+  @@map("delivery_mode")
+}
+
+enum PaymentMethod {
+  PIX
+  CASH
+
+  @@map("payment_method")
+}
+
+enum PaymentKind {
+  SIGNAL
+  BALANCE
+  DELIVERY_FEE
+  CONSUMABLE
+  EXTRA_DAILY
+
+  @@map("payment_kind")
+}
+
+enum InspectionKind {
+  CHECKOUT
+  RETURN
+
+  @@map("inspection_kind")
+}
+
+enum ChecklistAnswer {
+  OK
+  NOT_OK
+  NA
+
+  @@map("checklist_answer")
+}
+
+enum ChecklistMediaSlot {
+  FRONT
+  BACK
+  LEFT
+  RIGHT
+  PLATE_SERIAL
+  TEST_VIDEO
+
+  @@map("checklist_media_slot")
+}
+
+enum OccurrenceKind {
+  DAMAGE
+  MISSING_PART
+  DIRT
+  LATE
+
+  @@map("occurrence_kind")
+}
+
+enum OccurrenceDecision {
+  CHARGE
+  WAIVE
+  DISPUTE
+
+  @@map("occurrence_decision")
+}
+
+enum LedgerAccount {
+  CASH
+  DEPOSIT
+
+  @@map("ledger_account")
+}
+
+enum LedgerDirection {
+  IN
+  OUT
+
+  @@map("ledger_direction")
+}
+
+enum LedgerCategory {
+  RENTAL
+  DELIVERY
+  CONSUMABLE_SOLD
+  EXTRA_FEES
+  DEPOSIT_RETAINED
+  OTHER_IN
+  EQUIPMENT_PURCHASE
+  MAINTENANCE
+  FUEL
+  ADVERTISING
+  CONSUMABLE_BOUGHT
+  OTHER_OUT
+  DEPOSIT_RECEIVED
+  DEPOSIT_REFUNDED
+  DEPOSIT_TO_CASH
+
+  @@map("ledger_category")
+}
+
+enum MaintenanceStatus {
+  IN_REPAIR
+  AWAITING_INSPECTION
+  DONE
+
+  @@map("maintenance_status")
+}
+
+enum MaintenanceLocation {
+  WORKSHOP
+  BASE
+
+  @@map("maintenance_location")
+}
+
+enum UploadPurpose {
+  UNIT_PHOTO
+  DAMAGE_PHOTO
+  CHECKLIST_PHOTO
+  CHECKLIST_VIDEO
+  CUSTOMER_DOCUMENT
+  RECEIPT
+
+  @@map("upload_purpose")
+}
+
+enum UploadStatus {
+  PENDING
+  COMPLETED
+
+  @@map("upload_status")
+}
+
+enum UnitPhotoSlot {
+  MAIN
+  FRONT
+  BACK
+  PLATE
+  SERIAL
+
+  @@map("unit_photo_slot")
+}
+
+enum LotPricing {
+  PER_PIECE
+  PER_LOT
+
+  @@map("lot_pricing")
+}
+
+enum SignalMode {
+  FIXED
+  PERCENT
+
+  @@map("signal_mode")
+}

@@ -131,8 +131,11 @@
     "packages/db": {
       "name": "@marinho-gestao/db",
       "dependencies": {
+        "@marinho-gestao/domain": "workspace:*",
+        "@marinho-gestao/read-model": "workspace:*",
         "@prisma/adapter-pg": "^7.10.0",
         "@prisma/client": "^7.10.0",
+        "better-auth": "catalog:",
         "pg": "^8.23.0",
         "zod": "catalog:",
       },
@@ -142,6 +145,7 @@
         "prisma": "^7.10.0",
         "typescript": "catalog:",
         "varlock": "catalog:",
+        "vitest": "catalog:",
       },
     },
     "packages/domain": {

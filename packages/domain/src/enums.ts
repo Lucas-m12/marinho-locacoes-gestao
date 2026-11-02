@@ -156,6 +156,9 @@ export const UPLOAD_PURPOSES = [
 ] as const;
 export type UploadPurpose = (typeof UPLOAD_PURPOSES)[number];
 
+export const UPLOAD_STATUSES = ["PENDING", "COMPLETED"] as const;
+export type UploadStatus = (typeof UPLOAD_STATUSES)[number];
+
 export const UNIT_PHOTO_SLOTS = [
 	"MAIN",
 	"FRONT",

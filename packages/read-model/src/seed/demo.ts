@@ -2,6 +2,7 @@ import {
 	addCalendarDays,
 	addHours,
 	calendarDay,
+	internalEmail,
 	type LedgerCategory,
 	type LedgerDirection,
 	type PaymentKind,
@@ -63,7 +64,7 @@ function demoUser(entry: (typeof CATALOG_USERS)[number]): UserRecord {
 	return {
 		...entry,
 		id: `user-${entry.username}`,
-		email: `${entry.username}@marinho.local`,
+		email: internalEmail(entry.username),
 		password: DEMO_PASSWORD,
 	};
 }

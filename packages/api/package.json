@@ -1,25 +1,24 @@
 {
-  "name": "@marinho-gestao/api",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
-  },
-  "scripts": {
-    "build": "tsc -b",
-    "check-types": "tsc -b"
-  },
-  "dependencies": {
-    "@marinho-gestao/auth": "workspace:*",
-    "@marinho-gestao/db": "workspace:*",
-    "@orpc/client": "catalog:",
-    "@orpc/openapi": "catalog:",
-    "@orpc/server": "catalog:",
-    "@orpc/zod": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@marinho-gestao/config": "workspace:*",
-    "typescript": "catalog:"
-  }
+	"name": "@marinho-gestao/api",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@marinho-gestao/auth": "workspace:*",
+		"@marinho-gestao/db": "workspace:*",
+		"@orpc/client": "catalog:",
+		"@orpc/openapi": "catalog:",
+		"@orpc/server": "catalog:",
+		"@orpc/zod": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@marinho-gestao/config": "workspace:*",
+		"typescript": "catalog:"
+	}
 }

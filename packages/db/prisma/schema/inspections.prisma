@@ -1,0 +1,59 @@
+model Inspection {
+  id           String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  rentalItemId String             @map("rental_item_id") @db.Uuid
+  kind         InspectionKind
+  completedAt  DateTime?          @map("completed_at") @db.Timestamptz(3)
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  rentalItem   RentalItem         @relation(fields: [rentalItemId], references: [id], onDelete: Cascade)
+  answers      InspectionAnswer[]
+  media        InspectionMedia[]
+
+  @@unique([rentalItemId, kind])
+  @@map("inspection")
+}
+
+model InspectionAnswer {
+  id             String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  inspectionId   String           @map("inspection_id") @db.Uuid
+  key            String
+  position       Int
+  label          String
+  note           String
+  occurrenceKind OccurrenceKind   @map("occurrence_kind")
+  answer         ChecklistAnswer?
+  observation    String?
+  preexisting    Boolean          @default(false)
+  inspection     Inspection       @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  @@unique([inspectionId, key])
+  @@map("inspection_answer")
+}
+
+model InspectionMedia {
+  id           String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  inspectionId String             @map("inspection_id") @db.Uuid
+  slot         ChecklistMediaSlot
+  fileKey      String             @map("file_key")
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  inspection   Inspection         @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  @@unique([inspectionId, slot])
+  @@map("inspection_media")
+}
+
+model Occurrence {
+  id             String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  rentalId       String             @map("rental_id") @db.Uuid
+  rentalItemId   String             @map("rental_item_id") @db.Uuid
+  kind           OccurrenceKind
+  description    String
+  suggestedCents Int                @map("suggested_cents")
+  amountCents    Int                @map("amount_cents")
+  decision       OccurrenceDecision
+  createdAt      DateTime           @map("created_at") @db.Timestamptz(3)
+  rental         Rental             @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  rentalItem     RentalItem         @relation(fields: [rentalItemId], references: [id], onDelete: Cascade)
+
+  @@index([rentalId])
+  @@map("occurrence")
+}

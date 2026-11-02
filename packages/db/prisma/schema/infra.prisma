@@ -1,0 +1,49 @@
+model Counter {
+  name  String @id
+  value Int
+
+  @@map("counter")
+}
+
+model Event {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  actorId   String?  @map("actor_id")
+  actorName String   @map("actor_name")
+  actorRole Role?    @map("actor_role")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  message   String?
+  payload   Json     @default("{}")
+  createdAt DateTime @map("created_at") @db.Timestamptz(3)
+
+  @@index([entity, entityId, createdAt])
+  @@map("event")
+}
+
+model Upload {
+  id           String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  fileKey      String        @unique @map("file_key")
+  purpose      UploadPurpose
+  contentType  String        @map("content_type")
+  sizeBytes    Int           @map("size_bytes")
+  status       UploadStatus  @default(PENDING)
+  uploadedById String        @map("uploaded_by_id")
+  createdAt    DateTime      @map("created_at") @db.Timestamptz(3)
+  completedAt  DateTime?     @map("completed_at") @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@map("upload")
+}
+
+model IdempotencyKey {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  key       String
+  userId    String   @map("user_id")
+  procedure String
+  response  Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([userId, procedure, key])
+  @@map("idempotency_key")
+}
