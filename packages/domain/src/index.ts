@@ -12,6 +12,7 @@ export * from "./money";
 export * from "./permissions";
 export * from "./quote";
 export * from "./rental-status";
+export * from "./retention";
 export * from "./search";
 export * from "./settlement";
 export * from "./unit-status";

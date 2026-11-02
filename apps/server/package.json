@@ -8,6 +8,10 @@
 		"compile": "bun build --compile --no-compile-autoload-dotenv --minify --sourcemap --bytecode ./src/index.ts --outfile server",
 		"dev": "bun run --hot src/index.ts",
 		"start": "bun run dist/index.mjs",
+		"jobs": "bun src/jobs/main.ts",
+		"job": "bun src/jobs/main.ts",
+		"test": "vitest run",
+		"test:server": "vitest run --config vitest.server.config.ts",
 		"env:generate": "varlock codegen",
 		"auth:generate": "varlock run -- bun x auth@latest generate --config src/auth-cli.ts --output ../../packages/db/prisma/schema/auth.prisma --yes"
 	},
@@ -15,10 +19,12 @@
 		"@marinho-gestao/api": "workspace:*",
 		"@marinho-gestao/auth": "workspace:*",
 		"@marinho-gestao/db": "workspace:*",
+		"@marinho-gestao/domain": "workspace:*",
 		"@orpc/openapi": "catalog:",
 		"@orpc/server": "catalog:",
 		"@orpc/zod": "catalog:",
 		"better-auth": "catalog:",
+		"croner": "10.0.1",
 		"hono": "^4.13.7",
 		"varlock": "catalog:",
 		"zod": "catalog:"
@@ -27,6 +33,7 @@
 		"@marinho-gestao/config": "workspace:*",
 		"@types/bun": "catalog:",
 		"tsdown": "^0.23.0",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	}
 }

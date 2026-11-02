@@ -6,7 +6,13 @@ import type {
 	UpdateCustomerInput,
 } from "@marinho-gestao/contract";
 import type { DbClient } from "@marinho-gestao/db";
-import type { CustomerSegment, DocumentKind } from "@marinho-gestao/domain";
+import {
+	type CustomerSegment,
+	DEFAULT_DOCUMENT_RETENTION_MONTHS,
+	type DocumentKind,
+	documentRetentionCutoff,
+	isDocumentRetentionOver,
+} from "@marinho-gestao/domain";
 import {
 	customerDetail,
 	customerDocumentView,
@@ -16,7 +22,7 @@ import {
 } from "@marinho-gestao/read-model";
 import type { z } from "zod";
 import { notFound } from "../errors";
-import { inTransaction, type ServiceDeps } from "./deps";
+import { inTransaction, type ServiceDeps, type SystemDeps } from "./deps";
 import { recordEvent } from "./events";
 import { requireUsableFile } from "./files";
 import { requireUuid } from "./lookups";
@@ -150,4 +156,73 @@ export async function addCustomerDocument(
 			fileKey: document.fileKey,
 		});
 	});
+}
+
+export async function purgeExpiredCustomerDocuments(deps: SystemDeps): Promise<{
+	customers: number;
+	documents: number;
+	retentionMonths: number;
+}> {
+	const now = deps.clock();
+	const settings = await deps.db.settings.findUnique({
+		where: { id: 1 },
+		select: { documentRetentionMonths: true },
+	});
+	const retentionMonths =
+		settings?.documentRetentionMonths ?? DEFAULT_DOCUMENT_RETENTION_MONTHS;
+	const cutoff = documentRetentionCutoff(now, retentionMonths);
+	const candidates = await deps.db.customer.findMany({
+		where: { documents: { some: { receivedAt: { lt: cutoff } } } },
+		select: {
+			id: true,
+			createdAt: true,
+			documents: {
+				where: { receivedAt: { lt: cutoff } },
+				select: { id: true, kind: true, fileKey: true, receivedAt: true },
+			},
+			rentals: {
+				select: {
+					createdAt: true,
+					endsAt: true,
+					returnedAt: true,
+					closedAt: true,
+				},
+			},
+		},
+		orderBy: { createdAt: "asc" },
+	});
+
+	let customers = 0;
+	let documents = 0;
+	for (const customer of candidates) {
+		const expired = customer.documents.filter((document) =>
+			isDocumentRetentionOver(document, customer, now, retentionMonths),
+		);
+		if (expired.length === 0) continue;
+		for (const document of expired) {
+			await deps.storage.delete(document.fileKey);
+		}
+		await inTransaction(deps.db, async (tx) => {
+			await tx.customerDocument.deleteMany({
+				where: { id: { in: expired.map((document) => document.id) } },
+			});
+			await tx.upload.deleteMany({
+				where: { fileKey: { in: expired.map((document) => document.fileKey) } },
+			});
+			await recordEvent(tx, {
+				actor: null,
+				action: "customer.documentsPurged",
+				entity: "Customer",
+				entityId: customer.id,
+				at: now,
+				payload: {
+					retentionMonths,
+					documents: expired.map(({ id, kind }) => ({ id, kind })),
+				},
+			});
+		});
+		customers += 1;
+		documents += expired.length;
+	}
+	return { customers, documents, retentionMonths };
 }

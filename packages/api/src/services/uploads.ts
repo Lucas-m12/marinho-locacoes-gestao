@@ -10,10 +10,11 @@ import {
 	canReadFile,
 	fileExtension,
 	isUploadAllowed,
+	pendingUploadCutoff,
 } from "@marinho-gestao/domain";
 import { ORPCError } from "@orpc/server";
 import { notFound, precondition } from "../errors";
-import { inTransaction, type ServiceDeps } from "./deps";
+import { inTransaction, type ServiceDeps, type SystemDeps } from "./deps";
 import { recordEvent } from "./events";
 
 const URL_VALIDITY_SECONDS = 10 * 60;
@@ -139,4 +140,24 @@ export async function getDownloadUrl(
 		url: await deps.storage.presignGet(fileKey, URL_VALIDITY_SECONDS),
 		expiresAt: expiresAt(now),
 	};
+}
+
+export async function deleteStalePendingUploads(
+	deps: SystemDeps,
+): Promise<{ deleted: number }> {
+	const now = deps.clock();
+	const stale = await deps.db.upload.findMany({
+		where: { status: "PENDING", createdAt: { lt: pendingUploadCutoff(now) } },
+		select: { id: true, fileKey: true },
+		orderBy: { createdAt: "asc" },
+	});
+	let deleted = 0;
+	for (const upload of stale) {
+		await deps.storage.delete(upload.fileKey);
+		const removed = await deps.db.upload.deleteMany({
+			where: { id: upload.id, status: "PENDING" },
+		});
+		deleted += removed.count;
+	}
+	return { deleted };
 }

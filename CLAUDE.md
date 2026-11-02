@@ -10,7 +10,9 @@ bun run dev:web        # front em http://localhost:3001, com o mock por padrão
 bun run check-types    # tipos de todos os pacotes
 bun run check          # Biome, com correção automática
 bun run test           # Vitest: domain, api (unidade) e cenários contra o mock
-bun run test:server    # cenários e uploads contra o servidor real (sobe o postgres-test na 5433)
+bun run test:server    # cenários, uploads e tarefas contra o Postgres real (sobe o postgres-test na 5433)
+bun run jobs           # agendador das tarefas (expirar orçamentos, limpar uploads, apagar documentos, backup)
+bun run job <nome>     # roda uma tarefa uma vez: expire-quotes, cleanup-uploads, purge-customer-documents, backup-database
 bun run build
 bun run db:generate    # gera enums.prisma a partir do domain e o cliente Prisma
 ```
