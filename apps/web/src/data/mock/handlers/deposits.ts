@@ -1,5 +1,9 @@
-import { money } from "@/lib/format";
-import { PAYMENT_METHOD_LABELS } from "@/lib/labels";
+import {
+	LEDGER_DESCRIPTIONS,
+	RENTAL_EVENTS,
+	rentalView,
+	requireRental,
+} from "@marinho-gestao/read-model";
 import { api, requirePermission } from "../base";
 import { mockNow } from "../clock";
 import { getDb, nextId } from "../db";
@@ -10,8 +14,6 @@ import {
 	receiveDeposit,
 	requireHeldDeposit,
 } from "../flows";
-import { requireRental } from "../queries";
-import { rentalView } from "../views";
 
 export const deposits = {
 	recordReceived: api.deposits.recordReceived.handler(({ context, input }) => {
@@ -56,7 +58,7 @@ export const deposits = {
 				amountCents: input.amountCents,
 				occurredAt: at,
 				method: input.method,
-				description: `Caução devolvida da ${rental.number}`,
+				description: LEDGER_DESCRIPTIONS.depositRefunded(rental.number),
 				rentalNumber: rental.number,
 				unitCode: null,
 				receiptFileKey: null,
@@ -67,7 +69,7 @@ export const deposits = {
 				db,
 				rental,
 				user,
-				`Caução de ${money(input.amountCents)} devolvida por ${PAYMENT_METHOD_LABELS[input.method]}`,
+				RENTAL_EVENTS.depositRefunded(input.amountCents, input.method),
 				at,
 			);
 			return rentalView(db, rental, now);
@@ -96,7 +98,10 @@ export const deposits = {
 						amountCents: input.amountCents,
 						occurredAt: at,
 						method: rental.deposit.receivedMethod ?? ("PIX" as const),
-						description: `Caução retida da ${rental.number}: ${input.reason}`,
+						description: LEDGER_DESCRIPTIONS.depositRetained(
+							rental.number,
+							input.reason,
+						),
 						rentalNumber: rental.number,
 						unitCode: null,
 						receiptFileKey: null,
@@ -120,7 +125,7 @@ export const deposits = {
 						db,
 						rental,
 						user,
-						`Caução de ${money(input.amountCents)} retida: ${input.reason}`,
+						RENTAL_EVENTS.depositRetained(input.amountCents, input.reason),
 						at,
 					);
 					return rentalView(db, rental, now);

@@ -9,13 +9,11 @@ import type {
 	CustomerOrigin,
 	CustomerTier,
 	DeliveryMode,
-	DocumentKind,
 	LedgerAccount,
 	MaintenanceLocation,
 	MaintenanceStatus,
 	OccurrenceDecision,
 	OccurrenceKind,
-	PaymentKind,
 	RentalDisplayStatus,
 	Role,
 	UnitPhotoSlot,
@@ -23,7 +21,9 @@ import type {
 } from "@marinho-gestao/domain";
 
 export {
+	DOCUMENT_KIND_LABELS,
 	LEDGER_CATEGORY_LABELS,
+	PAYMENT_KIND_LABELS,
 	PAYMENT_METHOD_LABELS,
 } from "@marinho-gestao/domain";
 
@@ -79,24 +79,9 @@ export const CUSTOMER_ORIGIN_LABELS: Record<CustomerOrigin, string> = {
 	PARTNER_STORE: "Loja parceira",
 };
 
-export const DOCUMENT_KIND_LABELS: Record<DocumentKind, string> = {
-	PHOTO_ID: "Documento com foto",
-	TAX_ID: "CPF ou CNPJ",
-	PROOF_OF_ADDRESS: "Comprovante de endereço",
-	OTHER: "Outro documento",
-};
-
 export const DELIVERY_MODE_LABELS: Record<DeliveryMode, string> = {
 	DELIVERY: "Entrega e coleta na obra",
 	PICKUP: "Cliente busca e devolve",
-};
-
-export const PAYMENT_KIND_LABELS: Record<PaymentKind, string> = {
-	SIGNAL: "Sinal",
-	BALANCE: "Saldo",
-	DELIVERY_FEE: "Taxa de entrega",
-	CONSUMABLE: "Consumível",
-	EXTRA_DAILY: "Diária extra",
 };
 
 export const OCCURRENCE_KIND_LABELS: Record<OccurrenceKind, string> = {
@@ -190,6 +175,7 @@ export const PRECONDITION_MESSAGES: Record<PreconditionReason, string> = {
 	DUPLICATE:
 		"Já existe um cadastro com esses dados. Se for um usuário, escolha outro nome.",
 	UPLOAD_MISSING: "O arquivo não chegou. Envie de novo.",
+	UPLOAD_INVALID: "Esse tipo ou tamanho de arquivo não é aceito.",
 	ALREADY_REVERSED: "Este lançamento já foi estornado.",
 	IS_REVERSAL: "Um estorno não pode ser estornado.",
 };

@@ -1,24 +1,21 @@
-import type {
-	LedgerEntry,
-	Receivable,
-	SessionUser,
-} from "@marinho-gestao/contract";
+import type { SessionUser } from "@marinho-gestao/contract";
+import { oppositeDirection } from "@marinho-gestao/domain";
 import {
-	depositHeldCents,
-	isRentalOverdue,
-	LEDGER_IN_CATEGORIES,
-	LEDGER_OUT_CATEGORIES,
-	type LedgerCategory,
-	ledgerCsv,
-	ledgerTotals,
-	oppositeDirection,
-	reversalBlock,
-	signedAmountCents,
-	suggestLateFee,
-	sumCents,
-	toMs,
-} from "@marinho-gestao/domain";
-import { money } from "@/lib/format";
+	assertReversible,
+	dashboardSummary,
+	depositSummary,
+	entryView,
+	exportCashCsv,
+	LEDGER_DESCRIPTIONS,
+	ledgerByCategory,
+	listLedger,
+	pairedEntries,
+	RENTAL_EVENTS,
+	receivables,
+	requireEntry,
+	requireRental,
+	requireUnit,
+} from "@marinho-gestao/read-model";
 import { api, requirePermission } from "../base";
 import { mockNow } from "../clock";
 import {
@@ -27,39 +24,10 @@ import {
 	type MockDb,
 	type RentalRecord,
 } from "../db";
-import { notFound, precondition } from "../errors";
+import { requireUsableFile } from "../files";
 import { addEvent, once, postLedger, requireHeldDeposit } from "../flows";
-import { requireRental, requireUnit } from "../queries";
-import { itemPrice, rentalBalance, rentalChargesCents } from "../rental-money";
-import { requireCustomer } from "../views";
 
-function entryView(db: MockDb, record: LedgerRecord): LedgerEntry {
-	const {
-		maintenanceNumber: _order,
-		paymentId: _payment,
-		pairId: _pair,
-		...entry
-	} = record;
-	return {
-		...entry,
-		reversalOfDescription:
-			db.ledger.find((other) => other.id === record.reversalOfId)
-				?.description ?? null,
-		reversedById:
-			db.ledger.find((other) => other.reversalOfId === record.id)?.id ?? null,
-	};
-}
-
-function requireEntry(db: MockDb, id: string): LedgerRecord {
-	const entry = db.ledger.find((other) => other.id === id);
-	if (!entry) throw notFound("ledgerEntry", id);
-	return entry;
-}
-
-function assertReversible(db: MockDb, entry: LedgerRecord): void {
-	const block = reversalBlock(entry, db.ledger);
-	if (block) throw precondition(block);
-}
+export { dashboardSummary };
 
 function undoDeposit(rental: RentalRecord, entry: LedgerRecord): void {
 	const { deposit } = rental;
@@ -104,7 +72,7 @@ function postReversal(
 		amountCents: original.amountCents,
 		occurredAt: at,
 		method: original.method,
-		description: `Estorno de ${original.description}: ${reason}`,
+		description: LEDGER_DESCRIPTIONS.reversal(original.description, reason),
 		rentalNumber: original.rentalNumber,
 		unitCode: original.unitCode,
 		receiptFileKey: null,
@@ -115,122 +83,10 @@ function postReversal(
 	});
 }
 
-function inRange(entry: LedgerRecord, from: string, to: string): boolean {
-	const at = toMs(entry.occurredAt);
-	return at >= toMs(from) && at <= toMs(to);
-}
-
-function totalsByCategory(
-	entries: LedgerRecord[],
-	categories: readonly LedgerCategory[],
-) {
-	return categories
-		.map((category) => ({
-			category,
-			amountCents: sumCents(
-				entries
-					.filter((entry) => entry.category === category)
-					.map(signedAmountCents),
-			),
-		}))
-		.filter((row) => row.amountCents > 0)
-		.sort((a, b) => b.amountCents - a.amountCents);
-}
-
-export function cashTotals(db: MockDb, from: string, to: string) {
-	const entries = db.ledger.filter(
-		(entry) => entry.account === "CASH" && inRange(entry, from, to),
-	);
-	return ledgerTotals(entries);
-}
-
-export function depositsHeld(db: MockDb) {
-	const holding = db.rentals.filter(
-		(rental) => depositHeldCents(rental.deposit) > 0,
-	);
-	return {
-		heldCents: sumCents(
-			holding.map((rental) => depositHeldCents(rental.deposit)),
-		),
-		heldRentalCount: holding.length,
-	};
-}
-
-function receivablesOf(db: MockDb, now: Date): Receivable[] {
-	return db.rentals.flatMap((rental) => {
-		if (
-			["QUOTE", "AWAITING_DEPOSIT", "CANCELED", "EXPIRED"].includes(
-				rental.status,
-			)
-		) {
-			return [];
-		}
-		const customer = requireCustomer(db, rental.customerId);
-		const base = {
-			rentalNumber: rental.number,
-			customerId: customer.id,
-			customerName: customer.name,
-			delivered: rental.deliveredAt !== null,
-		};
-		const rows: Receivable[] = [];
-		const balance = rentalBalance(db, rental);
-		const charges = Math.min(
-			balance,
-			Math.max(0, rentalChargesCents(rental) - rental.deposit.retainedCents),
-		);
-		if (balance - charges > 0) {
-			rows.push({
-				...base,
-				kind: "BALANCE",
-				amountCents: balance - charges,
-				provisional: false,
-			});
-		}
-		if (charges > 0) {
-			rows.push({
-				...base,
-				kind: "CHARGE",
-				amountCents: charges,
-				provisional: false,
-			});
-		}
-		if (isRentalOverdue(rental, now)) {
-			const dailyTotalCents = sumCents(
-				rental.items.map(
-					(item) =>
-						(itemPrice(db, rental, item).dailyPriceCents ?? 0) * item.quantity,
-				),
-			);
-			rows.push({
-				...base,
-				kind: "LATE",
-				amountCents: suggestLateFee({
-					dueAt: rental.endAt,
-					returnedAt: now,
-					dailyTotalCents,
-				}).amountCents,
-				provisional: true,
-			});
-		}
-		return rows;
-	});
-}
-
 export const ledger = {
 	list: api.ledger.list.handler(({ context, input }) => {
 		requirePermission(context, "money:read");
-		const db = getDb();
-		const entries = db.ledger
-			.filter(
-				(entry) =>
-					entry.account === input.account &&
-					inRange(entry, input.from, input.to),
-			)
-			.sort((a, b) => toMs(b.occurredAt) - toMs(a.occurredAt));
-		return {
-			entries: entries.map((entry) => entryView(db, entry)),
-			...ledgerTotals(entries),
-		};
+		return listLedger(getDb(), input);
 	}),
 
 	create: api.ledger.create.handler(({ context, input }) => {
@@ -239,8 +95,11 @@ export const ledger = {
 		if (input.rentalNumber) requireRental(db, input.rentalNumber);
 		if (input.unitCode) requireUnit(db, input.unitCode);
 		const { idempotencyKey, ...entry } = input;
-		return once(db, user, "ledger.create", idempotencyKey, () =>
-			entryView(
+		return once(db, user, "ledger.create", idempotencyKey, () => {
+			if (entry.receiptFileKey) {
+				requireUsableFile(db, user.id, entry.receiptFileKey, ["RECEIPT"]);
+			}
+			return entryView(
 				db,
 				postLedger(db, {
 					...entry,
@@ -248,8 +107,8 @@ export const ledger = {
 					recordedBy: user.name,
 					maintenanceNumber: null,
 				}),
-			),
-		);
+			);
+		});
 	}),
 
 	reverse: api.ledger.reverse.handler(({ context, input }) => {
@@ -258,12 +117,7 @@ export const ledger = {
 		return once(db, user, "ledger.reverse", input.idempotencyKey, () => {
 			const at = mockNow().toISOString();
 			const original = requireEntry(db, input.entryId);
-			const partners = original.pairId
-				? db.ledger.filter(
-						(entry) =>
-							entry.pairId === original.pairId && entry.id !== original.id,
-					)
-				: [];
+			const partners = pairedEntries(db, original);
 			for (const entry of [original, ...partners]) assertReversible(db, entry);
 
 			const rental = db.rentals.find(
@@ -279,7 +133,7 @@ export const ledger = {
 					db,
 					rental,
 					user,
-					`Estorno de ${money(original.amountCents)}: ${input.reason}`,
+					RENTAL_EVENTS.reversed(original.amountCents, input.reason),
 					at,
 				);
 			}
@@ -294,55 +148,21 @@ export const ledger = {
 
 	exportCsv: api.ledger.exportCsv.handler(({ context, input }) => {
 		requirePermission(context, "money:read");
-		return ledgerCsv({
-			month: input.month,
-			entries: getDb().ledger.filter((entry) => entry.account === "CASH"),
-		});
+		return exportCashCsv(getDb(), input.month);
 	}),
 
 	byCategory: api.ledger.byCategory.handler(({ context, input }) => {
 		requirePermission(context, "money:read");
-		const entries = getDb().ledger.filter(
-			(entry) =>
-				entry.account === "CASH" && inRange(entry, input.from, input.to),
-		);
-		return {
-			in: totalsByCategory(entries, LEDGER_IN_CATEGORIES),
-			out: totalsByCategory(entries, LEDGER_OUT_CATEGORIES),
-		};
+		return ledgerByCategory(getDb(), input);
 	}),
 
 	receivables: api.ledger.receivables.handler(({ context }) => {
 		requirePermission(context, "money:read");
-		const items = receivablesOf(getDb(), mockNow());
-		return {
-			items,
-			totalCents: sumCents(
-				items
-					.filter((item) => !item.provisional)
-					.map((item) => item.amountCents),
-			),
-		};
+		return receivables(getDb(), mockNow());
 	}),
 
 	depositSummary: api.ledger.depositSummary.handler(({ context, input }) => {
 		requirePermission(context, "money:read");
-		const db = getDb();
-		const entries = db.ledger.filter(
-			(entry) =>
-				entry.account === "DEPOSIT" && inRange(entry, input.from, input.to),
-		);
-		const sum = (category: LedgerCategory) =>
-			sumCents(
-				entries
-					.filter((entry) => entry.category === category)
-					.map(signedAmountCents),
-			);
-		return {
-			...depositsHeld(db),
-			receivedCents: sum("DEPOSIT_RECEIVED"),
-			refundedCents: sum("DEPOSIT_REFUNDED"),
-			retainedCents: sum("DEPOSIT_TO_CASH"),
-		};
+		return depositSummary(getDb(), input);
 	}),
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextCode } from "./codes";
+import { codeSequence, formatCode, nextCode } from "./codes";
 
 describe("nextCode", () => {
 	it("começa do 1", () => {
@@ -19,5 +19,14 @@ describe("nextCode", () => {
 
 	it("passa do tamanho do preenchimento", () => {
 		expect(nextCode("OS", ["OS-999"])).toBe("OS-1000");
+	});
+});
+
+describe("formatCode e codeSequence", () => {
+	it("formata e lê a sequência", () => {
+		expect(formatCode("LOC", 34)).toBe("LOC-0034");
+		expect(formatCode("OS", 5)).toBe("OS-005");
+		expect(codeSequence("MAR", "MAR-017")).toBe(17);
+		expect(codeSequence("MAR", "LOC-0001")).toBeNull();
 	});
 });

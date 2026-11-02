@@ -46,6 +46,7 @@
         "@fontsource-variable/archivo": "^5.3.0",
         "@marinho-gestao/contract": "workspace:*",
         "@marinho-gestao/domain": "workspace:*",
+        "@marinho-gestao/read-model": "workspace:*",
         "@marinho-gestao/ui": "workspace:*",
         "@orpc/client": "catalog:",
         "@orpc/contract": "catalog:",
@@ -166,6 +167,20 @@
         "effect": "4.0.6",
         "typescript": "catalog:",
         "varlock": "catalog:",
+      },
+    },
+    "packages/read-model": {
+      "name": "@marinho-gestao/read-model",
+      "version": "0.0.0",
+      "dependencies": {
+        "@marinho-gestao/contract": "workspace:*",
+        "@marinho-gestao/domain": "workspace:*",
+        "@orpc/client": "catalog:",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@marinho-gestao/config": "workspace:*",
+        "typescript": "catalog:",
       },
     },
     "packages/ui": {
@@ -468,6 +483,8 @@
     "@marinho-gestao/domain": ["@marinho-gestao/domain@workspace:packages/domain"],
 
     "@marinho-gestao/infra": ["@marinho-gestao/infra@workspace:packages/infra"],
+
+    "@marinho-gestao/read-model": ["@marinho-gestao/read-model@workspace:packages/read-model"],
 
     "@marinho-gestao/ui": ["@marinho-gestao/ui@workspace:packages/ui"],
 

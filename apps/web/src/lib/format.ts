@@ -5,6 +5,9 @@ import {
 	calendarDaysBetween,
 	type DateInput,
 	formatBRLShort,
+	formatDate,
+	formatTime,
+	weekdayAbbreviation,
 } from "@marinho-gestao/domain";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,13 +24,12 @@ function formatZoned(value: DateInput, pattern: string): string {
 	return format(zoned(value), pattern, { locale: ptBR });
 }
 
-export function formatTime(value: DateInput): string {
-	return formatZoned(value, "HH:mm");
-}
-
-export function formatDate(value: DateInput): string {
-	return formatZoned(value, "dd/MM");
-}
+export {
+	dailiesLabel,
+	formatDate,
+	formatTime,
+	formatWeekdayDateTime,
+} from "@marinho-gestao/domain";
 
 export function formatFullDate(value: DateInput): string {
 	return formatZoned(value, "dd/MM/yyyy");
@@ -35,14 +37,6 @@ export function formatFullDate(value: DateInput): string {
 
 export function formatDateAndTime(value: DateInput): string {
 	return `${formatDate(value)} · ${formatTime(value)}`;
-}
-
-function weekdayAbbreviation(value: DateInput): string {
-	return capitalize(formatZoned(value, "EEEE")).slice(0, 3);
-}
-
-export function formatWeekdayDateTime(value: DateInput): string {
-	return `${weekdayAbbreviation(value)}, ${formatDate(value)} · ${formatTime(value)}`;
 }
 
 export function formatWeekdayFullDateTime(value: DateInput): string {
@@ -112,10 +106,6 @@ export function initials(name: string): string {
 		.slice(0, 2)
 		.map((part) => part.charAt(0).toUpperCase())
 		.join("");
-}
-
-export function dailiesLabel(dailies: number): string {
-	return dailies === 1 ? "1 diária" : `${dailies} diárias`;
 }
 
 export function hoursRemaining(until: DateInput, now: DateInput): number {

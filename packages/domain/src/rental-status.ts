@@ -49,6 +49,27 @@ export const COUNTED_RENTAL_STATUSES: readonly RentalStatus[] = [
 	"CLOSED",
 ];
 
+export const EXTENDABLE_RENTAL_STATUSES: readonly RentalStatus[] = [
+	"CONFIRMED",
+	"SEPARATED",
+	"ON_SITE",
+];
+
+export const PAYABLE_RENTAL_STATUSES: readonly RentalStatus[] = [
+	"AWAITING_DEPOSIT",
+	"CONFIRMED",
+	"SEPARATED",
+	"ON_SITE",
+	"RETURNED",
+	"CLOSED",
+];
+
+export const DELIVERED_RENTAL_STATUSES: readonly RentalStatus[] = [
+	"ON_SITE",
+	"RETURNED",
+	"CLOSED",
+];
+
 export function holdsBooking(status: RentalStatus): boolean {
 	return BOOKING_RENTAL_STATUSES.includes(status);
 }
@@ -67,4 +88,20 @@ export function rentalDisplayStatus(
 	now: DateInput,
 ): RentalDisplayStatus {
 	return isRentalOverdue(rental, now) ? "OVERDUE" : rental.status;
+}
+
+export function isQuoteExpired(
+	rental: {
+		status: RentalStatus;
+		signalDueAt: DateInput | null;
+		hasPaidSignal: boolean;
+	},
+	now: DateInput,
+): boolean {
+	return (
+		rental.status === "AWAITING_DEPOSIT" &&
+		rental.signalDueAt !== null &&
+		!rental.hasPaidSignal &&
+		toMs(rental.signalDueAt) < toMs(now)
+	);
 }

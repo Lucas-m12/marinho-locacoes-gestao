@@ -1,7 +1,7 @@
 import type { User } from "@marinho-gestao/contract";
+import { notFound, precondition } from "@marinho-gestao/read-model";
 import { api, requirePermission } from "../base";
 import { getDb, type MockDb, nextId, type UserRecord } from "../db";
-import { notFound, precondition } from "../errors";
 
 function userView(user: UserRecord): User {
 	return {

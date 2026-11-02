@@ -1,168 +1,41 @@
-import type { Inspection, InspectionMedia } from "@marinho-gestao/contract";
 import {
-	CHECKLIST_MEDIA_SLOTS,
 	detectDivergences,
-	type InspectionKind,
 	isChecklistComplete,
 	isRentalOverdue,
 	nextCode,
-	rentalStatusMachine,
-	suggestLateFee,
 	suggestOccurrenceAmount,
-	sumCents,
 } from "@marinho-gestao/domain";
-import { formatDate } from "@/lib/format";
+import {
+	allUnitsSeparatedForCheckout,
+	assertInspectionOpen,
+	assertRentalTransition,
+	findInspection,
+	inspectionView,
+	itemPrice,
+	moveUnit,
+	newInspectionLines,
+	notFound,
+	precondition,
+	RENTAL_EVENTS,
+	RETURN_TEXTS,
+	rentalView,
+	requireInspection,
+	requireItem,
+	requireRental,
+	requireUnit,
+} from "@marinho-gestao/read-model";
 import { api, requirePermission } from "../base";
 import { mockNow } from "../clock";
 import {
 	getDb,
-	type InspectionItemRecord,
-	type InspectionRecord,
 	type MockDb,
 	nextId,
 	type RentalItemRecord,
 	type RentalRecord,
 	type UnitRecord,
 } from "../db";
-import { invalidTransition, notFound, precondition } from "../errors";
+import { requireUsableFile } from "../files";
 import { addEvent, moveRental, receiveDeposit, recordPayment } from "../flows";
-import { fileRefOf, requireRental, requireType, requireUnit } from "../queries";
-import { itemPrice, rentalBalance, rentalTotals } from "../rental-money";
-import { itemNames, rentalView, requireCustomer } from "../views";
-import { knownDamagesOf, moveUnit } from "./equipment";
-
-function requireItem(rental: RentalRecord, code: string): RentalItemRecord {
-	const item = rental.items.find((entry) => entry.code === code);
-	if (!item) throw notFound("rentalItem", code);
-	return item;
-}
-
-function templateFor(db: MockDb, item: RentalItemRecord) {
-	if (item.kind === "LOT") {
-		return {
-			checklist: db.lots.find((lot) => lot.code === item.code)?.checklist ?? [],
-			typeName: itemNames(db, item).name,
-		};
-	}
-	const type = requireType(db, requireUnit(db, item.code).typeId);
-	return { checklist: type.checklist, typeName: type.name };
-}
-
-function preexistingItems(unit: UnitRecord | null): InspectionItemRecord[] {
-	return (unit?.knownDamages ?? []).map((damage) => ({
-		id: `dano:${damage.id}`,
-		label: `Já tinha: ${damage.description}`,
-		note: `Registrado em ${formatDate(damage.recordedAt)} · não se cobra do cliente`,
-		occurrenceKind: "DAMAGE",
-		answer: "NOT_OK",
-		observation: damage.description,
-		preexisting: true,
-	}));
-}
-
-function findInspection(
-	db: MockDb,
-	rentalNumber: string,
-	code: string,
-	kind: InspectionKind,
-): InspectionRecord | undefined {
-	return db.inspections.find(
-		(entry) =>
-			entry.rentalNumber === rentalNumber &&
-			entry.itemCode === code &&
-			entry.kind === kind,
-	);
-}
-
-function requireInspection(db: MockDb, id: string): InspectionRecord {
-	const inspection = db.inspections.find((entry) => entry.id === id);
-	if (!inspection) throw notFound("inspection", id);
-	return inspection;
-}
-
-function assertOpen(inspection: InspectionRecord): void {
-	if (inspection.completedAt) throw precondition("CHECKLIST_ALREADY_DONE");
-}
-
-function mediaView(
-	db: MockDb,
-	inspection: InspectionRecord,
-	checkout: InspectionRecord | undefined,
-): InspectionMedia[] {
-	const fileAt = (record: InspectionRecord | undefined, slot: string) => {
-		const fileKey = record?.media.find((entry) => entry.slot === slot)?.fileKey;
-		return fileKey ? fileRefOf(db, fileKey) : null;
-	};
-	return CHECKLIST_MEDIA_SLOTS.map((slot) => ({
-		slot,
-		file: fileAt(inspection, slot),
-		checkoutFile: inspection.kind === "RETURN" ? fileAt(checkout, slot) : null,
-	}));
-}
-
-function inspectionView(
-	db: MockDb,
-	inspection: InspectionRecord,
-	now: Date,
-): Inspection {
-	const rental = requireRental(db, inspection.rentalNumber);
-	const item = requireItem(rental, inspection.itemCode);
-	const checkout =
-		inspection.kind === "RETURN"
-			? findInspection(db, rental.number, item.code, "CHECKOUT")
-			: undefined;
-	const totals = rentalTotals(db, rental);
-	const dailyTotalCents = sumCents(
-		rental.items.map(
-			(entry) =>
-				(itemPrice(db, rental, entry).dailyPriceCents ?? 0) * entry.quantity,
-		),
-	);
-	const late = suggestLateFee({
-		dueAt: rental.endAt,
-		returnedAt: now,
-		dailyTotalCents,
-	});
-	const unit = item.kind === "UNIT" ? requireUnit(db, item.code) : null;
-
-	return {
-		id: inspection.id,
-		rentalNumber: rental.number,
-		itemKind: item.kind,
-		unitCode: item.code,
-		unitName: itemNames(db, item).name,
-		typeName: templateFor(db, item).typeName,
-		kind: inspection.kind,
-		completedAt: inspection.completedAt,
-		customerName: requireCustomer(db, rental.customerId).name,
-		siteCity: rental.siteCity,
-		items: inspection.items.map((entry) => {
-			const before = checkout?.items.find((line) => line.id === entry.id);
-			return {
-				id: entry.id,
-				label: entry.label,
-				note: entry.note,
-				occurrenceKind: entry.occurrenceKind,
-				answer: entry.answer,
-				observation: entry.observation,
-				preexisting: entry.preexisting,
-				checkoutAnswer: before?.answer ?? null,
-				checkoutObservation: before?.observation ?? null,
-			};
-		}),
-		media: mediaView(db, inspection, checkout),
-		knownDamages: unit ? knownDamagesOf(db, unit) : [],
-		dailyPriceCents: itemPrice(db, rental, item).dailyPriceCents,
-		balanceCents: rentalBalance(db, rental),
-		depositExpectedCents: totals.depositTotalCents,
-		depositReceivedCents: rental.deposit.receivedCents,
-		termSigned: rental.termSigned,
-		lateFee: {
-			extraDailies: late.extraDailies,
-			suggestedCents: late.amountCents,
-		},
-	};
-}
 
 function completeCheckout(
 	db: MockDb,
@@ -171,24 +44,14 @@ function completeCheckout(
 	unit: UnitRecord | null,
 	at: string,
 ): void {
-	const allSeparated = rental.items.every(
-		(entry) =>
-			entry.kind === "UNIT" &&
-			requireUnit(db, entry.code).status === "SEPARATED",
-	);
 	if (rental.status === "CONFIRMED") {
-		if (!allSeparated) throw precondition("UNITS_NOT_SEPARATED");
+		if (!allUnitsSeparatedForCheckout(db, rental)) {
+			throw precondition("UNITS_NOT_SEPARATED");
+		}
 		moveRental(rental, "SEPARATED");
 		rental.separatedAt = at;
 	}
-	if (rental.status !== "SEPARATED") {
-		throw invalidTransition({
-			entity: "RENTAL",
-			from: rental.status,
-			to: "ON_SITE",
-			allowed: [...rentalStatusMachine.allowedFrom(rental.status)],
-		});
-	}
+	if (rental.status !== "SEPARATED") assertRentalTransition(rental, "ON_SITE");
 	if (unit) moveUnit(unit, "RENTED");
 	item.checkoutDoneAt = at;
 	if (rental.items.every((entry) => entry.checkoutDoneAt !== null)) {
@@ -210,7 +73,7 @@ function openRepairOrder(
 			db.maintenance.map((order) => order.number),
 		),
 		unitCode: unit.code,
-		reason: `Conserto depois da ${rental.number}`,
+		reason: RETURN_TEXTS.repairReason(rental.number),
 		location: "BASE",
 		locationName: null,
 		estimatedCostCents: null,
@@ -230,25 +93,13 @@ export const inspections = {
 		const item = requireItem(rental, input.unitCode);
 		let inspection = findInspection(db, rental.number, item.code, input.kind);
 		if (!inspection) {
-			const unit = item.kind === "UNIT" ? requireUnit(db, item.code) : null;
 			inspection = {
 				id: nextId(db, "insp"),
 				rentalNumber: rental.number,
 				itemCode: item.code,
 				kind: input.kind,
 				completedAt: null,
-				items: [
-					...preexistingItems(unit),
-					...templateFor(db, item).checklist.map((entry) => ({
-						id: entry.id,
-						label: entry.label,
-						note: entry.note,
-						occurrenceKind: entry.occurrenceKind,
-						answer: null,
-						observation: null,
-						preexisting: false,
-					})),
-				],
+				items: newInspectionLines(db, item),
 				media: [],
 			};
 			db.inspections.push(inspection);
@@ -260,7 +111,7 @@ export const inspections = {
 		requirePermission(context, "inspections:run");
 		const db = getDb();
 		const inspection = requireInspection(db, input.inspectionId);
-		assertOpen(inspection);
+		assertInspectionOpen(inspection);
 		const line = inspection.items.find((entry) => entry.id === input.itemId);
 		if (!line) throw notFound("inspectionItem", input.itemId);
 		line.answer = input.answer;
@@ -273,10 +124,14 @@ export const inspections = {
 	}),
 
 	attachMedia: api.inspections.attachMedia.handler(({ context, input }) => {
-		requirePermission(context, "inspections:run");
+		const user = requirePermission(context, "inspections:run");
 		const db = getDb();
 		const inspection = requireInspection(db, input.inspectionId);
-		assertOpen(inspection);
+		assertInspectionOpen(inspection);
+		requireUsableFile(db, user.id, input.fileKey, [
+			"CHECKLIST_PHOTO",
+			"CHECKLIST_VIDEO",
+		]);
 		inspection.media = [
 			...inspection.media.filter((entry) => entry.slot !== input.slot),
 			{ slot: input.slot, fileKey: input.fileKey },
@@ -294,7 +149,7 @@ export const inspections = {
 		const now = mockNow();
 		const at = now.toISOString();
 		const inspection = requireInspection(db, input.inspectionId);
-		assertOpen(inspection);
+		assertInspectionOpen(inspection);
 		const rental = requireRental(db, inspection.rentalNumber);
 		const item = requireItem(rental, inspection.itemCode);
 		const unit = item.kind === "UNIT" ? requireUnit(db, item.code) : null;
@@ -325,15 +180,10 @@ export const inspections = {
 					at,
 				);
 			}
-			addEvent(db, rental, user, `${item.code} entregue, termo assinado`, at);
+			addEvent(db, rental, user, RENTAL_EVENTS.checkedOut(item.code), at);
 		} else {
 			if (rental.status !== "ON_SITE") {
-				throw invalidTransition({
-					entity: "RENTAL",
-					from: rental.status,
-					to: "RETURNED",
-					allowed: [...rentalStatusMachine.allowedFrom(rental.status)],
-				});
+				assertRentalTransition(rental, "RETURNED");
 			}
 			const checkout = findInspection(db, rental.number, item.code, "CHECKOUT");
 			const divergences = detectDivergences(
@@ -365,7 +215,7 @@ export const inspections = {
 					id: nextId(db, "occ"),
 					itemCode: item.code,
 					kind: "LATE",
-					description: `Atraso de ${view.lateFee.extraDailies} dia(s)`,
+					description: RETURN_TEXTS.lateOccurrence(view.lateFee.extraDailies),
 					suggestedCents: view.lateFee.suggestedCents,
 					amountCents: input.lateFee.amountCents,
 					decision: input.lateFee.decision,
@@ -377,7 +227,7 @@ export const inspections = {
 				moveUnit(unit, "IN_INSPECTION");
 				unit.returnedAt = at;
 				if (input.outcome === "DAMAGED") {
-					moveUnit(unit, "DAMAGED", `Voltou com dano da ${rental.number}`);
+					moveUnit(unit, "DAMAGED", RETURN_TEXTS.damagedReason(rental.number));
 				} else {
 					moveUnit(unit, input.outcome);
 				}
@@ -394,9 +244,7 @@ export const inspections = {
 				db,
 				rental,
 				user,
-				divergences.length > 0
-					? `${item.code} voltou com ${divergences.length} ocorrência(s)`
-					: `${item.code} voltou sem ocorrências`,
+				RENTAL_EVENTS.returned(item.code, divergences.length),
 				at,
 			);
 		}
