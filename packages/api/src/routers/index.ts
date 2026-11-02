@@ -2,7 +2,11 @@ import { contract } from "@marinho-gestao/contract";
 import { api, os } from "../procedures";
 import { availability } from "./availability";
 import { customers } from "./customers";
+import { dashboard } from "./dashboard";
 import { equipment } from "./equipment";
+import { inspections } from "./inspections";
+import { deposits, ledger } from "./ledger";
+import { maintenance } from "./maintenance";
 import { pending } from "./pending";
 import { rentals } from "./rentals";
 import { session } from "./session";
@@ -27,15 +31,15 @@ function pendingModule(module: Module) {
 export const appRouter = os.router({
 	session,
 	users,
-	dashboard: pendingModule("dashboard"),
+	dashboard,
 	availability,
 	equipment,
 	customers,
 	rentals,
-	inspections: pendingModule("inspections"),
-	deposits: pendingModule("deposits"),
-	ledger: pendingModule("ledger"),
-	maintenance: pendingModule("maintenance"),
+	inspections,
+	deposits,
+	ledger,
+	maintenance,
 	settings,
 	uploads: pendingModule("uploads"),
 	files: pendingModule("files"),

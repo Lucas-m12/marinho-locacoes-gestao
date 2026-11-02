@@ -1,8 +1,15 @@
-import type { AppClient, Session } from "@marinho-gestao/contract";
-import type { Role } from "@marinho-gestao/domain";
+import {
+	type AppClient,
+	contract,
+	type Session,
+} from "@marinho-gestao/contract";
 import {
 	addCalendarDays,
 	calendarDay,
+	PERMISSIONS,
+	type Permission,
+	ROLES,
+	type Role,
 	zonedTimeToIso,
 } from "@marinho-gestao/domain";
 import { isDefinedError, ORPCError } from "@orpc/client";
@@ -1601,6 +1608,456 @@ export function defineScenarios(harness: ScenarioHarness): void {
 				to: "SEPARATED",
 				allowed: [],
 			});
+		});
+	});
+
+	type RestrictedCall = {
+		procedure: string;
+		permission: Permission;
+		call: (client: AppClient) => Promise<unknown>;
+	};
+
+	const OPEN_TO_EVERY_ROLE = [
+		"session.me",
+		"dashboard.today",
+		"availability.search",
+		"availability.calendar",
+		"equipment.listTypes",
+		"equipment.listUnits",
+		"equipment.getUnit",
+		"equipment.listLots",
+		"rentals.list",
+		"rentals.get",
+		"rentals.copyQuoteText",
+		"rentals.listLostDemand",
+		"inspections.get",
+		"inspections.saveItem",
+		"inspections.attachMedia",
+		"inspections.complete",
+		"settings.get",
+		"uploads.requestUpload",
+		"uploads.completeUpload",
+		"files.getDownloadUrl",
+	];
+
+	function restrictedCalls(): RestrictedCall[] {
+		const period = { from: day(-29, "00:00"), to: day(1, "00:00") };
+		const money = { amountCents: 100, method: "PIX" as const };
+		const entry = {
+			direction: "OUT" as const,
+			category: "FUEL" as const,
+			amountCents: 100,
+			occurredAt: day(0, "09:00"),
+			method: "PIX" as const,
+			description: "Sem acesso",
+			rentalNumber: null,
+			unitCode: null,
+			receiptFileKey: null,
+		};
+		const unitFields = {
+			name: "Unidade nova",
+			shortName: null,
+			voltage: null,
+			serialNumber: null,
+			accessories: null,
+			owner: null,
+			labelApplied: true,
+			purchaseValueCents: null,
+			replacementValueCents: null,
+			notes: null,
+		};
+		const calls: [
+			string,
+			Permission,
+			(client: AppClient) => Promise<unknown>,
+		][] = [
+			["users.list", "users:manage", (c) => c.users.list()],
+			[
+				"users.create",
+				"users:manage",
+				(c) =>
+					c.users.create({
+						name: "Fulano",
+						username: "fulano",
+						role: "ATTENDANT",
+						password: "senha-forte",
+					}),
+			],
+			[
+				"users.setRole",
+				"users:manage",
+				(c) => c.users.setRole({ id: "qualquer", role: "ATTENDANT" }),
+			],
+			[
+				"users.setPassword",
+				"users:manage",
+				(c) =>
+					c.users.setPassword({ id: "qualquer", newPassword: "senha-forte" }),
+			],
+			["dashboard.summary", "money:read", (c) => c.dashboard.summary(period)],
+			[
+				"equipment.createType",
+				"catalog:manage",
+				(c) =>
+					c.equipment.createType({
+						name: "Tipo novo",
+						nicknames: [],
+						description: null,
+						dailyPriceCents: null,
+						depositCents: null,
+						turnaroundHours: 12,
+						accessories: null,
+					}),
+			],
+			[
+				"equipment.updateType",
+				"catalog:manage",
+				(c) => c.equipment.updateType({ id: "qualquer" }),
+			],
+			[
+				"equipment.createUnit",
+				"catalog:manage",
+				(c) =>
+					c.equipment.createUnit({
+						...unitFields,
+						typeId: "qualquer",
+						code: null,
+					}),
+			],
+			[
+				"equipment.updateUnit",
+				"catalog:manage",
+				(c) => c.equipment.updateUnit({ code: "MAR-003", notes: "x" }),
+			],
+			[
+				"equipment.updateLot",
+				"catalog:manage",
+				(c) => c.equipment.updateLot({ id: "qualquer" }),
+			],
+			[
+				"equipment.changeUnitStatus",
+				"units:operate",
+				(c) =>
+					c.equipment.changeUnitStatus({
+						code: "MAR-003",
+						to: "BLOCKED",
+						reason: "Sem acesso",
+					}),
+			],
+			[
+				"equipment.addUnitPhoto",
+				"units:operate",
+				(c) =>
+					c.equipment.addUnitPhoto({
+						code: "MAR-003",
+						slot: "MAIN",
+						fileKey: "unit_photo/x.jpg",
+					}),
+			],
+			[
+				"equipment.addKnownDamage",
+				"units:operate",
+				(c) =>
+					c.equipment.addKnownDamage({
+						code: "MAR-003",
+						description: "Risco novo",
+						fileKey: null,
+					}),
+			],
+			["customers.list", "customers:read", (c) => c.customers.list({})],
+			[
+				"customers.get",
+				"customers:read",
+				(c) => c.customers.get({ id: "qualquer" }),
+			],
+			[
+				"customers.create",
+				"customers:write",
+				(c) =>
+					c.customers.create({
+						kind: "INDIVIDUAL",
+						name: "Cliente novo",
+						taxId: null,
+						responsible: null,
+						authorizedReceivers: [],
+						whatsapp: "(82) 99999-0000",
+						alternatePhone: null,
+						address: null,
+						neighborhood: null,
+						city: "Cajueiro",
+						occupation: null,
+						origin: null,
+						referredBy: null,
+						acceptsPromotions: false,
+						notes: null,
+					}),
+			],
+			[
+				"customers.update",
+				"customers:write",
+				(c) => c.customers.update({ id: "qualquer", notes: "x" }),
+			],
+			[
+				"customers.addDocument",
+				"customers:write",
+				(c) =>
+					c.customers.addDocument({
+						customerId: "qualquer",
+						kind: "OTHER",
+						fileKey: "customer_document/x.pdf",
+					}),
+			],
+			[
+				"rentals.createQuote",
+				"rentals:sell",
+				(c) =>
+					c.rentals.createQuote({
+						...quote,
+						startAt: day(20),
+						endAt: day(21),
+						items: [{ kind: "UNIT", code: "MAR-003", quantity: 1 }],
+						send: false,
+					}),
+			],
+			[
+				"rentals.sendQuote",
+				"rentals:sell",
+				(c) => c.rentals.sendQuote({ number: "LOC-0033" }),
+			],
+			[
+				"rentals.recordPayment",
+				"money:write",
+				(c) =>
+					c.rentals.recordPayment({
+						...money,
+						number: "LOC-0029",
+						kind: "BALANCE",
+						idempotencyKey: newKey(),
+					}),
+			],
+			[
+				"rentals.confirm",
+				"rentals:sell",
+				(c) => c.rentals.confirm({ number: "LOC-0031" }),
+			],
+			[
+				"rentals.markSeparated",
+				"rentals:separate",
+				(c) => c.rentals.markSeparated({ number: "LOC-0030" }),
+			],
+			[
+				"rentals.previewExtend",
+				"rentals:sell",
+				(c) =>
+					c.rentals.previewExtend({ number: "LOC-0029", newEndAt: day(8) }),
+			],
+			[
+				"rentals.extend",
+				"rentals:sell",
+				(c) => c.rentals.extend({ number: "LOC-0029", newEndAt: day(8) }),
+			],
+			[
+				"rentals.cancel",
+				"rentals:sell",
+				(c) => c.rentals.cancel({ number: "LOC-0029", reason: "Sem acesso" }),
+			],
+			[
+				"rentals.close",
+				"rentals:close",
+				(c) => c.rentals.close({ number: "LOC-0026" }),
+			],
+			[
+				"rentals.recordLostDemand",
+				"lostDemand:write",
+				(c) =>
+					c.rentals.recordLostDemand({
+						item: "Betoneira",
+						typeId: null,
+						reason: "Não temos",
+						city: null,
+						requestedOn: TODAY,
+					}),
+			],
+			[
+				"deposits.recordReceived",
+				"money:write",
+				(c) =>
+					c.deposits.recordReceived({
+						...money,
+						rentalNumber: "LOC-0029",
+						idempotencyKey: newKey(),
+					}),
+			],
+			[
+				"deposits.recordRefund",
+				"money:write",
+				(c) =>
+					c.deposits.recordRefund({
+						...money,
+						rentalNumber: "LOC-0026",
+						idempotencyKey: newKey(),
+					}),
+			],
+			[
+				"deposits.recordRetention",
+				"money:write",
+				(c) =>
+					c.deposits.recordRetention({
+						amountCents: 100,
+						rentalNumber: "LOC-0026",
+						reason: "Sem acesso",
+						idempotencyKey: newKey(),
+					}),
+			],
+			[
+				"ledger.list",
+				"money:read",
+				(c) => c.ledger.list({ ...period, account: "CASH" }),
+			],
+			[
+				"ledger.create",
+				"money:write",
+				(c) => c.ledger.create({ ...entry, idempotencyKey: newKey() }),
+			],
+			[
+				"ledger.reverse",
+				"money:write",
+				(c) =>
+					c.ledger.reverse({
+						entryId: "qualquer",
+						reason: "Sem acesso",
+						idempotencyKey: newKey(),
+					}),
+			],
+			[
+				"ledger.exportCsv",
+				"money:read",
+				(c) => c.ledger.exportCsv({ month: TODAY.slice(0, 7) }),
+			],
+			["ledger.byCategory", "money:read", (c) => c.ledger.byCategory(period)],
+			["ledger.receivables", "money:read", (c) => c.ledger.receivables()],
+			[
+				"ledger.depositSummary",
+				"money:read",
+				(c) => c.ledger.depositSummary(period),
+			],
+			["maintenance.list", "maintenance:read", (c) => c.maintenance.list()],
+			[
+				"maintenance.open",
+				"maintenance:write",
+				(c) =>
+					c.maintenance.open({
+						unitCode: "MAR-003",
+						reason: "Sem acesso",
+						location: "BASE",
+						locationName: null,
+						estimatedCostCents: null,
+						expectedBackAt: null,
+					}),
+			],
+			[
+				"maintenance.complete",
+				"maintenance:write",
+				(c) =>
+					c.maintenance.complete({
+						number: "OS-004",
+						finalCostCents: 4500,
+						method: "PIX",
+						unitStatusAfter: "AVAILABLE",
+					}),
+			],
+			[
+				"settings.update",
+				"settings:manage",
+				(c) => c.settings.update({ signalDeadlineHours: 24 }),
+			],
+		];
+		return calls.map(([procedure, permission, call]) => ({
+			procedure,
+			permission,
+			call,
+		}));
+	}
+
+	describe("permissão por procedimento", () => {
+		it("todo procedimento restrito está na tabela de permissões", () => {
+			const restricted = restrictedCalls().map((entry) => entry.procedure);
+			const all = Object.entries(contract).flatMap(([module, procedures]) =>
+				Object.keys(procedures).map((name) => `${module}.${name}`),
+			);
+			const uncovered = all.filter(
+				(name) =>
+					!restricted.includes(name) && !OPEN_TO_EVERY_ROLE.includes(name),
+			);
+			expect(uncovered).toEqual([]);
+		});
+
+		it("papel sem permissão recebe FORBIDDEN em cada procedimento restrito", async () => {
+			const unexpected: string[] = [];
+			for (const { procedure, permission, call } of restrictedCalls()) {
+				const allowed = PERMISSIONS[permission] as readonly Role[];
+				for (const role of ROLES.filter((entry) => !allowed.includes(entry))) {
+					const error = await errorOf(call(clientAs(role)));
+					if (error.code !== "FORBIDDEN") {
+						unexpected.push(`${procedure} como ${role}: ${error.code}`);
+					}
+				}
+			}
+			expect(unexpected).toEqual([]);
+		});
+	});
+
+	describe("caução retida", () => {
+		it("lança saída na caução e entrada no caixa, ligadas", async () => {
+			const manager = clientAs("MANAGER");
+			await manager.deposits.recordRetention({
+				rentalNumber: "LOC-0026",
+				amountCents: 8000,
+				reason: "Disco quebrado",
+				idempotencyKey: newKey(),
+			});
+			const description = "Caução retida da LOC-0026: Disco quebrado";
+			const cash = (
+				await manager.ledger.list({ ...range, account: "CASH" })
+			).entries.find((item) => item.description === description);
+			const deposit = (
+				await manager.ledger.list({ ...range, account: "DEPOSIT" })
+			).entries.find((item) => item.description === description);
+			expect(cash).toMatchObject({
+				direction: "IN",
+				category: "DEPOSIT_RETAINED",
+				amountCents: 8000,
+			});
+			expect(deposit).toMatchObject({
+				direction: "OUT",
+				category: "DEPOSIT_TO_CASH",
+				amountCents: 8000,
+			});
+		});
+	});
+
+	describe("idempotência em paralelo", () => {
+		it("a mesma chave em duas requisições ao mesmo tempo lança uma vez só", async () => {
+			const client = clientAs("MANAGER");
+			const input = {
+				direction: "OUT" as const,
+				category: "FUEL" as const,
+				amountCents: 5000,
+				occurredAt: day(0, "09:00"),
+				method: "CASH" as const,
+				description: "Combustível em dobro",
+				rentalNumber: null,
+				unitCode: null,
+				receiptFileKey: null,
+				idempotencyKey: newKey(),
+			};
+			const [first, second] = await Promise.all([
+				client.ledger.create(input),
+				client.ledger.create(input),
+			]);
+			expect(second.id).toBe(first.id);
+			const { outCents } = await client.dashboard.summary(range);
+			expect(outCents).toBe(61000 + 5000);
 		});
 	});
 }
