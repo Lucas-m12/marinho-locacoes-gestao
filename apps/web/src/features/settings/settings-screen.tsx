@@ -632,7 +632,11 @@ function UserRow({ user }: { user: User }) {
 						</NativeSelect>
 					)}
 				</FieldShell>
-				<Button variant="secondary" onClick={() => setResetting(true)}>
+				<Button
+					variant="secondary"
+					aria-label={`Redefinir senha de ${user.name}`}
+					onClick={() => setResetting(true)}
+				>
 					Redefinir senha
 				</Button>
 			</div>

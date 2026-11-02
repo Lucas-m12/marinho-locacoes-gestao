@@ -87,7 +87,7 @@ function EntryRow({
 	const isReversal = entry.reversalOfId !== null;
 	const link = entry.unitCode ?? entry.rentalNumber;
 	return (
-		<div className="flex min-h-[60px] items-center gap-3.5 border-t py-2.5">
+		<li className="flex min-h-[60px] items-center gap-3.5 border-t py-2.5">
 			<span
 				aria-hidden
 				className={cn(
@@ -161,7 +161,7 @@ function EntryRow({
 					<span className="hidden md:inline">Estornar</span>
 				</Button>
 			)}
-		</div>
+		</li>
 	);
 }
 
@@ -345,19 +345,23 @@ function EntriesCard({
 					}
 				/>
 			)}
-			{visible.map((entry) => (
-				<EntryRow
-					key={entry.id}
-					entry={entry}
-					onReverse={
-						canWrite &&
-						entry.reversedById === null &&
-						entry.reversalOfId === null
-							? () => setReversing(entry)
-							: undefined
-					}
-				/>
-			))}
+			{visible.length > 0 && (
+				<ul className="flex flex-col">
+					{visible.map((entry) => (
+						<EntryRow
+							key={entry.id}
+							entry={entry}
+							onReverse={
+								canWrite &&
+								entry.reversedById === null &&
+								entry.reversalOfId === null
+									? () => setReversing(entry)
+									: undefined
+							}
+						/>
+					))}
+				</ul>
+			)}
 			{reversing && (
 				<ReverseDialog entry={reversing} onClose={() => setReversing(null)} />
 			)}

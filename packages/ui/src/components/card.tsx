@@ -4,12 +4,15 @@ import type * as React from "react";
 function Card({
 	className,
 	size = "default",
+	role,
 	...props
 }: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+	const labelled = Boolean(props["aria-labelledby"] || props["aria-label"]);
 	return (
 		<div
 			data-slot="card"
 			data-size={size}
+			role={role ?? (labelled ? "region" : undefined)}
 			className={cn(
 				"group/card bg-card text-card-foreground flex flex-col gap-3 rounded-2xl py-(--card-spacing) text-[15px] [--card-spacing:--spacing(4)] data-[size=sm]:[--card-spacing:--spacing(4)] md:[--card-spacing:--spacing(5)]",
 				className,

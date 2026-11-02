@@ -123,7 +123,7 @@ function ResultRow({
 	})();
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-t py-4">
+		<li className="flex flex-wrap items-center gap-x-5 gap-y-3 border-t py-4">
 			<span className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
 				<b className="text-base/[22px]">
 					{result.kind === "UNIT"
@@ -153,6 +153,7 @@ function ResultRow({
 					<Link
 						to="/locacoes/nova"
 						search={{ item: result.code, saida: start, devolucao: end }}
+						aria-label={`Reservar ${result.kind === "UNIT" ? result.code : result.name}`}
 						className={buttonVariants({ size: "default" })}
 					>
 						Reservar
@@ -173,7 +174,7 @@ function ResultRow({
 						/>
 					</>
 				))}
-		</div>
+		</li>
 	);
 }
 
@@ -228,17 +229,20 @@ function ResultsCard({
 					description="Confira o nome ou tente pelo código. Se não temos o equipamento, registre como demanda perdida."
 				/>
 			)}
-			{query &&
-				results.data?.results.map((result) => (
-					<ResultRow
-						key={result.code}
-						result={result}
-						dailies={results.data.dailies}
-						start={start}
-						end={end}
-						canSell={canSell}
-					/>
-				))}
+			{query && results.data && results.data.results.length > 0 && (
+				<ul className="flex flex-col">
+					{results.data.results.map((result) => (
+						<ResultRow
+							key={result.code}
+							result={result}
+							dailies={results.data.dailies}
+							start={start}
+							end={end}
+							canSell={canSell}
+						/>
+					))}
+				</ul>
+			)}
 		</Card>
 	);
 }

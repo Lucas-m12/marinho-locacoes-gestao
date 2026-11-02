@@ -168,10 +168,12 @@ export function UploadSlot({
 export function UploadButton({
 	purpose,
 	label,
+	accessibleLabel,
 	onUploaded,
 }: {
 	purpose: UploadPurpose;
 	label: string;
+	accessibleLabel?: string;
 	onUploaded: (file: FileRef) => void | Promise<void>;
 }) {
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -196,6 +198,11 @@ export function UploadButton({
 				variant="secondary"
 				size="xs"
 				disabled={uploading}
+				aria-label={
+					accessibleLabel && state.phase === "idle"
+						? accessibleLabel
+						: undefined
+				}
 				onClick={() =>
 					state.phase === "failed"
 						? start(state.file)

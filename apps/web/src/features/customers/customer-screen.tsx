@@ -179,6 +179,7 @@ function DocumentsCard({ customer }: { customer: CustomerDetail }) {
 							<UploadButton
 								purpose="CUSTOMER_DOCUMENT"
 								label="Enviar"
+								accessibleLabel={`Enviar ${DOCUMENT_KIND_LABELS[kind]}`}
 								onUploaded={save(kind)}
 							/>
 						)}
