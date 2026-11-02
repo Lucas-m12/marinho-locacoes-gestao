@@ -1,5 +1,11 @@
 import type { SessionUser } from "@marinho-gestao/contract";
 import { buttonVariants } from "@marinho-gestao/ui/components/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@marinho-gestao/ui/components/dropdown-menu";
 import { cn } from "@marinho-gestao/ui/lib/utils";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
@@ -121,6 +127,29 @@ function Sidebar({ user }: { user: SessionUser }) {
 	);
 }
 
+function RailAccountMenu({ user }: { user: SessionUser }) {
+	const signOut = useSignOut();
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger
+				aria-label={`${user.name}, ${ROLE_LABELS[user.role]}: menu da conta`}
+				className="bg-navy-soft text-on-navy mt-auto flex size-11 flex-none items-center justify-center rounded-full font-bold"
+			>
+				{initials(user.name).charAt(0)}
+			</DropdownMenuTrigger>
+			<DropdownMenuContent side="right" align="end" className="w-44">
+				<DropdownMenuItem
+					onClick={signOut}
+					className="min-h-11 px-3 text-[15px]"
+				>
+					Sair
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+}
+
 function Rail({ user }: { user: SessionUser }) {
 	const isActive = useIsActive();
 	const canSell = allowedEntries([NEW_RENTAL], user.role).length > 0;
@@ -164,7 +193,7 @@ function Rail({ user }: { user: SessionUser }) {
 					</li>
 				))}
 			</ul>
-			<UserAvatar user={user} className="mt-auto" />
+			<RailAccountMenu user={user} />
 		</nav>
 	);
 }
