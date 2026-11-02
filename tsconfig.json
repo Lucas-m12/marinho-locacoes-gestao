@@ -1,3 +1,3 @@
 {
-  "extends": "@marinho-gestao/config/tsconfig.base.json"
+	"extends": "@marinho-gestao/config/tsconfig.base.json"
 }

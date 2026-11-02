@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Cliente José Carlos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: {{dir}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}"><div style="flex: none; width: 248px; background: #13294B"><dc-import name="Nav" bp="desktop" active="clientes" hint-size="248px,900px"></dc-import></div></sc-if>
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}"><div style="flex: none; width: 88px; background: #13294B"><dc-import name="Nav" bp="tablet" active="clientes" hint-size="88px,900px"></dc-import></div></sc-if>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px">
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="display: flex; align-items: center; gap: 10px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="32" height="32" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg><span style="font-stretch: 125%; font-weight: 800; font-size: 16px; letter-spacing: 0.02em">MARINHO</span></span><span role="img" aria-label="Lucas" style="width: 36px; height: 36px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">L</span></div></sc-if>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<a href="Clientes.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 14px; font-weight: 600; color: #13294B; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Clientes</a>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px">
+<span aria-hidden="true" style="flex: none; width: 56px; height: 56px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-stretch: 75%; font-weight: 800; font-size: 22px">JC</span>
+<span style="display: flex; flex-direction: column; gap: 2px"><h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: {{h1}}; line-height: 1.1; text-transform: uppercase; color: #13294B">José Carlos</h1><span style="font-size: 16px; color: #5E544C">Pedreiro · Capela · cliente desde 15/10</span></span>
+<span style="display: inline-flex; align-items: center; min-height: 28px; padding: 0 12px; border-radius: 999px; background: #E2EADF; color: #2E4F2E; font-size: 14px; font-weight: 700">Confiável</span>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1.5px solid #13294B; background: #FBF6EC; color: #13294B; font-family: inherit; font-weight: 700; font-size: 15px">Editar</button>
+<a href="NovaLocacao.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; background: #13294B; color: #FBF6EC; font-weight: 700; font-size: 15px; text-decoration: none">Nova locação para ele</a>
+</div>
+</header>
+
+<div style="display: grid; grid-template-columns: {{statCols}}; gap: 12px">
+<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+<div style="background: #FBF6EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #5E544C">{{s.k}}</span><b style="font-stretch: 75%; font-size: 26px; line-height: 30px">{{s.v}}</b></div>
+</sc-for>
+</div>
+
+<div style="display: grid; grid-template-columns: {{layoutCols}}; gap: 24px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section aria-labelledby="dados" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 6px">
+<h2 id="dados" style="margin: 0 0 8px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Dados</h2>
+<dl style="margin: 0; display: flex; flex-direction: column">
+<sc-for list="{{dados}}" as="r" hint-placeholder-count="5">
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid #E6DAC6; font-size: 15px"><dt style="color: #5E544C">{{r.k}}</dt><dd style="margin: 0; font-weight: 700; text-align: right">{{r.v}}</dd></div>
+</sc-for>
+</dl>
+</section>
+<section aria-labelledby="docs" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 10px">
+<h2 id="docs" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Documentos</h2>
+<sc-for list="{{docs}}" as="d" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 44px"><span aria-hidden="true" style="flex: none; width: 28px; height: 28px; border-radius: 50%; background: #E2EADF; color: #2E4F2E; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px">✓</span><span style="flex-grow: 1; display: flex; flex-direction: column"><b style="font-size: 15px">{{d.nome}}</b><span style="font-size: 13px; color: #5E544C">{{d.quando}}</span></span><button type="button" style="min-height: 40px; padding: 0 12px; border-radius: 8px; border: 1.5px solid #8C8070; background: transparent; color: #13294B; font-family: inherit; font-weight: 600; font-size: 14px">Ver</button></div>
+</sc-for>
+<p style="margin: 0; font-size: 13px; color: #5E544C">Só vocês três têm acesso às fotos dos documentos.</p>
+</section>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section aria-labelledby="locs" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 4px">
+<h2 id="locs" style="margin: 0 0 8px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Locações</h2>
+<sc-for list="{{locs}}" as="l" hint-placeholder-count="3">
+<a href="Locacao.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-height: 56px; padding: 10px 0; border-top: 1px solid #E6DAC6; text-decoration: none; color: #13294B">
+<b style="flex: none; width: 84px; font-size: 14px">{{l.num}}</b>
+<span style="flex: 1 1 180px; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">{{l.equip}}</span><span style="font-size: 13px; color: #5E544C">{{l.periodo}}</span></span>
+<b style="font-size: 15px">{{l.valor}}</b>
+<span style="display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 999px; font-size: 13px; font-weight: 700; background: {{l.chipBg}}; color: {{l.chipFg}}">{{l.status}}</span>
+</a>
+</sc-for>
+</section>
+<section aria-labelledby="obs" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 10px">
+<h2 id="obs" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Observações</h2>
+<p style="margin: 0; font-size: 15px; line-height: 22px">Prefere entrega cedo, antes das 7h. Costuma alugar para obras em Capela e Cajueiro.</p>
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #F2E8D7; font-size: 14px"><span style="font-stretch: 75%; font-weight: 700; font-size: 11px; line-height: 14px; padding: 1px 6px; border-radius: 4px; border: 1px solid #B4532A; color: #B4532A">F2</span>Condição especial: pode pagar o saldo na devolução.</div>
+</section>
+</div>
+</div>
+
+</main>
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="position: sticky; bottom: 0; background: #13294B"><dc-import name="Nav" bp="phone" active="clientes" hint-size="390px,76px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+const stats = [{ k: 'Locações', v: '3' }, { k: 'Total gasto', v: 'R$ 1.000' }, { k: 'Atrasos', v: '0' }, { k: 'Saldo em aberto', v: 'R$ 0' }];
+const dados = [
+{ k: 'Tipo', v: 'Profissional' }, { k: 'CPF', v: '•••.•••.•••-••' }, { k: 'WhatsApp', v: 'Salvo no celular da empresa' },
+{ k: 'Endereço', v: '[ENDEREÇO], Capela' }, { k: 'Chegou por', v: 'Loja parceira · [CÓDIGO DA LOJA]' }, { k: 'Aceita mensagens', v: 'Sim' }
+];
+const docs = [
+{ nome: 'Documento com foto', quando: 'Recebido em 15/10' },
+{ nome: 'CPF', quando: 'Recebido em 15/10' },
+{ nome: 'Comprovante de endereço', quando: 'Recebido em 15/10' }
+];
+const locs = [
+{ num: 'LOC-0029', equip: 'MAR-002 Martelo demolidor', periodo: '02/11 a 08/11', valor: 'R$ 700', status: 'Confirmada', chipBg: '#DCE3EE', chipFg: '#13294B' },
+{ num: 'LOC-0018', equip: 'Andaime, 10 peças', periodo: '24/10 a 29/10', valor: 'R$ 120', status: 'Encerrada', chipBg: '#EFE6D6', chipFg: '#5E544C' },
+{ num: 'LOC-0009', equip: 'Serra mármore e esmerilhadeira', periodo: '17/10 a 18/10', valor: 'R$ 180', status: 'Encerrada', chipBg: '#EFE6D6', chipFg: '#5E544C' }
+];
+return {
+D, T, P, notP: !P,
+dir: P ? 'column' : 'row',
+minH: h ? h + 'px' : '100vh',
+pad: D ? '32px 40px 48px' : (T ? '28px 28px 40px' : '16px 16px 28px'),
+cardPad: P ? '16px' : '20px',
+h1: P ? '28px' : '36px',
+statCols: P ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+layoutCols: D ? 'minmax(0, 1fr) minmax(0, 1.3fr)' : 'minmax(0, 1fr)',
+stats, dados, docs, locs
+};
+}
+}
+</script>
+</body>
+</html>

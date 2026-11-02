@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Dinheiro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: {{dir}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}"><div style="flex: none; width: 248px; background: #13294B"><dc-import name="Nav" bp="desktop" active="dinheiro" hint-size="248px,900px"></dc-import></div></sc-if>
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}"><div style="flex: none; width: 88px; background: #13294B"><dc-import name="Nav" bp="tablet" active="dinheiro" hint-size="88px,900px"></dc-import></div></sc-if>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px">
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="display: flex; align-items: center; gap: 10px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="32" height="32" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg><span style="font-stretch: 125%; font-weight: 800; font-size: 16px; letter-spacing: 0.02em">MARINHO</span></span><span role="img" aria-label="Lucas" style="width: 36px; height: 36px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">L</span></div></sc-if>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: {{h1}}; line-height: 1.1; text-transform: uppercase; color: #13294B">Dinheiro</h1>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #5E544C">Tudo o que entra e sai. A caução fica à parte.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1.5px solid #13294B; background: #FBF6EC; color: #13294B; font-family: inherit; font-weight: 700; font-size: 15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>Despesa</button>
+<button type="button" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 10px; border: none; background: #13294B; color: #FBF6EC; font-family: inherit; font-weight: 700; font-size: 15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Entrada</button>
+</div>
+</header>
+
+<div role="tablist" aria-label="Contas" style="align-self: flex-start; display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: #E6DAC6; max-width: 100%; overflow-x: auto">
+<button type="button" role="tab" aria-selected="true" style="flex: none; min-height: 40px; padding: 0 16px; border-radius: 9px; border: none; background: #FBF6EC; color: #13294B; font-family: inherit; font-size: 14px; font-weight: 700">Caixa</button>
+<button type="button" role="tab" aria-selected="false" style="flex: none; min-height: 40px; padding: 0 16px; border-radius: 9px; border: none; background: transparent; color: #13294B; font-family: inherit; font-size: 14px; font-weight: 700">Caução</button>
+<button type="button" role="tab" aria-selected="false" style="flex: none; min-height: 40px; padding: 0 16px; border-radius: 9px; border: none; background: transparent; color: #13294B; font-family: inherit; font-size: 14px; font-weight: 700">A receber</button>
+</div>
+
+<div style="display: grid; grid-template-columns: {{kpiCols}}; gap: 16px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<div style="background: {{k.bg}}; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 6px; color: {{k.fg}}"><span style="font-size: 14px; color: {{k.sub}}">{{k.label}}</span><b style="font-stretch: 75%; font-size: {{kpiSize}}; line-height: 1.1">{{k.value}}</b><span style="font-size: 13px; color: {{k.sub}}">{{k.note}}</span></div>
+</sc-for>
+</div>
+
+<div style="display: grid; grid-template-columns: {{layoutCols}}; gap: 24px; align-items: start">
+<section aria-labelledby="lanc" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 4px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; padding-bottom: 8px"><h2 id="lanc" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Lançamentos</h2><span style="font-size: 14px; color: #5E544C">últimos 30 dias</span></div>
+<sc-for list="{{lancamentos}}" as="l" hint-placeholder-count="7">
+<div style="display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 0; border-top: 1px solid #E6DAC6">
+<span aria-hidden="true" style="flex: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; background: {{l.iconBg}}; color: {{l.iconFg}}">{{l.sinal}}</span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><b style="font-size: 15px; line-height: 21px">{{l.desc}}</b><span style="font-size: 13px; color: #5E544C">{{l.meta}}</span></span>
+<span style="flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 2px"><b style="font-size: 15px; color: {{l.cor}}">{{l.valor}}</b><span style="font-size: 13px; color: #5E544C">{{l.data}}</span></span>
+</div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section aria-labelledby="cat" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 12px">
+<h2 id="cat" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Por categoria</h2>
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5E544C">Entradas</span>
+<sc-for list="{{entradas}}" as="c" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px"><span>{{c.k}}</span><b>{{c.v}}</b></span><span style="height: 8px; border-radius: 4px; background: #EFE6D6; display: flex"><span style="width: {{c.pct}}; border-radius: 4px; background: #5F8A5A"></span></span></div>
+</sc-for>
+<span style="padding-top: 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #5E544C">Saídas</span>
+<sc-for list="{{saidas}}" as="c" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px"><span>{{c.k}}</span><b>{{c.v}}</b></span><span style="height: 8px; border-radius: 4px; background: #EFE6D6; display: flex"><span style="width: {{c.pct}}; border-radius: 4px; background: #B4532A"></span></span></div>
+</sc-for>
+</section>
+<section aria-labelledby="receber" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 10px">
+<h2 id="receber" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">A receber</h2>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 15px"><span>LOC-0029 · José Carlos · saldo na entrega</span><b>R$ 500</b></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 15px"><span>LOC-0028 · João Batista · dias de atraso</span><b style="color: #8A3A1A">[ATRASO]</b></div>
+</section>
+</div>
+</div>
+
+</main>
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="position: sticky; bottom: 0; background: #13294B"><dc-import name="Nav" bp="phone" active="dinheiro" hint-size="390px,76px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+const kpis = [
+{ label: 'Entrou', value: 'R$ 2.340', note: 'últimos 30 dias', bg: '#FBF6EC', fg: '#13294B', sub: '#5E544C' },
+{ label: 'Saiu', value: 'R$ 610', note: 'últimos 30 dias', bg: '#FBF6EC', fg: '#13294B', sub: '#5E544C' },
+{ label: 'Resultado', value: 'R$ 1.730', note: 'entrou menos saiu', bg: '#FBF6EC', fg: '#2E4F2E', sub: '#5E544C' },
+{ label: 'Caução em mãos', value: 'R$ 900', note: 'fora do caixa, 4 locações', bg: '#13294B', fg: '#FBF6EC', sub: '#C9D2DF' }
+];
+const E = (desc, meta, valor, data, entra) => ({ desc, meta, valor, data, sinal: entra ? '+' : '−', cor: entra ? '#2E4F2E' : '#8A3A1A', iconBg: entra ? '#E2EADF' : '#F7DCCF', iconFg: entra ? '#2E4F2E' : '#8A3A1A' });
+const lancamentos = [
+E('Combustível da entrega em Capela', 'Combustível · LOC-0029 · Dinheiro', '− R$ 40', '02/11', false),
+E('Saldo da LOC-0026', 'Locação · MAR-006 · Pix', '+ R$ 150', '01/11', true),
+E('Sinal da LOC-0029', 'Locação · MAR-002 · Pix', '+ R$ 200', '31/10', true),
+E('Discos de corte vendidos (3)', 'Consumíveis · LOC-0026 · Dinheiro', '+ R$ 40', '30/10', true),
+E('Discos diamantados (2)', 'Consumíveis · MAR-008 · Pix', '− R$ 70', '30/10', false),
+E('Anúncio no Instagram', 'Anúncio · Pix', '− R$ 50', '29/10', false),
+E('Escovas da serra tico-tico', 'Manutenção · MAR-011 · Dinheiro', '− R$ 45', '28/10', false)
+];
+const pct = (v, t) => Math.round((v / t) * 100) + '%';
+const entradas = [['Locações', 2180], ['Entrega e coleta', 120], ['Consumíveis vendidos', 40]].map(([k, v]) => ({ k, v: 'R$ ' + v.toLocaleString('pt-BR'), pct: pct(v, 2180) }));
+const saidas = [['Consumíveis comprados', 255], ['Combustível', 160], ['Anúncio', 150], ['Manutenção', 45]].map(([k, v]) => ({ k, v: 'R$ ' + v.toLocaleString('pt-BR'), pct: pct(v, 255) }));
+return {
+D, T, P, notP: !P,
+dir: P ? 'column' : 'row',
+minH: h ? h + 'px' : '100vh',
+pad: D ? '32px 40px 48px' : (T ? '28px 28px 40px' : '16px 16px 28px'),
+cardPad: P ? '16px' : '20px',
+h1: P ? '28px' : '36px',
+kpiCols: D ? 'repeat(4, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))',
+kpiSize: P ? '24px' : '30px',
+layoutCols: D ? 'minmax(0, 1.6fr) minmax(0, 1fr)' : 'minmax(0, 1fr)',
+kpis, lancamentos, entradas, saidas
+};
+}
+}
+</script>
+</body>
+</html>

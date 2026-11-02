@@ -2,5 +2,7 @@
 import type { PublicCoercedEnvSchema } from "./env";
 
 export const ENV = {
-  VITE_SERVER_URL: import.meta.env.VITE_SERVER_URL!,
-} satisfies Pick<PublicCoercedEnvSchema, "VITE_SERVER_URL">;
+	VITE_DATA_SOURCE: (import.meta.env.VITE_DATA_SOURCE ??
+		"mock") as PublicCoercedEnvSchema["VITE_DATA_SOURCE"],
+	VITE_SERVER_URL: import.meta.env.VITE_SERVER_URL ?? "",
+};

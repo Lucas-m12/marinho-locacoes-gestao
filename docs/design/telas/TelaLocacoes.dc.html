@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Locações</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: {{dir}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}"><div style="flex: none; width: 248px; background: #13294B"><dc-import name="Nav" bp="desktop" active="locacoes" hint-size="248px,900px"></dc-import></div></sc-if>
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}"><div style="flex: none; width: 88px; background: #13294B"><dc-import name="Nav" bp="tablet" active="locacoes" hint-size="88px,900px"></dc-import></div></sc-if>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 20px">
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="display: flex; align-items: center; gap: 10px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="32" height="32" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg><span style="font-stretch: 125%; font-weight: 800; font-size: 16px; letter-spacing: 0.02em">MARINHO</span></span><span role="img" aria-label="Lucas" style="width: 36px; height: 36px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">L</span></div></sc-if>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: {{h1}}; line-height: 1.1; text-transform: uppercase; color: #13294B">Locações</h1>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #5E544C">Orçamentos, reservas e equipamentos na obra.</p>
+</div>
+<sc-if value="{{notP}}" hint-placeholder-val="{{true}}"><a href="NovaLocacao.dc.html" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; box-sizing: border-box; border-radius: 10px; background: #13294B; color: #FBF6EC; font-weight: 700; font-size: 15px; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Nova locação</a></sc-if>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div role="tablist" aria-label="Filtrar locações" style="display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: #E6DAC6; overflow-x: auto; max-width: 100%">
+<sc-for list="{{abas}}" as="a" hint-placeholder-count="3">
+<button type="button" role="tab" aria-selected="{{a.sel}}" style="flex: none; min-height: 40px; padding: 0 14px; border-radius: 9px; border: none; font-family: inherit; font-size: 14px; font-weight: 700; background: {{a.bg}}; color: #13294B">{{a.label}}</button>
+</sc-for>
+</div>
+<label style="flex: 1 1 220px; display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-size: 15px; color: #5E544C"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM21 21l-5-5"></path></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%)">Buscar locação</span><input type="search" placeholder="Cliente, equipamento ou número" style="flex-grow: 1; min-width: 0; border: none; outline: none; background: transparent; font-family: inherit; font-size: 15px; color: #13294B"></label>
+</div>
+
+<sc-if value="{{notP}}" hint-placeholder-val="{{true}}">
+<section aria-label="Locações abertas" style="background: #FBF6EC; border-radius: 14px; padding: 8px 20px; overflow-x: auto">
+<div style="display: grid; grid-template-columns: {{cols}}; gap: 16px; align-items: center; padding: 12px 0; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5E544C">
+<span>Nº</span><span>Cliente</span><span>Equipamentos e período</span><span style="text-align: right">Valor</span><span>Status</span>
+</div>
+<sc-for list="{{linhas}}" as="l" hint-placeholder-count="8">
+<a href="Locacao.dc.html" style="display: grid; grid-template-columns: {{cols}}; gap: 16px; align-items: center; min-height: 64px; padding: 8px 0; border-top: 1px solid #E6DAC6; text-decoration: none; color: #13294B; font-size: 15px">
+<b>{{l.num}}</b>
+<span style="display: flex; flex-direction: column"><span style="font-weight: 600">{{l.cliente}}</span><span style="font-size: 13px; color: #5E544C">{{l.cidade}}</span></span>
+<span style="display: flex; flex-direction: column"><span>{{l.equip}}</span><span style="font-size: 13px; color: #5E544C">{{l.periodo}}</span></span>
+<b style="text-align: right">{{l.valor}}</b>
+<span><span style="display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; background: {{l.chipBg}}; color: {{l.chipFg}}">{{l.status}}</span></span>
+</a>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}">
+<ul aria-label="Locações abertas" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{linhas}}" as="l" hint-placeholder-count="8">
+<li><a href="Locacao.dc.html" style="display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 12px; background: #FBF6EC; text-decoration: none; color: #13294B">
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 10px"><b style="font-size: 14px">{{l.num}}</b><span style="display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: {{l.chipBg}}; color: {{l.chipFg}}">{{l.status}}</span></span>
+<b style="font-size: 16px; line-height: 22px">{{l.equip}}</b>
+<span style="font-size: 14px; color: #5E544C">{{l.cliente}} · {{l.cidade}}</span>
+<span style="display: flex; justify-content: space-between; gap: 10px; font-size: 14px"><span style="color: #5E544C">{{l.periodo}}</span><b>{{l.valor}}</b></span>
+</a></li>
+</sc-for>
+</ul>
+</sc-if>
+
+<section aria-labelledby="perdida" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px"><h2 id="perdida" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Demanda perdida em novembro</h2><span style="font-size: 14px; color: #5E544C">pedidos que não deu para atender</span></div>
+<div style="display: grid; grid-template-columns: {{perdCols}}; gap: 12px">
+<sc-for list="{{perdidas}}" as="p" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 10px; border: 1.5px solid #E6DAC6"><b style="font-size: 15px">{{p.item}}</b><span style="font-size: 14px; color: #5E544C">{{p.motivo}}</span><span style="font-size: 13px; color: #5E544C">{{p.quando}}</span></div>
+</sc-for>
+</div>
+<button type="button" style="align-self: flex-start; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1.5px solid #13294B; background: transparent; color: #13294B; font-family: inherit; font-weight: 700; font-size: 15px">Registrar pedido não atendido</button>
+</section>
+
+</main>
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="position: sticky; bottom: 0; background: #13294B"><dc-import name="Nav" bp="phone" active="locacoes" hint-size="390px,76px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+const S = {
+'Atrasada': ['#F7DCCF', '#8A3A1A'], 'Na obra': ['#13294B', '#FBF6EC'], 'Confirmada': ['#DCE3EE', '#13294B'],
+'Aguardando sinal': ['#EFE6D6', '#5E544C'], 'Orçamento': ['#FFFFFF', '#5E544C']
+};
+const L = (num, cliente, cidade, equip, periodo, valor, status) => ({ num, cliente, cidade, equip, periodo, valor, status, chipBg: S[status][0], chipFg: S[status][1] });
+const linhas = [
+L('LOC-0028', 'João Batista', 'Pilar', 'MAR-008 Serra mármore', '29/10 a 01/11', 'R$ 160', 'Atrasada'),
+L('LOC-0027', 'Pedro Henrique', 'Cajueiro', 'MAR-001 Martelete', '30/10 a 02/11', 'R$ 320', 'Na obra'),
+L('LOC-0026', 'Rafael Lima', 'Atalaia', 'MAR-006 Esmerilhadeira', '30/10 a 02/11', 'R$ 200', 'Na obra'),
+L('LOC-0029', 'José Carlos', 'Capela', 'MAR-002 Martelo demolidor', '02/11 a 08/11', 'R$ 700', 'Confirmada'),
+L('LOC-0030', 'Antônio Ferreira', 'Cajueiro', 'Andaime, 8 peças', '02/11 a 16/11', 'R$ 240', 'Confirmada'),
+L('LOC-0032', 'Maria do Carmo', 'Viçosa', 'MAR-017 Aspirador', '02/11 a 03/11', 'R$ 80', 'Confirmada'),
+L('LOC-0031', 'Ana Paula', 'Cajueiro', 'Carrocinha', '03/11', 'R$ 80', 'Aguardando sinal'),
+L('LOC-0033', 'Cícero Santos', 'Viçosa', 'Pistola de pintura e andaime', '07/11 a 10/11', 'R$ 296', 'Orçamento')
+];
+const abas = [['Abertas · 8', true], ['Encerradas', false], ['Demanda perdida · 3', false]].map(([label, s]) => ({ label, sel: s ? 'true' : 'false', bg: s ? '#FBF6EC' : 'transparent' }));
+const perdidas = [
+{ item: 'Betoneira', motivo: 'Não temos no estoque', quando: '2 pedidos · Capela e Atalaia' },
+{ item: 'Lavadora de alta pressão', motivo: 'Não temos no estoque', quando: '1 pedido · Cajueiro' },
+{ item: 'Martelo demolidor', motivo: 'Ocupado no período pedido', quando: '1 pedido · Viçosa' }
+];
+return {
+D, T, P, notP: !P,
+dir: P ? 'column' : 'row',
+minH: h ? h + 'px' : '100vh',
+pad: D ? '32px 40px 48px' : (T ? '28px 28px 40px' : '16px 16px 28px'),
+cardPad: P ? '16px' : '20px',
+h1: P ? '28px' : '36px',
+cols: D ? '100px minmax(0, 1.2fr) minmax(0, 1.6fr) 120px 170px' : '84px minmax(0, 1fr) minmax(0, 1.3fr) 80px 150px',
+perdCols: D ? 'repeat(3, minmax(0, 1fr))' : 'minmax(0, 1fr)',
+linhas, abas, perdidas
+};
+}
+}
+</script>
+</body>
+</html>

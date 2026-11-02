@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Unidade MAR-002</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: {{dir}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}"><div style="flex: none; width: 248px; background: #13294B"><dc-import name="Nav" bp="desktop" active="estoque" hint-size="248px,900px"></dc-import></div></sc-if>
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}"><div style="flex: none; width: 88px; background: #13294B"><dc-import name="Nav" bp="tablet" active="estoque" hint-size="88px,900px"></dc-import></div></sc-if>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px">
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="display: flex; align-items: center; gap: 10px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="32" height="32" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg><span style="font-stretch: 125%; font-weight: 800; font-size: 16px; letter-spacing: 0.02em">MARINHO</span></span><span role="img" aria-label="Lucas" style="width: 36px; height: 36px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">L</span></div></sc-if>
+
+<header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<a href="Estoque.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 14px; font-weight: 600; color: #13294B; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Estoque</a>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px"><h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: {{h1}}; line-height: 1.1; text-transform: uppercase; color: #13294B">MAR-002</h1><span style="display: inline-flex; align-items: center; min-height: 28px; padding: 0 12px; border-radius: 999px; background: #DCE3EE; color: #13294B; font-size: 14px; font-weight: 700">Separado</span></div>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #5E544C">Martelo demolidor Bosch GSH 500 · sai hoje às 08:00 na LOC-0029</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1.5px solid #13294B; background: #FBF6EC; color: #13294B; font-family: inherit; font-weight: 700; font-size: 15px">Mudar status</button>
+<button type="button" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1.5px solid #13294B; background: #FBF6EC; color: #13294B; font-family: inherit; font-weight: 700; font-size: 15px">Editar</button>
+</div>
+</header>
+
+<div style="display: grid; grid-template-columns: {{layoutCols}}; gap: 24px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section aria-label="Fotos da unidade" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 12px">
+<div style="aspect-ratio: 4 / 3; border-radius: 12px; background: #F2E8D7; border: 1.5px dashed #C2B39A; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; font-size: 14px; color: #5E544C">[FOTO: foto de entrada da unidade, de lado, no fundo claro]</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{fotos}}" as="f" hint-placeholder-count="4">
+<div style="aspect-ratio: 1; border-radius: 8px; background: #F2E8D7; border: 1px dashed #C2B39A; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; color: #5E544C">{{f}}</div>
+</sc-for>
+</div>
+</section>
+<section aria-labelledby="ficha" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 6px">
+<h2 id="ficha" style="margin: 0 0 8px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Ficha</h2>
+<dl style="margin: 0; display: flex; flex-direction: column">
+<sc-for list="{{ficha}}" as="r" hint-placeholder-count="8">
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid #E6DAC6; font-size: 15px"><dt style="color: #5E544C">{{r.k}}</dt><dd style="margin: 0; font-weight: 700; text-align: right">{{r.v}}</dd></div>
+</sc-for>
+</dl>
+</section>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+<section aria-labelledby="num" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px"><h2 id="num" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Quanto rendeu</h2><span style="font-stretch: 75%; font-weight: 700; font-size: 11px; line-height: 14px; padding: 1px 6px; border-radius: 4px; border: 1px solid #B4532A; color: #B4532A">F2</span></div>
+<div style="display: grid; grid-template-columns: {{numCols}}; gap: 12px">
+<sc-for list="{{numeros}}" as="n" hint-placeholder-count="4">
+<div style="background: #FBF6EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: #5E544C">{{n.k}}</span><b style="font-stretch: 75%; font-size: 24px; line-height: 28px">{{n.v}}</b></div>
+</sc-for>
+</div>
+<div style="background: #FBF6EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; justify-content: space-between; gap: 12px; font-size: 14px"><span style="color: #5E544C">Já pagou do valor de compra</span><b>[—]</b></span>
+<span style="height: 10px; border-radius: 5px; background: #EFE6D6"></span>
+<span style="font-size: 13px; color: #5E544C">Aparece quando o valor de compra for cadastrado: [VALOR DE COMPRA].</span>
+</div>
+</section>
+
+<section aria-labelledby="hist" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 4px">
+<h2 id="hist" style="margin: 0 0 8px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Locações desta unidade</h2>
+<sc-for list="{{historico}}" as="l" hint-placeholder-count="3">
+<a href="Locacao.dc.html" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-height: 52px; padding: 10px 0; border-top: 1px solid #E6DAC6; text-decoration: none; color: #13294B">
+<b style="flex: none; width: 84px; font-size: 14px">{{l.num}}</b>
+<span style="flex: 1 1 160px; display: flex; flex-direction: column"><span style="font-size: 15px; font-weight: 600">{{l.cliente}}</span><span style="font-size: 13px; color: #5E544C">{{l.periodo}}</span></span>
+<b style="font-size: 15px">{{l.valor}}</b>
+</a>
+</sc-for>
+</section>
+
+<section aria-labelledby="danos" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 10px">
+<h2 id="danos" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Danos que já tinha</h2>
+<div style="display: flex; gap: 12px; align-items: center"><span style="flex: none; width: 56px; height: 56px; border-radius: 8px; background: #F2E8D7; border: 1px dashed #C2B39A; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #5E544C">[FOTO]</span><span style="display: flex; flex-direction: column"><b style="font-size: 15px">Risco na lateral esquerda</b><span style="font-size: 13px; color: #5E544C">Registrado na catalogação, 20/10 · não se cobra do cliente</span></span></div>
+<button type="button" style="align-self: flex-start; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1.5px solid #13294B; background: transparent; color: #13294B; font-family: inherit; font-weight: 700; font-size: 15px">Registrar dano</button>
+</section>
+</div>
+</div>
+
+</main>
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="position: sticky; bottom: 0; background: #13294B"><dc-import name="Nav" bp="phone" active="estoque" hint-size="390px,76px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+const ficha = [
+{ k: 'Tipo', v: 'Martelo demolidor 5 kg' }, { k: 'Diária', v: 'R$ 100' }, { k: 'Caução', v: '[CAUÇÃO]' },
+{ k: 'Voltagem', v: '[CONFERIR]' }, { k: 'Nº de série', v: '[Nº DE SÉRIE]' }, { k: 'Acessórios', v: 'Maleta · [ACESSÓRIOS]' },
+{ k: 'Dono', v: '[PAI OU EMPRESA]' }, { k: 'Etiqueta aplicada', v: 'Sim' }
+];
+const numeros = [
+{ k: 'Locações', v: '2' }, { k: 'Dias alugados', v: '4' }, { k: 'Receita', v: 'R$ 400' }, { k: 'Manutenção', v: 'R$ 0' }
+];
+const historico = [
+{ num: 'LOC-0029', cliente: 'José Carlos', periodo: '02/11 a 08/11 · sai hoje', valor: 'R$ 700' },
+{ num: 'LOC-0021', cliente: 'Antônio Ferreira', periodo: '26/10 a 27/10', valor: 'R$ 200' },
+{ num: 'LOC-0015', cliente: 'Pedro Henrique', periodo: '22/10 a 23/10', valor: 'R$ 200' }
+];
+return {
+D, T, P, notP: !P,
+dir: P ? 'column' : 'row',
+minH: h ? h + 'px' : '100vh',
+pad: D ? '32px 40px 48px' : (T ? '28px 28px 40px' : '16px 16px 28px'),
+cardPad: P ? '16px' : '20px',
+h1: P ? '28px' : '36px',
+layoutCols: D ? 'minmax(0, 1fr) minmax(0, 1.2fr)' : 'minmax(0, 1fr)',
+numCols: P ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+fotos: ['Frente', 'Verso', 'Placa', 'Nº de série'],
+ficha, numeros, historico
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Agenda</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: {{dir}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}"><div style="flex: none; width: 248px; background: #13294B"><dc-import name="Nav" bp="desktop" active="agenda" hint-size="248px,900px"></dc-import></div></sc-if>
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}"><div style="flex: none; width: 88px; background: #13294B"><dc-import name="Nav" bp="tablet" active="agenda" hint-size="88px,900px"></dc-import></div></sc-if>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px">
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="display: flex; align-items: center; gap: 10px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="32" height="32" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg><span style="font-stretch: 125%; font-weight: 800; font-size: 16px; letter-spacing: 0.02em">MARINHO</span></span><span role="img" aria-label="Lucas" style="width: 36px; height: 36px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">L</span></div></sc-if>
+
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: {{h1}}; line-height: 1.1; text-transform: uppercase; color: #13294B">Agenda</h1>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #5E544C">Veja o que está livre no período e reserve na hora.</p>
+</header>
+
+<form aria-label="Consultar disponibilidade" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: grid; grid-template-columns: {{searchCols}}; gap: 16px; align-items: end">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Equipamento<input type="text" value="Martelete ou demolidor" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Saída<input type="text" value="Sáb, 07/11 · 08:00" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Devolução<input type="text" value="Ter, 10/11 · 17:00" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+<button type="button" style="min-height: 48px; padding: 0 20px; border: none; border-radius: 10px; background: #13294B; color: #FBF6EC; font-family: inherit; font-weight: 700; font-size: 15px">Ver disponibilidade</button>
+</form>
+
+<section aria-labelledby="res" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding-bottom: 8px"><h2 id="res" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Resultado</h2><span style="font-size: 14px; color: #5E544C">07/11 a 10/11 · 4 diárias</span></div>
+<sc-for list="{{resultados}}" as="r" hint-placeholder-count="2">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 16px 0; border-top: 1px solid #E6DAC6">
+<span style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 4px"><b style="font-size: 16px; line-height: 22px">{{r.nome}}</b><span style="font-size: 14px; color: #5E544C">{{r.detalhe}}</span></span>
+<span style="display: inline-flex; align-items: center; min-height: 28px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 700; background: {{r.chipBg}}; color: {{r.chipFg}}">{{r.status}}</span>
+<span style="flex: 0 0 auto; min-width: 140px; font-size: 15px; font-weight: 700">{{r.valor}}</span>
+<a href="{{r.href}}" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; background: {{r.btnBg}}; color: {{r.btnFg}}; border: 1.5px solid #13294B">{{r.acao}}</a>
+</div>
+</sc-for>
+</section>
+
+<section aria-labelledby="cal" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px">
+<h2 id="cal" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase">Próximos dias</h2>
+<div style="display: flex; gap: 8px"><button type="button" aria-label="Dias anteriores" style="width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid #8C8070; background: #FBF6EC; color: #13294B; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button><button type="button" aria-label="Próximos dias" style="width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid #8C8070; background: #FBF6EC; color: #13294B; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></div>
+</div>
+<div style="display: grid; grid-template-columns: {{gridCols}}; gap: 4px; align-items: end">
+<span style="font-size: 13px; color: #5E544C; padding-bottom: 4px">Equipamento</span>
+<sc-for list="{{dias}}" as="d" hint-placeholder-count="7">
+<span style="display: flex; flex-direction: column; align-items: center; padding: 4px 0; border-radius: 6px; background: {{d.bg}}; font-size: 12px; line-height: 15px; color: #5E544C">{{d.dia}}<b style="font-size: 14px; color: #13294B">{{d.num}}</b></span>
+</sc-for>
+</div>
+<sc-for list="{{linhas}}" as="l" hint-placeholder-count="10">
+<div style="display: grid; grid-template-columns: {{gridCols}}; gap: 4px; align-items: center">
+<span style="min-width: 0; display: flex; flex-direction: column; padding-right: 8px"><b style="font-size: 14px; line-height: 18px">{{l.cod}}</b><sc-if value="{{l.showNome}}" hint-placeholder-val="{{true}}"><span style="font-size: 13px; line-height: 17px; color: #5E544C; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{l.nome}}</span></sc-if></span>
+<sc-for list="{{l.cells}}" as="c" hint-placeholder-count="7">
+<span style="height: 34px; border-radius: 6px; background: {{c.bg}}; color: {{c.fg}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">{{c.txt}}</span>
+</sc-for>
+</div>
+</sc-for>
+<div style="display: flex; flex-wrap: wrap; gap: 10px 20px; padding-top: 12px; border-top: 1px solid #E6DAC6">
+<sc-for list="{{legenda}}" as="g" hint-placeholder-count="6">
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #13294B"><span aria-hidden="true" style="width: 18px; height: 14px; border-radius: 4px; background: {{g.bg}}; border: 1px solid #D8CBB3"></span>{{g.label}}</span>
+</sc-for>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: #5E544C">Toque num dia livre para começar uma reserva. No andaime, o número é de peças livres.</p>
+</section>
+
+</main>
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="position: sticky; bottom: 0; background: #13294B"><dc-import name="Nav" bp="phone" active="agenda" hint-size="390px,76px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+const n = D ? 14 : (T ? 7 : 5);
+const nomes = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const dias = [];
+for (let i = 0; i < n; i++) {
+const dia = nomes[i % 7];
+dias.push({ dia, num: String(2 + i).padStart(2, '0'), bg: dia === 'Dom' ? '#EFE6D6' : 'transparent' });
+}
+const COR = {
+'.': ['#F7F1E6', '#13294B'], a: ['#13294B', '#FBF6EC'], r: ['#6E86AE', '#FFFFFF'], s: ['#C9D2DF', '#13294B'],
+m: ['#B4532A', '#FFFFFF'], i: ['#A89A84', '#FFFFFF'], x: ['#8A3A1A', '#FFFFFF']
+};
+const linha = (cod, nome, mapa) => ({
+cod, nome, showNome: !P,
+cells: mapa.slice(0, n).split('').map((k) => ({ bg: COR[k][0], fg: COR[k][1], txt: k === 'x' ? '!' : '' }))
+});
+const andaime = {
+cod: 'Andaime', nome: '20 peças', showNome: !P,
+cells: Array.from({ length: n }, (_, i) => (i >= 5 && i <= 8) ? { bg: '#C9D2DF', fg: '#13294B', txt: '0' } : { bg: '#F7F1E6', fg: '#2E4F2E', txt: '12' })
+};
+const linhas = [
+linha('MAR-001', 'Martelete Bosch', 'a.............'),
+linha('MAR-002', 'Martelo demolidor', 'aaaaaaa.......'),
+linha('MAR-003', 'Furadeira DeWalt', '.....rr.......'),
+linha('MAR-004', 'Furadeira Black+Decker', '..............'),
+linha('MAR-006', 'Esmerilhadeira Bosch', 'a.............'),
+linha('MAR-008', 'Serra mármore Makita', 'x.............'),
+linha('MAR-010', 'Serra circular 1.100 W', 'i.............'),
+linha('MAR-011', 'Serra tico-tico', 'mmmm..........'),
+linha('MAR-015', 'Pistola de pintura', '.....ssss.....'),
+linha('MAR-017', 'Aspirador WAP', 'aa............'),
+linha('Carrocinha', 'reboque', '.s............'),
+andaime
+];
+const legenda = [
+['#F7F1E6', 'Livre'], ['#13294B', 'Alugado'], ['#6E86AE', 'Reservado'], ['#C9D2DF', 'Aguardando sinal'],
+['#A89A84', 'Em inspeção'], ['#B4532A', 'Em manutenção'], ['#8A3A1A', 'Atrasado']
+].map(([bg, label]) => ({ bg, label }));
+const resultados = [
+{ nome: 'MAR-001 · Martelete Bosch GBH 2-28 D', detalhe: 'Fura e quebra concreto · SDS-plus', status: 'Livre no período', chipBg: '#E2EADF', chipFg: '#2E4F2E', valor: 'R$ 80 × 4 = R$ 320', acao: 'Reservar', href: 'NovaLocacao.dc.html', btnBg: '#13294B', btnFg: '#FBF6EC' },
+{ nome: 'MAR-002 · Martelo demolidor Bosch GSH 500', detalhe: 'Com José Carlos (LOC-0029) até 08/11', status: 'Livre a partir de 09/11', chipBg: '#F7DCCF', chipFg: '#8A3A1A', valor: 'R$ 100 por dia', acao: 'Registrar demanda perdida', href: 'Locacoes.dc.html', btnBg: '#FBF6EC', btnFg: '#13294B' }
+];
+return {
+D, T, P, notP: !P,
+dir: P ? 'column' : 'row',
+minH: h ? h + 'px' : '100vh',
+pad: D ? '32px 40px 48px' : (T ? '28px 28px 40px' : '16px 16px 28px'),
+cardPad: P ? '16px' : '20px',
+h1: P ? '28px' : '36px',
+searchCols: D ? 'minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto' : (T ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)'),
+gridCols: (D ? '200px' : (T ? '170px' : '92px')) + ' repeat(' + n + ', minmax(0, 1fr))',
+dias, linhas, legenda, resultados
+};
+}
+}
+</script>
+</body>
+</html>

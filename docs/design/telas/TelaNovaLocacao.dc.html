@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Nova locação</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: flex; flex-direction: {{dir}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}"><div style="flex: none; width: 248px; background: #13294B"><dc-import name="Nav" bp="desktop" active="locacoes" hint-size="248px,900px"></dc-import></div></sc-if>
+<sc-if value="{{T}}" hint-placeholder-val="{{false}}"><div style="flex: none; width: 88px; background: #13294B"><dc-import name="Nav" bp="tablet" active="locacoes" hint-size="88px,900px"></dc-import></div></sc-if>
+<main style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px">
+
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><span style="display: flex; align-items: center; gap: 10px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="32" height="32" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg><span style="font-stretch: 125%; font-weight: 800; font-size: 16px; letter-spacing: 0.02em">MARINHO</span></span><span role="img" aria-label="Lucas" style="width: 36px; height: 36px; border-radius: 50%; background: #13294B; color: #FBF6EC; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px">L</span></div></sc-if>
+
+<header style="display: flex; flex-direction: column; gap: 6px">
+<a href="Locacoes.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 14px; font-weight: 600; color: #13294B; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Locações</a>
+<h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: {{h1}}; line-height: 1.1; text-transform: uppercase; color: #13294B">Nova locação</h1>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #5E544C">Monte o orçamento. Depois de enviado, as unidades ficam seguras por 24 horas.</p>
+</header>
+
+<div style="display: grid; grid-template-columns: {{layoutCols}}; gap: 24px; align-items: start">
+<form aria-label="Orçamento" style="display: flex; flex-direction: column; gap: 20px; min-width: 0">
+
+<section aria-labelledby="s1" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 14px">
+<h2 id="s1" style="margin: 0; display: flex; align-items: center; gap: 10px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 8px; background: #13294B; color: #FBF6EC; display: inline-flex; align-items: center; justify-content: center; font-size: 15px">1</span>Cliente</h2>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Buscar por nome ou telefone<input type="search" value="Cícero" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 16px; border-radius: 10px; border: 2px solid #13294B; background: #FFFFFF">
+<span aria-hidden="true" style="flex: none; width: 44px; height: 44px; border-radius: 50%; background: #F2E8D7; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px">CS</span>
+<span style="flex: 1 1 180px; display: flex; flex-direction: column; gap: 2px"><b style="font-size: 16px">Cícero Santos</b><span style="font-size: 14px; color: #5E544C">Pintor · Viçosa · indicado por loja parceira</span></span>
+<span style="display: inline-flex; align-items: center; min-height: 26px; padding: 0 10px; border-radius: 999px; background: #DCE3EE; color: #13294B; font-size: 13px; font-weight: 700">Cliente novo</span>
+</div>
+<p style="margin: 0; padding: 12px 14px; border-radius: 10px; background: #F7DCCF; color: #8A3A1A; font-size: 14px; line-height: 20px">Primeira locação: falta receber o documento com foto e o CPF antes da entrega.</p>
+<a href="Cliente.dc.html" style="align-self: flex-start; font-size: 14px; font-weight: 600; color: #13294B">Cadastrar outro cliente</a>
+</section>
+
+<section aria-labelledby="s2" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 14px">
+<h2 id="s2" style="margin: 0; display: flex; align-items: center; gap: 10px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 8px; background: #13294B; color: #FBF6EC; display: inline-flex; align-items: center; justify-content: center; font-size: 15px">2</span>Período</h2>
+<div style="display: grid; grid-template-columns: {{twoCols}}; gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Saída<input type="text" value="Sáb, 07/11/2026 · 08:00" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Devolução<input type="text" value="Ter, 10/11/2026 · 17:00" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+</div>
+<p style="margin: 0; font-size: 15px"><b>4 diárias</b> <span style="color: #5E544C">· sábado a terça</span></p>
+</section>
+
+<section aria-labelledby="s3" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 8px">
+<h2 id="s3" style="margin: 0 0 6px; display: flex; align-items: center; gap: 10px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 8px; background: #13294B; color: #FBF6EC; display: inline-flex; align-items: center; justify-content: center; font-size: 15px">3</span>Equipamentos</h2>
+<sc-for list="{{itens}}" as="it" hint-placeholder-count="2">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 14px 0; border-top: 1px solid #E6DAC6">
+<span style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 4px"><b style="font-size: 16px; line-height: 22px">{{it.nome}}</b><span style="font-size: 14px; color: #2E4F2E; font-weight: 600">{{it.livre}}</span></span>
+<span style="flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px; min-width: 150px"><span style="font-size: 14px; color: #5E544C">{{it.conta}}</span><b style="font-size: 16px">{{it.valor}}</b></span>
+<span style="flex: 0 0 auto; font-size: 14px; color: #5E544C">Caução <b style="color: #13294B">[CAUÇÃO]</b></span>
+<button type="button" aria-label="Tirar {{it.nome}}" style="width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid #8C8070; background: transparent; color: #13294B; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+</sc-for>
+<button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1.5px dashed #13294B; background: transparent; color: #13294B; font-family: inherit; font-weight: 700; font-size: 15px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Adicionar equipamento</button>
+</section>
+
+<section aria-labelledby="s4" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 14px">
+<h2 id="s4" style="margin: 0; display: flex; align-items: center; gap: 10px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 8px; background: #13294B; color: #FBF6EC; display: inline-flex; align-items: center; justify-content: center; font-size: 15px">4</span>Entrega</h2>
+<fieldset style="margin: 0; padding: 0; border: none; display: grid; grid-template-columns: {{twoCols}}; gap: 12px">
+<legend style="padding: 0 0 8px; font-size: 14px; font-weight: 600">Como o equipamento chega</legend>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border-radius: 10px; border: 2px solid #13294B; background: #FFFFFF; font-size: 15px; font-weight: 600"><input type="radio" name="entrega" checked style="width: 20px; height: 20px; accent-color: #13294B">Entrega e coleta na obra</label>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border-radius: 10px; border: 1.5px solid #8C8070; background: #FFFFFF; font-size: 15px; font-weight: 600"><input type="radio" name="entrega" style="width: 20px; height: 20px; accent-color: #13294B">Cliente busca e devolve</label>
+</fieldset>
+<div style="display: grid; grid-template-columns: {{twoCols}}; gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Endereço da obra<input type="text" value="[ENDEREÇO DA OBRA], Viçosa" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Localização (link do pino)<input type="url" placeholder="Cole o link que o cliente mandou" style="min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+</div>
+<p style="margin: 0; font-size: 14px; color: #5E544C">Taxa de entrega para Viçosa: <b style="color: #13294B">[TAXA]</b></p>
+</section>
+
+<section aria-labelledby="s5" style="background: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 14px">
+<h2 id="s5" style="margin: 0; display: flex; align-items: center; gap: 10px; font-stretch: 75%; font-weight: 800; font-size: 20px; line-height: 24px; text-transform: uppercase"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 8px; background: #13294B; color: #FBF6EC; display: inline-flex; align-items: center; justify-content: center; font-size: 15px">5</span>Observações</h2>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Para quem entrega e para o termo<textarea rows="3" style="box-sizing: border-box; padding: 12px 14px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; line-height: 22px; color: #13294B; resize: vertical">Pintura da fachada. Montar o andaime com 2 níveis na frente da casa.</textarea></label>
+</section>
+</form>
+
+<aside aria-labelledby="resumo" style="background: #13294B; color: #FBF6EC; border-radius: 14px; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 14px">
+<h2 id="resumo" style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 22px; line-height: 26px; text-transform: uppercase; color: #FBF6EC">Resumo</h2>
+<dl style="margin: 0; display: flex; flex-direction: column">
+<sc-for list="{{resumo}}" as="r" hint-placeholder-count="5">
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid #1F3B68; font-size: 15px"><dt style="color: #C9D2DF">{{r.k}}</dt><dd style="margin: 0; font-weight: 700">{{r.v}}</dd></div>
+</sc-for>
+</dl>
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px"><span style="font-size: 16px; font-weight: 700">Total</span><span style="font-stretch: 75%; font-weight: 800; font-size: 28px">R$ 296 + [TAXA]</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 10px; background: #1F3B68; font-size: 14px; line-height: 20px">
+<span style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #C9D2DF">Sinal para reservar</span><b>[SINAL]</b></span>
+<span style="display: flex; justify-content: space-between; gap: 12px"><span style="color: #C9D2DF">Caução, devolvida depois</span><b>[CAUÇÃO]</b></span>
+</div>
+<button type="button" style="min-height: 52px; border: none; border-radius: 10px; background: #E58A5F; color: #13294B; font-family: inherit; font-weight: 800; font-size: 16px">Salvar e enviar orçamento</button>
+<button type="button" style="min-height: 48px; border-radius: 10px; border: 1.5px solid #C9D2DF; background: transparent; color: #FBF6EC; font-family: inherit; font-weight: 700; font-size: 15px">Salvar rascunho</button>
+<p style="margin: 0; font-size: 13px; line-height: 19px; color: #C9D2DF">O preço fica congelado quando o sinal entra. Sem sinal em 24 horas, a agenda libera as unidades.</p>
+</aside>
+</div>
+
+</main>
+<sc-if value="{{P}}" hint-placeholder-val="{{false}}"><div style="position: sticky; bottom: 0; background: #13294B"><dc-import name="Nav" bp="phone" active="locacoes" hint-size="390px,76px"></dc-import></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+const itens = [
+{ nome: 'MAR-015 · Pistola de pintura a bateria Yankee Ferr', livre: 'Livre no período', conta: 'R$ 50 × 4 diárias', valor: 'R$ 200' },
+{ nome: 'Andaime · 12 peças', livre: 'Livres no período: 12 das 20 peças', conta: 'R$ 2 × 12 peças × 4 diárias', valor: 'R$ 96' }
+];
+const resumo = [
+{ k: 'Pistola de pintura', v: 'R$ 200' },
+{ k: 'Andaime, 12 peças', v: 'R$ 96' },
+{ k: 'Entrega e coleta', v: '[TAXA]' },
+{ k: 'Desconto', v: 'R$ 0' }
+];
+return {
+D, T, P, notP: !P,
+dir: P ? 'column' : 'row',
+minH: h ? h + 'px' : '100vh',
+pad: D ? '32px 40px 48px' : (T ? '28px 28px 40px' : '16px 16px 28px'),
+cardPad: P ? '16px' : '24px',
+h1: P ? '28px' : '36px',
+layoutCols: D ? 'minmax(0, 1fr) 380px' : 'minmax(0, 1fr)',
+twoCols: P ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))',
+itens, resumo
+};
+}
+}
+</script>
+</body>
+</html>

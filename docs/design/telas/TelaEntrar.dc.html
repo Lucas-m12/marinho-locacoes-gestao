@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Entrar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="display: grid; grid-template-columns: {{cols}}; min-height: {{minH}}; background: #F2E8D7; font-family: 'Archivo', sans-serif; color: #13294B">
+
+<sc-if value="{{D}}" hint-placeholder-val="{{true}}">
+<div style="background: #13294B; color: #FBF6EC; padding: 64px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px">
+<div style="display: flex; align-items: center; gap: 16px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="64" height="64" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#FBF6EC"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#13294B" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#B4532A"></rect></svg>
+<span style="display: flex; flex-direction: column"><span style="font-stretch: 125%; font-weight: 800; font-size: 30px; line-height: 32px; letter-spacing: 0.02em">MARINHO</span><span style="font-stretch: 75%; font-weight: 700; font-size: 15px; letter-spacing: 0.28em; color: #E58A5F">LOCAÇÕES</span></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 16px; max-width: 520px">
+<p style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 56px; line-height: 1.02; text-transform: uppercase">Alugue o que sua obra precisa.</p>
+<p style="margin: 0; font-size: 18px; line-height: 27px; color: #C9D2DF">Sistema de gestão da locadora: agenda, estoque, locações e dinheiro num lugar só.</p>
+</div>
+<div style="display: flex; height: 8px; max-width: 320px"><span style="flex-grow: 3; background: #FBF6EC"></span><span style="flex-grow: 1; background: #E58A5F"></span></div>
+</div>
+</sc-if>
+
+<div style="display: flex; align-items: center; justify-content: center; padding: {{pad}}">
+<div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 28px">
+<sc-if value="{{notD}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 14px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 84 84" width="52" height="52" aria-hidden="true"><rect x="6" y="6" width="84" height="84" rx="14" fill="#13294B"></rect><path d="M27 68V26L48 51L69 26V68" fill="none" stroke="#FBF6EC" stroke-width="10" stroke-linejoin="miter"></path><rect x="20" y="72" width="56" height="7" fill="#E58A5F"></rect></svg>
+<span style="display: flex; flex-direction: column"><span style="font-stretch: 125%; font-weight: 800; font-size: 24px; line-height: 26px; letter-spacing: 0.02em">MARINHO</span><span style="font-stretch: 75%; font-weight: 700; font-size: 13px; letter-spacing: 0.28em; color: #8A3A1A">LOCAÇÕES</span></span>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-stretch: 75%; font-weight: 800; font-size: 36px; line-height: 1.1; text-transform: uppercase">Entrar</h1>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: #5E544C">Use o e-mail e a senha que o Lucas criou para você.</p>
+</div>
+<form aria-label="Entrar no sistema" style="display: flex; flex-direction: column; gap: 18px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">E-mail<input type="email" autocomplete="email" placeholder="seu@email.com" style="min-height: 52px; box-sizing: border-box; padding: 0 16px; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 16px; color: #13294B"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600">Senha<span style="display: flex; align-items: center; min-height: 52px; box-sizing: border-box; border: 1.5px solid #8C8070; border-radius: 10px; background: #FFFFFF"><input type="password" autocomplete="current-password" value="senha123" style="flex-grow: 1; min-width: 0; height: 48px; padding: 0 16px; border: none; outline: none; background: transparent; font-family: inherit; font-size: 16px; color: #13294B"><button type="button" style="min-height: 44px; margin-right: 4px; padding: 0 12px; border: none; border-radius: 8px; background: transparent; color: #13294B; font-family: inherit; font-weight: 700; font-size: 14px">Mostrar</button></span></label>
+<label style="display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 15px"><input type="checkbox" checked style="width: 22px; height: 22px; accent-color: #13294B">Continuar conectado neste aparelho</label>
+<a href="Painel.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 10px; background: #13294B; color: #FBF6EC; font-weight: 800; font-size: 16px; text-decoration: none">Entrar</a>
+<a href="#" style="align-self: center; font-size: 15px; font-weight: 600; color: #13294B">Esqueci a senha</a>
+</form>
+<p style="margin: 0; padding-top: 16px; border-top: 1px solid #DCCFB8; font-size: 13px; line-height: 19px; color: #5E544C">Acesso só para a família. Cada pessoa tem o próprio login.</p>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"bp":{"editor":"enum","options":["desktop","tablet","phone"],"default":"desktop"},"h":{"editor":null},"$preview":{"width":1440,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() {
+const bp = this.props.bp || 'desktop';
+const D = bp === 'desktop', T = bp === 'tablet', P = bp === 'phone';
+const h = this.props.h;
+return {
+D, T, P, notD: !D,
+minH: h ? h + 'px' : '100vh',
+cols: D ? 'minmax(0, 1.1fr) minmax(0, 1fr)' : 'minmax(0, 1fr)',
+pad: D ? '64px' : (T ? '64px 48px' : '32px 20px')
+};
+}
+}
+</script>
+</body>
+</html>
