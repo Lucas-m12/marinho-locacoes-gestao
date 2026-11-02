@@ -36,13 +36,43 @@ export function addEvent(
 	});
 }
 
+type LedgerLinks = "paymentId" | "pairId" | "reversalOfId" | "reversalReason";
+
 export function postLedger(
 	db: MockDb,
-	entry: Omit<LedgerRecord, "id">,
+	entry: Omit<LedgerRecord, "id" | LedgerLinks> &
+		Partial<Pick<LedgerRecord, LedgerLinks>>,
 ): LedgerRecord {
-	const record = { ...entry, id: nextId(db, "led") };
+	const record: LedgerRecord = {
+		paymentId: null,
+		pairId: null,
+		reversalOfId: null,
+		reversalReason: null,
+		...entry,
+		id: nextId(db, "led"),
+	};
 	db.ledger.push(record);
 	return record;
+}
+
+export function once<T>(
+	db: MockDb,
+	actor: SessionUser,
+	procedure: string,
+	key: string,
+	run: () => T,
+): T {
+	const slot = `${actor.id}:${procedure}:${key}`;
+	if (slot in db.idempotency) return db.idempotency[slot] as T;
+	const result = run();
+	db.idempotency[slot] = result;
+	return result;
+}
+
+export function hasPaidSignal(rental: RentalRecord): boolean {
+	return rental.payments.some(
+		(payment) => payment.kind === "SIGNAL" && payment.reversedAt === null,
+	);
 }
 
 export function moveRental(rental: RentalRecord, to: RentalStatus): void {
@@ -63,10 +93,7 @@ export function expireSignals(db: MockDb, now: Date): void {
 			rental.status === "AWAITING_DEPOSIT" &&
 			rental.signalDueAt !== null &&
 			toMs(rental.signalDueAt) <= now.getTime();
-		const signalPaid = rental.payments.some(
-			(payment) => payment.kind === "SIGNAL",
-		);
-		if (overdue && !signalPaid) {
+		if (overdue && !hasPaidSignal(rental)) {
 			moveRental(rental, "EXPIRED");
 			addEvent(
 				db,
@@ -127,13 +154,15 @@ export function recordPayment(
 		receiptFileKey?: string | null;
 	},
 ): void {
+	const paymentId = nextId(db, "pay");
 	rental.payments.push({
-		id: nextId(db, "pay"),
+		id: paymentId,
 		kind: payment.kind,
 		amountCents: payment.amountCents,
 		method: payment.method,
 		paidAt: payment.paidAt,
 		recordedBy: actor.name,
+		reversedAt: null,
 	});
 	if (payment.kind === "SIGNAL") freezePrices(db, rental, payment.paidAt);
 
@@ -151,6 +180,7 @@ export function recordPayment(
 		receiptFileKey: payment.receiptFileKey ?? null,
 		recordedBy: actor.name,
 		maintenanceNumber: null,
+		paymentId,
 	});
 	addEvent(
 		db,

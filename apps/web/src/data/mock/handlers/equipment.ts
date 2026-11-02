@@ -10,6 +10,7 @@ import {
 	countDailies,
 	matchesSearch,
 	nextCode,
+	signedAmountCents,
 	sumCents,
 	toMs,
 	unitStatusMachine,
@@ -179,7 +180,7 @@ function unitDetail(db: MockDb, unit: UnitRecord, now: Date): UnitDetail {
 						(entry) =>
 							entry.unitCode === unit.code && entry.category === "MAINTENANCE",
 					)
-					.map((entry) => entry.amountCents),
+					.map(signedAmountCents),
 			),
 		},
 		rentals: related.map((rental) => ({

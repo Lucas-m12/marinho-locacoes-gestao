@@ -18,15 +18,15 @@ import { authGateway, InvalidCredentialsError } from "@/data/auth";
 import { isMockSource } from "@/data/source";
 
 const SignInSchema = z.object({
-	email: z.email("Informe um e-mail válido"),
+	username: z.string().trim().min(1, "Informe o usuário"),
 	password: z.string().min(1, "Informe a senha"),
-	remember: z.boolean(),
+	rememberMe: z.boolean(),
 });
 
 const MOCK_ACCESSES = [
-	["Gestão", "lucas@marinho.local"],
-	["Atendimento", "atendimento@marinho.local"],
-	["Equipamentos", "equipamentos@marinho.local"],
+	["Gestão", "lucas"],
+	["Atendimento", "atendimento"],
+	["Equipamentos", "equipamentos"],
 ] as const;
 
 export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
@@ -35,14 +35,12 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 	const [showPassword, setShowPassword] = useState(false);
 
 	const form = useForm({
-		defaultValues: { email: "", password: "", remember: true },
+		defaultValues: { username: "", password: "", rememberMe: true },
 		validators: { onSubmit: SignInSchema },
 		onSubmit: async ({ value }) => {
 			setSubmitError(null);
 			try {
-				await authGateway.signIn(value.email, value.password, {
-					remember: value.remember,
-				});
+				await authGateway.signIn(value);
 				await navigate({ to: redirectTo ?? "/painel" });
 			} catch (error) {
 				setSubmitError(
@@ -79,7 +77,7 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 					<div className="flex flex-col gap-1.5">
 						<h1 className="type-title text-4xl/[1.1]">Entrar</h1>
 						<p className="text-muted-foreground text-base/6">
-							Use o e-mail e a senha que o Lucas criou para você.
+							Use o usuário e a senha que o Lucas criou para você.
 						</p>
 					</div>
 
@@ -97,17 +95,18 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 									<AlertDescription>{submitError}</AlertDescription>
 								</Alert>
 							)}
-							<form.Field name="email">
+							<form.Field name="username">
 								{(field) => {
 									const invalid = field.state.meta.errors.length > 0;
 									return (
 										<Field data-invalid={invalid}>
-											<FieldLabel htmlFor={field.name}>E-mail</FieldLabel>
+											<FieldLabel htmlFor={field.name}>Usuário</FieldLabel>
 											<Input
 												id={field.name}
-												type="email"
-												autoComplete="email"
-												placeholder="seu@email.com"
+												autoComplete="username"
+												autoCapitalize="none"
+												autoCorrect="off"
+												spellCheck={false}
 												className="h-[52px] px-4"
 												value={field.state.value}
 												onBlur={field.handleBlur}
@@ -170,7 +169,7 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 								}}
 							</form.Field>
 
-							<form.Field name="remember">
+							<form.Field name="rememberMe">
 								{(field) => (
 									<Field orientation="horizontal" className="min-h-11">
 										<Checkbox
@@ -200,7 +199,7 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 								variant="ghost"
 								className="self-center underline underline-offset-2"
 								onClick={() =>
-									toast.info("Fale com o Lucas para criar uma nova senha.")
+									toast.info("Peça ao Lucas para redefinir sua senha.")
 								}
 							>
 								Esqueci a senha
@@ -211,9 +210,9 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 					{isMockSource && (
 						<div className="bg-card flex flex-col gap-1 rounded-lg p-3.5 text-sm/5">
 							<b>Acessos de demonstração (senha marinho123)</b>
-							{MOCK_ACCESSES.map(([role, email]) => (
-								<span key={email} className="text-muted-foreground">
-									{role}: {email}
+							{MOCK_ACCESSES.map(([role, username]) => (
+								<span key={username} className="text-muted-foreground">
+									{role}: {username}
 								</span>
 							))}
 						</div>

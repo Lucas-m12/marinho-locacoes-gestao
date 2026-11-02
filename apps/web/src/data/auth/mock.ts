@@ -6,7 +6,7 @@ import { readJson, removeKey, writeJson } from "@/data/mock/storage";
 import { type AuthGateway, InvalidCredentialsError } from "./types";
 
 const SESSION_KEY = "marinho:mock:session";
-const SESSION_HOURS = 24 * 30;
+const SESSION_HOURS = 24 * 90;
 
 type StoredSession = { userId: string; expiresAt: string };
 
@@ -28,7 +28,7 @@ export function readMockSession(): Session | null {
 		user: {
 			id: user.id,
 			name: user.name,
-			email: user.email,
+			username: user.username,
 			role: user.role,
 		},
 		expiresAt: stored.expiresAt,
@@ -40,10 +40,10 @@ export function createMockAuthGateway(): AuthGateway {
 		async getSession() {
 			return readMockSession();
 		},
-		async signIn(email, password, options) {
+		async signIn({ username, password, rememberMe }) {
 			const user = getDb().users.find(
 				(entry) =>
-					entry.email.toLowerCase() === email.trim().toLowerCase() &&
+					entry.username === username.trim().toLowerCase() &&
 					entry.password === password,
 			);
 			if (!user) throw new InvalidCredentialsError();
@@ -54,11 +54,7 @@ export function createMockAuthGateway(): AuthGateway {
 			};
 			removeKey("session", SESSION_KEY);
 			removeKey("local", SESSION_KEY);
-			writeJson(
-				options?.remember === false ? "session" : "local",
-				SESSION_KEY,
-				stored,
-			);
+			writeJson(rememberMe ? "local" : "session", SESSION_KEY, stored);
 
 			const session = readMockSession();
 			if (!session) throw new InvalidCredentialsError();

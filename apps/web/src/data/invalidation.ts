@@ -55,6 +55,7 @@ const AFFECTED: Record<string, Module[]> = {
 	"deposits.recordRefund": MONEY_FLOW,
 	"deposits.recordRetention": MONEY_FLOW,
 	"ledger.create": ["ledger", "dashboard", "equipment", "maintenance"],
+	"ledger.reverse": [...MONEY_FLOW, "maintenance"],
 	"maintenance.open": ["maintenance", "equipment", "availability", "dashboard"],
 	"maintenance.complete": [
 		"maintenance",
@@ -65,7 +66,7 @@ const AFFECTED: Record<string, Module[]> = {
 	],
 	"settings.update": ["settings", "equipment", "availability", "rentals"],
 	"users.create": ["users"],
-	"users.update": ["users"],
+	"users.setRole": ["users"],
 };
 
 export function invalidateAfter(

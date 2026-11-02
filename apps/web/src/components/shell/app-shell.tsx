@@ -103,9 +103,11 @@ function Sidebar({ user }: { user: SessionUser }) {
 				<UserAvatar user={user} />
 				<span className="flex min-w-0 grow flex-col">
 					<span className="truncate text-[15px] font-bold">{user.name}</span>
-					<span className="text-on-navy-muted text-[13px]">
-						{ROLE_LABELS[user.role]}
-					</span>
+					{user.name !== ROLE_LABELS[user.role] && (
+						<span className="text-on-navy-muted text-[13px]">
+							{ROLE_LABELS[user.role]}
+						</span>
+					)}
 				</span>
 				<button
 					type="button"

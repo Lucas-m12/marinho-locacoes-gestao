@@ -78,6 +78,10 @@ export function rentalChargesCents(rental: RentalRecord): number {
 	);
 }
 
+export function activePayments(rental: RentalRecord) {
+	return rental.payments.filter((payment) => payment.reversedAt === null);
+}
+
 export function rentalBalance(db: MockDb, rental: RentalRecord): number {
 	return rentalBalanceCents({
 		totalCents: rentalTotalCents(db, rental),
@@ -85,6 +89,6 @@ export function rentalBalance(db: MockDb, rental: RentalRecord): number {
 			0,
 			rentalChargesCents(rental) - rental.deposit.retainedCents,
 		),
-		payments: rental.payments,
+		payments: activePayments(rental),
 	});
 }

@@ -38,7 +38,19 @@ No mock, `uploadUrl` é `mock-upload://<fileKey>`. O `UploadService` reconhece o
 
 ## Autenticação
 
-`AuthGateway` (`getSession`, `signIn`, `signOut`) tem duas implementações: mock e `better-auth/react`. Em `http`, `getSession` chama `authClient.getSession()` e depois `session.me`, então **`session.me` precisa devolver `user.role`**. O login do `better-auth` precisa estar configurado com cookie e `CORS_ORIGIN` para a origem do front, porque o `RPCLink` usa `credentials: "include"`.
+`AuthGateway` (`getSession`, `signIn({ username, password, rememberMe })`, `signOut`) tem duas implementações: mock e `better-auth/react`. Em `http`:
+
+- `signIn` chama `authClient.signIn.username`, então o servidor precisa dos plugins `username` e `admin`. O cliente já usa `usernameClient()` e `adminClient()`.
+- `getSession` chama `authClient.getSession()` e depois `session.me`, então **`session.me` precisa devolver `user.username` e `user.role`**.
+- O cookie e o `CORS_ORIGIN` precisam aceitar a origem do front, porque o `RPCLink` usa `credentials: "include"`.
+- Sessão de 90 dias. Sem cadastro público e sem recuperação de senha por e-mail: quem redefine é a gestão.
+- O e-mail interno (`<usuario>@marinho.local`) existe só porque o Better Auth exige. Não aparece no contrato nem na interface.
+
+## Idempotência
+
+`rentals.recordPayment`, `deposits.*`, `ledger.create` e `ledger.reverse` recebem `idempotencyKey`. O front gera uma chave por formulário (`useIdempotencyKey`): toque duplo e nova tentativa depois de uma falha mandam a mesma chave, e a chave só muda depois de um sucesso.
+
+Se a chave já existir para o mesmo usuário e procedimento, devolva a resposta guardada sem executar de novo. Tentativa que falhou não consome a chave.
 
 ## Erros que as telas esperam
 
@@ -61,10 +73,11 @@ Permissões vêm de `packages/domain/src/permissions.ts`. Regras puras vêm de `
 
 | Procedimento | Permissão | Comportamento |
 | --- | --- | --- |
-| `session.me` | sessão | Devolve usuário com `role` e `expiresAt` |
-| `users.list` | `users:manage` | Lista sem senha |
-| `users.create` | `users:manage` | Cria o acesso. E-mail repetido dá `DUPLICATE`. Não há cadastro público |
-| `users.update` | `users:manage` | Muda o papel |
+| `session.me` | sessão | Devolve usuário com `username`, `role` e `expiresAt` |
+| `users.list` | `users:manage` | Nome, usuário e papel. Sem senha e sem e-mail |
+| `users.create` | `users:manage` | Plugin `admin`. Usuário repetido dá `DUPLICATE`. Gera o e-mail interno `<usuario>@marinho.local`. Não há cadastro público |
+| `users.setRole` | `users:manage` | Plugin `admin` |
+| `users.setPassword` | `users:manage` | Plugin `admin`. O front gera ou recebe a senha e a mostra uma vez |
 
 ### dashboard
 
@@ -110,7 +123,7 @@ Reservas que ocupam a agenda são as locações em `holdsBooking(status)`. Item 
 | `rentals.list`, `get`, `copyQuoteText` | `rentals:read` | Abertas: atrasadas, na obra e depois por saída. "Atrasada" é derivada, nunca gravada |
 | `rentals.createQuote` | `rentals:sell` | Recusa tipo sem preço. Com `send: true`, faz tudo de forma atômica: se houver conflito, nada é criado |
 | `rentals.sendQuote` | `rentals:sell` | `QUOTE → AWAITING_DEPOSIT`, segura as unidades e define `signalDueAt` |
-| `rentals.recordPayment` | `money:write` | Lança no caixa. `SIGNAL` congela os preços dos itens |
+| `rentals.recordPayment` | `money:write` | Idempotente. Lança no caixa. `SIGNAL` congela os preços dos itens |
 | `rentals.confirm` | `rentals:sell` | Exige sinal registrado |
 | `rentals.markSeparated` | `rentals:separate` | Unidades vão para Separado |
 | `rentals.previewExtend`, `extend` | `rentals:sell` | Confere a agenda sem contar a própria locação e recalcula o total |
@@ -119,7 +132,7 @@ Reservas que ocupam a agenda são as locações em `holdsBooking(status)`. Item 
 | `rentals.recordLostDemand` | `lostDemand:write` | Registra o pedido não atendido |
 | `rentals.listLostDemand` | `rentals:read` | Registros e grupos por item e motivo |
 
-Antes do sinal, os preços acompanham a tabela. Orçamento `AWAITING_DEPOSIT` com prazo vencido e sem sinal vira `EXPIRED` e libera a agenda: no mock isso roda a cada chamada, no backend precisa de job ou checagem na leitura. **A recusa de reserva dupla precisa ser garantida no banco** com `EXCLUDE constraint`, incluindo a folga.
+Antes do sinal, os preços acompanham a tabela. Orçamento `AWAITING_DEPOSIT` com prazo vencido e sem sinal vira `EXPIRED` e libera a agenda. Isso é calculado na leitura e não depende de tarefa agendada. **A recusa de reserva dupla precisa ser garantida no banco** com `EXCLUDE constraint`, incluindo a folga.
 
 ### inspections
 
@@ -137,16 +150,27 @@ Antes do sinal, os preços acompanham a tabela. Orçamento `AWAITING_DEPOSIT` co
 
 | Procedimento | Permissão | Comportamento |
 | --- | --- | --- |
-| `deposits.recordReceived`, `recordRefund` | `money:write` | Movimentam só a conta `DEPOSIT`. Devolução acima do que está em mãos dá `INSUFFICIENT_DEPOSIT` |
-| `deposits.recordRetention` | `money:write` | Exige motivo. Lança saída na conta `DEPOSIT` e entrada na `CASH`, e abate cobranças em aberto |
+| `deposits.recordReceived`, `recordRefund` | `money:write` | Idempotentes. Movimentam só a conta `DEPOSIT`. Devolução acima do que está em mãos dá `INSUFFICIENT_DEPOSIT` |
+| `deposits.recordRetention` | `money:write` | Idempotente. Exige motivo. Lança saída na conta `DEPOSIT` e entrada na `CASH`, ligadas entre si, e abate cobranças em aberto |
 
 ### ledger
 
 | Procedimento | Permissão | Comportamento |
 | --- | --- | --- |
 | `ledger.list`, `byCategory`, `depositSummary` | `money:read` | `byCategory` só conta `CASH` |
-| `ledger.create` | `money:write` | Sempre na conta `CASH` |
+| `ledger.create` | `money:write` | Idempotente. Sempre na conta `CASH` |
+| `ledger.reverse` | `money:write` | Idempotente. Veja abaixo |
+| `ledger.exportCsv` | `money:read` | `{ month: "AAAA-MM" }` devolve `{ fileName, content }`. Use `ledgerCsv` de `packages/domain`. Só a conta `CASH` entra |
 | `ledger.receivables` | `money:read` | Saldos, cobranças e atraso sugerido, este marcado `provisional` e fora de `totalCents` |
+
+**Estorno.** Lançamentos nunca são editados nem apagados. `ledger.reverse({ entryId, reason, idempotencyKey })` cria um lançamento inverso com `reversalOfId`, na mesma conta e categoria:
+
+- Estornar algo já estornado ou um estorno devolve `PRECONDITION_FAILED` (`ALREADY_REVERSED`, `IS_REVERSAL`).
+- Totais usam `ledgerTotals` e `signedAmountCents`: o estorno de uma entrada abate "entrou", sem somar em "saiu".
+- Lançamento de pagamento marca o pagamento como estornado, e o saldo da locação volta. Sinal estornado volta a exigir sinal.
+- Lançamento de caução ajusta a caução da locação. Caução recebida já devolvida não pode ser estornada (`INSUFFICIENT_DEPOSIT`).
+- Retenção tem dois lançamentos, um em cada conta. Estornar qualquer um desfaz os dois.
+- Manutenção volta a contar o valor como não lançado na ordem.
 
 ### maintenance
 

@@ -28,6 +28,7 @@ import type {
 import { notFound } from "./errors";
 import { fileRefOf } from "./queries";
 import {
+	activePayments,
 	itemPrice,
 	rentalBalance,
 	rentalChargesCents,
@@ -337,11 +338,13 @@ export function rentalView(
 		deliveryFeeCents: rental.deliveryFeeCents,
 		discountCents: rental.discountCents,
 		chargesCents: rentalChargesCents(rental),
-		paidCents: sumCents(rental.payments.map((payment) => payment.amountCents)),
+		paidCents: sumCents(
+			activePayments(rental).map((payment) => payment.amountCents),
+		),
 		balanceCents: rentalBalance(db, rental),
 		signalRequiredCents: signalRequired(db, totals.totalCents),
 		signalPaidCents: sumCents(
-			rental.payments
+			activePayments(rental)
 				.filter((payment) => payment.kind === "SIGNAL")
 				.map((payment) => payment.amountCents),
 		),

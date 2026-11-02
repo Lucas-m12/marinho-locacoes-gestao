@@ -31,6 +31,7 @@ import {
 } from "@/components/form/fields";
 import { orpc } from "@/data/client";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { describeError, isLocallyHandled, showLocalError } from "@/lib/errors";
 import { dailiesLabel, formatDate, money } from "@/lib/format";
 import { PAYMENT_KIND_LABELS, PAYMENT_METHOD_LABELS } from "@/lib/labels";
@@ -108,6 +109,7 @@ function suggestedAmount(rental: Rental, kind: PaymentKind): number | null {
 
 export function PaymentDialog({ rental, open, onOpenChange }: DialogProps) {
 	const record = useMutation(orpc.rentals.recordPayment.mutationOptions());
+	const [idempotencyKey, renewKey] = useIdempotencyKey();
 	const [kind, setKind] = useState(suggestedKind(rental));
 	const [amount, setAmount] = useState(
 		suggestedAmount(rental, suggestedKind(rental)),
@@ -126,8 +128,10 @@ export function PaymentDialog({ rental, open, onOpenChange }: DialogProps) {
 				kind,
 				amountCents: amount,
 				method,
+				idempotencyKey,
 			});
 			toast.success(`${PAYMENT_KIND_LABELS[kind]} registrado.`);
+			renewKey();
 			setError(null);
 			onOpenChange(false);
 		} catch (mutationError) {
@@ -216,6 +220,7 @@ export function DepositDialog({
 	const receive = useMutation(orpc.deposits.recordReceived.mutationOptions());
 	const refund = useMutation(orpc.deposits.recordRefund.mutationOptions());
 	const retain = useMutation(orpc.deposits.recordRetention.mutationOptions());
+	const [idempotencyKey, renewKey] = useIdempotencyKey();
 	const held = rental.deposit.heldCents;
 	const [amount, setAmount] = useState<number | null>(null);
 	const [method, setMethod] = useState<PaymentMethod>("PIX");
@@ -241,7 +246,11 @@ export function DepositDialog({
 			setError("Informe o motivo da retenção.");
 			return;
 		}
-		const movement = { rentalNumber: rental.number, amountCents: value };
+		const movement = {
+			rentalNumber: rental.number,
+			amountCents: value,
+			idempotencyKey,
+		};
 		try {
 			if (action === "receive") {
 				await receive.mutateAsync({ ...movement, method });
@@ -251,6 +260,7 @@ export function DepositDialog({
 				await retain.mutateAsync({ ...movement, reason });
 			}
 			toast.success("Caução atualizada.");
+			renewKey();
 			close();
 		} catch (mutationError) {
 			if (isLocallyHandled(mutationError)) {

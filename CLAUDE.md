@@ -40,6 +40,9 @@ Regras que valem sempre:
 - Cada mutation declara o que invalida em `data/invalidation.ts`.
 - `CONFLICT`, `INVALID_TRANSITION` e `PRECONDITION_FAILED` são tratados na própria tela. O resto vira toast global em `lib/query-client.ts`.
 - Papéis e permissões ficam em `packages/domain/src/permissions.ts`. Menu, rotas e mock usam a mesma tabela.
+- Login é por nome de usuário. O e-mail interno (`<usuario>@marinho.local`) existe só no modelo: não entra no contrato nem na interface.
+- Lançamentos nunca são editados nem apagados: erro se corrige com `ledger.reverse`. Totais passam por `ledgerTotals` e `signedAmountCents`, para o estorno abater o lançamento original.
+- Toda mutation de dinheiro recebe `idempotencyKey`. No front, use `useIdempotencyKey()`, uma chave por formulário. No mock, envolva o handler em `once()`.
 
 ## Trocar mock por backend real
 
@@ -64,6 +67,7 @@ Nenhuma tela muda. O valor é resolvido em tempo de build (`define` em `vite.con
 
 - Código e identificadores em inglês. Interface e rotas em pt-BR.
 - Dinheiro sempre em centavos inteiros (`amountCents`). Na tela, use `money()` ou `<Money />`.
+- A caução fica na conta `DEPOSIT` e nunca entra no CSV do contador. Só a parte retida gera entrada em `CASH`.
 - Datas em ISO 8601 com fuso. O fuso de negócio é `America/Maceio`; formate com `lib/format.ts`.
 - IDs internos são `string`. Códigos de negócio são campos próprios: `LOC-0001`, `MAR-001`, `OS-001`.
 - Valor que o negócio não definiu é `null` no schema e aparece como "a definir" (`<ToDefine />` ou `<Money />`). Não invente valores.

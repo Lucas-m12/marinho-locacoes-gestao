@@ -33,7 +33,6 @@ import {
 	OCCURRENCE_KIND_LABELS,
 	PAYMENT_KIND_LABELS,
 	PAYMENT_METHOD_LABELS,
-	ROLE_LABELS,
 } from "@/lib/labels";
 import { useCopyQuoteText } from "./copy-quote";
 import {
@@ -78,7 +77,11 @@ function stepsOf(rental: Rental, now: Date): Step[] {
 		},
 		{
 			name: "Sinal pago",
-			when: stamped(rental.payments[0]?.paidAt ?? null, "falta o sinal"),
+			when: stamped(
+				rental.payments.find((payment) => payment.reversedAt === null)
+					?.paidAt ?? null,
+				"falta o sinal",
+			),
 			state: state(1),
 		},
 		{
@@ -394,9 +397,7 @@ function HistoryCard({ rental }: { rental: Rental }) {
 							{event.message}
 						</span>
 						<span className="text-muted-foreground text-[13px]">
-							{event.actorRole
-								? `${event.actorName} · ${ROLE_LABELS[event.actorRole]}`
-								: event.actorName}
+							{event.actorName}
 						</span>
 					</span>
 				</div>
@@ -420,20 +421,36 @@ function PaymentsCard({ rental }: { rental: Rental }) {
 				</h2>
 				<b className="type-condensed text-2xl">{money(rental.totalCents)}</b>
 			</div>
-			{rental.payments.map((payment) => (
-				<div key={payment.id} className="flex items-center gap-3 border-t py-3">
-					<span className="flex grow flex-col">
-						<b className="text-[15px]">
-							{PAYMENT_KIND_LABELS[payment.kind]} · {money(payment.amountCents)}
-						</b>
-						<span className="text-muted-foreground text-[13px]">
-							{PAYMENT_METHOD_LABELS[payment.method]} ·{" "}
-							{formatDate(payment.paidAt)}
+			{rental.payments.map((payment) => {
+				const reversed = payment.reversedAt !== null;
+				return (
+					<div
+						key={payment.id}
+						className="flex items-center gap-3 border-t py-3"
+					>
+						<span className="flex grow flex-col">
+							<b
+								className={cn(
+									"text-[15px]",
+									reversed && "text-muted-foreground line-through",
+								)}
+							>
+								{PAYMENT_KIND_LABELS[payment.kind]} ·{" "}
+								{money(payment.amountCents)}
+							</b>
+							<span className="text-muted-foreground text-[13px]">
+								{PAYMENT_METHOD_LABELS[payment.method]} ·{" "}
+								{formatDate(payment.paidAt)}
+							</span>
 						</span>
-					</span>
-					<StatusChip tone="available">Pago</StatusChip>
-				</div>
-			))}
+						{reversed ? (
+							<StatusChip tone="waiting">Estornado</StatusChip>
+						) : (
+							<StatusChip tone="available">Pago</StatusChip>
+						)}
+					</div>
+				);
+			})}
 			{rental.balanceCents > 0 && (
 				<div className="flex items-center gap-3 border-t py-3">
 					<span className="flex grow flex-col">

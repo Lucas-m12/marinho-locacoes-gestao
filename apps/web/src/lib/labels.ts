@@ -11,17 +11,20 @@ import type {
 	DeliveryMode,
 	DocumentKind,
 	LedgerAccount,
-	LedgerCategory,
 	MaintenanceLocation,
 	MaintenanceStatus,
 	OccurrenceDecision,
 	OccurrenceKind,
 	PaymentKind,
-	PaymentMethod,
 	RentalDisplayStatus,
 	Role,
 	UnitPhotoSlot,
 	UnitStatus,
+} from "@marinho-gestao/domain";
+
+export {
+	LEDGER_CATEGORY_LABELS,
+	PAYMENT_METHOD_LABELS,
 } from "@marinho-gestao/domain";
 
 export const ROLE_LABELS: Record<Role, string> = {
@@ -88,11 +91,6 @@ export const DELIVERY_MODE_LABELS: Record<DeliveryMode, string> = {
 	PICKUP: "Cliente busca e devolve",
 };
 
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-	PIX: "Pix",
-	CASH: "Dinheiro",
-};
-
 export const PAYMENT_KIND_LABELS: Record<PaymentKind, string> = {
 	SIGNAL: "Sinal",
 	BALANCE: "Saldo",
@@ -117,24 +115,6 @@ export const OCCURRENCE_DECISION_LABELS: Record<OccurrenceDecision, string> = {
 export const LEDGER_ACCOUNT_LABELS: Record<LedgerAccount, string> = {
 	CASH: "Caixa",
 	DEPOSIT: "Caução",
-};
-
-export const LEDGER_CATEGORY_LABELS: Record<LedgerCategory, string> = {
-	RENTAL: "Locações",
-	DELIVERY: "Entrega e coleta",
-	CONSUMABLE_SOLD: "Consumíveis vendidos",
-	EXTRA_FEES: "Diárias extras e taxas",
-	DEPOSIT_RETAINED: "Caução retida",
-	OTHER_IN: "Outras entradas",
-	EQUIPMENT_PURCHASE: "Compra de equipamento",
-	MAINTENANCE: "Manutenção",
-	FUEL: "Combustível",
-	ADVERTISING: "Anúncio",
-	CONSUMABLE_BOUGHT: "Consumíveis comprados",
-	OTHER_OUT: "Outras saídas",
-	DEPOSIT_RECEIVED: "Caução recebida",
-	DEPOSIT_REFUNDED: "Caução devolvida",
-	DEPOSIT_TO_CASH: "Caução retida",
 };
 
 export const MAINTENANCE_STATUS_LABELS: Record<MaintenanceStatus, string> = {
@@ -207,6 +187,9 @@ export const PRECONDITION_MESSAGES: Record<PreconditionReason, string> = {
 	INSUFFICIENT_DEPOSIT: "O valor é maior do que a caução em mãos.",
 	CUSTOMER_BLOCKED: "Este cliente está bloqueado e não pode alugar agora.",
 	INVALID_DATE: "Confira as datas informadas.",
-	DUPLICATE: "Já existe um cadastro com esses dados.",
+	DUPLICATE:
+		"Já existe um cadastro com esses dados. Se for um usuário, escolha outro nome.",
 	UPLOAD_MISSING: "O arquivo não chegou. Envie de novo.",
+	ALREADY_REVERSED: "Este lançamento já foi estornado.",
+	IS_REVERSAL: "Um estorno não pode ser estornado.",
 };

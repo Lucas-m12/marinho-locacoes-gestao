@@ -33,6 +33,7 @@ import {
 import { validateWith } from "@/components/form/validate";
 import { UploadSlot } from "@/components/upload-slot";
 import { orpc } from "@/data/client";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { LEDGER_CATEGORY_LABELS, PAYMENT_METHOD_LABELS } from "@/lib/labels";
 
 const COPY: Record<LedgerDirection, { title: string; description: string }> = {
@@ -58,6 +59,7 @@ export function LedgerEntryDialog({
 		orpc.rentals.list.queryOptions({ input: { tab: "OPEN" } }),
 	);
 	const units = useQuery(orpc.equipment.listUnits.queryOptions({ input: {} }));
+	const [idempotencyKey] = useIdempotencyKey();
 	const [receipt, setReceipt] = useState<FileRef | null>(null);
 	const [uploading, setUploading] = useState(false);
 
@@ -75,6 +77,7 @@ export function LedgerEntryDialog({
 			rentalNumber: null as string | null,
 			unitCode: null as string | null,
 			receiptFileKey: null as string | null,
+			idempotencyKey,
 		},
 		validators: { onSubmit: validateWith(CreateLedgerEntryInput) },
 		onSubmit: async ({ value }) => {

@@ -5,7 +5,7 @@ import { Id, IsoDateTime, Role } from "../common";
 export const SessionUser = z.object({
 	id: Id,
 	name: z.string(),
-	email: z.email(),
+	username: z.string(),
 	role: Role,
 });
 export type SessionUser = z.infer<typeof SessionUser>;

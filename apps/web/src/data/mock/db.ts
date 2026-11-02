@@ -31,15 +31,16 @@ import type {
 } from "@marinho-gestao/domain";
 import { calendarDay } from "@marinho-gestao/domain";
 import { mockNow } from "./clock";
-import { buildSeed } from "./seed";
-import { readJson, writeText } from "./storage";
+import { buildSeed, MOCK_DB_VERSION } from "./seed";
+import { readJson, removeKey, writeText } from "./storage";
 
-export const MOCK_DB_VERSION = 1;
 export const MOCK_DB_KEY = `marinho:mock:v${MOCK_DB_VERSION}`;
+const OLD_DB_KEYS = ["marinho:mock:v1"];
 
 export type UserRecord = {
 	id: string;
 	name: string;
+	username: string;
 	email: string;
 	role: Role;
 	password: string;
@@ -151,6 +152,7 @@ export type PaymentRecord = {
 	method: PaymentMethod;
 	paidAt: string;
 	recordedBy: string;
+	reversedAt: string | null;
 };
 
 export type DepositRecord = {
@@ -252,6 +254,10 @@ export type LedgerRecord = {
 	receiptFileKey: string | null;
 	recordedBy: string;
 	maintenanceNumber: string | null;
+	paymentId: string | null;
+	pairId: string | null;
+	reversalOfId: string | null;
+	reversalReason: string | null;
 };
 
 export type MaintenanceRecord = {
@@ -309,12 +315,14 @@ export type MockDb = {
 	settings: SettingsRecord;
 	files: Record<string, FileRef>;
 	pendingUploads: Record<string, PendingUpload>;
+	idempotency: Record<string, unknown>;
 };
 
 let current: MockDb | null = null;
 let lastSaved = "";
 
 function load(): MockDb {
+	for (const key of OLD_DB_KEYS) removeKey("local", key);
 	const stored = readJson<MockDb>("local", MOCK_DB_KEY);
 	const today = calendarDay(mockNow());
 	const usable =

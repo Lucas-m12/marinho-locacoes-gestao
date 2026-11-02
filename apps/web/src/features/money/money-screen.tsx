@@ -1,12 +1,25 @@
 import type {
 	CategoryTotal,
+	ExportCsvOutput,
 	LedgerEntry,
 	Receivable,
 	ReceivableKind,
 } from "@marinho-gestao/contract";
-import type { LedgerDirection } from "@marinho-gestao/domain";
+import { calendarDay, type LedgerDirection } from "@marinho-gestao/domain";
 import { Button } from "@marinho-gestao/ui/components/button";
 import { Card } from "@marinho-gestao/ui/components/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@marinho-gestao/ui/components/dialog";
+import {
+	NativeSelect,
+	NativeSelectOption,
+} from "@marinho-gestao/ui/components/native-select";
 import { Skeleton } from "@marinho-gestao/ui/components/skeleton";
 import {
 	Tabs,
@@ -14,12 +27,22 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "@marinho-gestao/ui/components/tabs";
+import { Textarea } from "@marinho-gestao/ui/components/textarea";
 import { cn } from "@marinho-gestao/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { HandCoins, Minus, Plus, ReceiptText } from "lucide-react";
+import {
+	Download,
+	HandCoins,
+	Minus,
+	Plus,
+	ReceiptText,
+	Undo2,
+} from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
+import { FieldShell } from "@/components/form/fields";
 import { KpiCard } from "@/components/kpi-card";
 import {
 	EmptyState,
@@ -27,8 +50,12 @@ import {
 	ListSkeleton,
 	PageHeader,
 } from "@/components/page";
+import { StatusChip } from "@/components/status-chip";
 import { orpc } from "@/data/client";
-import { formatDate, money } from "@/lib/format";
+import { useCan } from "@/features/auth/use-current-user";
+import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
+import { describeError, isLocallyHandled } from "@/lib/errors";
+import { formatDate, formatMonthYear, money } from "@/lib/format";
 import { LEDGER_CATEGORY_LABELS, PAYMENT_METHOD_LABELS } from "@/lib/labels";
 import { last30Days } from "@/lib/periods";
 import { LedgerEntryDialog } from "./ledger-entry-dialog";
@@ -48,8 +75,16 @@ const RECEIVABLE_LABELS: Record<ReceivableKind, string> = {
 	LATE: "dias de atraso",
 };
 
-function EntryRow({ entry }: { entry: LedgerEntry }) {
+function EntryRow({
+	entry,
+	onReverse,
+}: {
+	entry: LedgerEntry;
+	onReverse?: () => void;
+}) {
 	const isIn = entry.direction === "IN";
+	const reversed = entry.reversedById !== null;
+	const isReversal = entry.reversalOfId !== null;
 	const link = entry.unitCode ?? entry.rentalNumber;
 	return (
 		<div className="flex min-h-[60px] items-center gap-3.5 border-t py-2.5">
@@ -65,7 +100,14 @@ function EntryRow({ entry }: { entry: LedgerEntry }) {
 				{isIn ? "+" : "−"}
 			</span>
 			<span className="flex min-w-0 grow flex-col gap-0.5">
-				<b className="text-[15px]/[21px]">{entry.description}</b>
+				<b
+					className={cn(
+						"text-[15px]/[21px]",
+						reversed && "text-muted-foreground line-through",
+					)}
+				>
+					{entry.reversalReason ?? entry.description}
+				</b>
 				<span className="text-muted-foreground text-[13px]">
 					{[
 						LEDGER_CATEGORY_LABELS[entry.category],
@@ -75,12 +117,30 @@ function EntryRow({ entry }: { entry: LedgerEntry }) {
 						.filter(Boolean)
 						.join(" · ")}
 				</span>
+				{reversed && (
+					<StatusChip tone="waiting" size="sm" className="self-start">
+						Estornado
+					</StatusChip>
+				)}
+				{isReversal && (
+					<StatusChip
+						tone="waiting"
+						size="sm"
+						className="self-start py-0.5 whitespace-normal"
+					>
+						Estorno de {entry.reversalOfDescription}
+					</StatusChip>
+				)}
 			</span>
 			<span className="flex flex-none flex-col items-end gap-0.5">
 				<b
 					className={cn(
 						"text-[15px]",
-						isIn ? "text-positive" : "text-alert-foreground",
+						reversed
+							? "text-muted-foreground line-through"
+							: isIn
+								? "text-positive"
+								: "text-alert-foreground",
 					)}
 				>
 					{isIn ? "+" : "−"} {money(entry.amountCents)}
@@ -89,7 +149,161 @@ function EntryRow({ entry }: { entry: LedgerEntry }) {
 					{formatDate(entry.occurredAt)}
 				</span>
 			</span>
+			{onReverse && (
+				<Button
+					variant="ghost"
+					size="xs"
+					className="flex-none px-2.5"
+					aria-label={`Estornar ${entry.description}`}
+					onClick={onReverse}
+				>
+					<Undo2 aria-hidden />
+					<span className="hidden md:inline">Estornar</span>
+				</Button>
+			)}
 		</div>
+	);
+}
+
+function ReverseDialog({
+	entry,
+	onClose,
+}: {
+	entry: LedgerEntry;
+	onClose: () => void;
+}) {
+	const reverse = useMutation(orpc.ledger.reverse.mutationOptions());
+	const [idempotencyKey] = useIdempotencyKey();
+	const [reason, setReason] = useState("");
+	const [error, setError] = useState<string | null>(null);
+
+	const submit = async () => {
+		if (reason.trim().length < 3) {
+			setError("Informe o motivo do estorno.");
+			return;
+		}
+		try {
+			await reverse.mutateAsync({
+				entryId: entry.id,
+				reason,
+				idempotencyKey,
+			});
+			toast.success("Lançamento estornado.");
+			onClose();
+		} catch (mutationError) {
+			if (isLocallyHandled(mutationError)) {
+				setError(describeError(mutationError));
+			}
+		}
+	};
+
+	return (
+		<Dialog open onOpenChange={(open) => !open && onClose()}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Estornar lançamento</DialogTitle>
+					<DialogDescription>
+						{entry.description} · {money(entry.amountCents)}. O lançamento não é
+						apagado: entra um inverso, ligado a ele.
+					</DialogDescription>
+				</DialogHeader>
+				<FieldShell label="Motivo" errors={error ? [error] : []}>
+					{({ id, invalid, describedBy }) => (
+						<Textarea
+							id={id}
+							value={reason}
+							onChange={(event) => setReason(event.target.value)}
+							aria-invalid={invalid}
+							aria-describedby={describedBy}
+						/>
+					)}
+				</FieldShell>
+				<DialogFooter>
+					<Button type="button" variant="outline" onClick={onClose}>
+						Voltar
+					</Button>
+					<Button
+						type="button"
+						variant="destructive"
+						disabled={reverse.isPending}
+						onClick={submit}
+					>
+						Estornar
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+const EXPORTABLE_MONTHS = 12;
+
+function recentMonths(now: Date): string[] {
+	const [year = 0, month = 1] = calendarDay(now).split("-").map(Number);
+	return Array.from({ length: EXPORTABLE_MONTHS }, (_, index) => {
+		const date = new Date(Date.UTC(year, month - 1 - index, 1));
+		return date.toISOString().slice(0, 7);
+	});
+}
+
+function downloadCsv({ fileName, content }: ExportCsvOutput) {
+	const url = URL.createObjectURL(
+		new Blob([content], { type: "text/csv;charset=utf-8" }),
+	);
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = fileName;
+	link.click();
+	setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function ExportDialog({ onClose }: { onClose: () => void }) {
+	const months = recentMonths(new Date());
+	const [month, setMonth] = useState(months[0] ?? "");
+	const exportCsv = useMutation(orpc.ledger.exportCsv.mutationOptions());
+
+	const submit = async () => {
+		const file = await exportCsv.mutateAsync({ month });
+		downloadCsv(file);
+		toast.success(`${file.fileName} baixado.`);
+		onClose();
+	};
+
+	return (
+		<Dialog open onOpenChange={(open) => !open && onClose()}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Exportar mês</DialogTitle>
+					<DialogDescription>
+						Arquivo do caixa para o contador. A caução fica de fora, porque não
+						é faturamento.
+					</DialogDescription>
+				</DialogHeader>
+				<FieldShell label="Mês">
+					{({ id }) => (
+						<NativeSelect
+							id={id}
+							value={month}
+							onChange={(event) => setMonth(event.target.value)}
+						>
+							{months.map((option) => (
+								<NativeSelectOption key={option} value={option}>
+									{formatMonthYear(option)}
+								</NativeSelectOption>
+							))}
+						</NativeSelect>
+					)}
+				</FieldShell>
+				<DialogFooter>
+					<Button type="button" variant="outline" onClick={onClose}>
+						Cancelar
+					</Button>
+					<Button type="button" disabled={exportCsv.isPending} onClick={submit}>
+						Baixar CSV
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 }
 
@@ -103,6 +317,8 @@ function EntriesCard({
 	const entries = useQuery(
 		orpc.ledger.list.queryOptions({ input: { account, ...range } }),
 	);
+	const canWrite = useCan("money:write");
+	const [reversing, setReversing] = useState<LedgerEntry | null>(null);
 	const [showAll, setShowAll] = useState(false);
 	const rows = entries.data?.entries ?? [];
 	const visible = showAll ? rows : rows.slice(0, VISIBLE_ENTRIES);
@@ -130,8 +346,21 @@ function EntriesCard({
 				/>
 			)}
 			{visible.map((entry) => (
-				<EntryRow key={entry.id} entry={entry} />
+				<EntryRow
+					key={entry.id}
+					entry={entry}
+					onReverse={
+						canWrite &&
+						entry.reversedById === null &&
+						entry.reversalOfId === null
+							? () => setReversing(entry)
+							: undefined
+					}
+				/>
 			))}
+			{reversing && (
+				<ReverseDialog entry={reversing} onClose={() => setReversing(null)} />
+			)}
 			{visible.length < rows.length && (
 				<Button
 					variant="secondary"
@@ -197,9 +426,10 @@ function CategoriesCard({ range }: { range: { from: string; to: string } }) {
 }
 
 function ReceivableRow({ item }: { item: Receivable }) {
+	const balanceWhen = item.delivered ? "em aberto" : "na entrega";
 	const when =
 		item.kind === "BALANCE"
-			? `${RECEIVABLE_LABELS.BALANCE} na entrega`
+			? `${RECEIVABLE_LABELS.BALANCE} ${balanceWhen}`
 			: RECEIVABLE_LABELS[item.kind];
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-[15px]">
@@ -336,6 +566,7 @@ export function MoneyScreen({
 }) {
 	const tab: Tab = search.conta ?? "caixa";
 	const [direction, setDirection] = useState<LedgerDirection | null>(null);
+	const [exporting, setExporting] = useState(false);
 	const range = last30Days(new Date());
 
 	return (
@@ -345,6 +576,10 @@ export function MoneyScreen({
 				description="Tudo o que entra e sai. A caução fica à parte."
 				actions={
 					<>
+						<Button variant="outline" onClick={() => setExporting(true)}>
+							<Download aria-hidden />
+							Exportar mês (CSV)
+						</Button>
 						<Button variant="outline" onClick={() => setDirection("OUT")}>
 							<Minus aria-hidden strokeWidth={2.4} />
 							Despesa
@@ -395,6 +630,7 @@ export function MoneyScreen({
 				</TabsContent>
 			</Tabs>
 
+			{exporting && <ExportDialog onClose={() => setExporting(false)} />}
 			{direction && (
 				<LedgerEntryDialog
 					direction={direction}

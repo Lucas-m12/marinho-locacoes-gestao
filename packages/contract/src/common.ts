@@ -35,6 +35,8 @@ export const PositiveCents = Cents.positive("Informe um valor maior que zero");
 export const NonNegativeCents = Cents.nonnegative();
 export const Id = z.string().min(1);
 export const FileKey = z.string().min(1);
+export const IdempotencyKey = z.string().min(8);
+export const YearMonth = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 export const RentalNumber = z.string().regex(/^LOC-\d+$/);
 export const ItemCode = z.string().regex(/^[A-Z]+(-\d+)?$/);
 
@@ -127,6 +129,8 @@ export const PreconditionReason = z.enum([
 	"INVALID_DATE",
 	"DUPLICATE",
 	"UPLOAD_MISSING",
+	"ALREADY_REVERSED",
+	"IS_REVERSAL",
 ]);
 export type PreconditionReason = z.infer<typeof PreconditionReason>;
 

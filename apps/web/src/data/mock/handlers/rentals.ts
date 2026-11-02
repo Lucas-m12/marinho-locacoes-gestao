@@ -20,7 +20,14 @@ import {
 	type RentalRecord,
 } from "../db";
 import { conflict, invalidTransition, precondition } from "../errors";
-import { addEvent, holdUnits, moveRental, recordPayment } from "../flows";
+import {
+	addEvent,
+	hasPaidSignal,
+	holdUnits,
+	moveRental,
+	once,
+	recordPayment,
+} from "../flows";
 import {
 	findConflicts,
 	requireLot,
@@ -315,14 +322,16 @@ export const rentals = {
 		const now = mockNow();
 		const rental = requireRental(db, input.number);
 		assertAccepts(rental, PAYABLE, rental.status);
-		recordPayment(db, rental, user, {
-			kind: input.kind,
-			amountCents: input.amountCents,
-			method: input.method,
-			paidAt: input.paidAt ?? now.toISOString(),
-			receiptFileKey: input.receiptFileKey,
+		return once(db, user, "rentals.recordPayment", input.idempotencyKey, () => {
+			recordPayment(db, rental, user, {
+				kind: input.kind,
+				amountCents: input.amountCents,
+				method: input.method,
+				paidAt: input.paidAt ?? now.toISOString(),
+				receiptFileKey: input.receiptFileKey,
+			});
+			return rentalView(db, rental, now);
 		});
-		return rentalView(db, rental, now);
 	}),
 
 	confirm: api.rentals.confirm.handler(({ context, input }) => {
@@ -330,9 +339,7 @@ export const rentals = {
 		const db = getDb();
 		const now = mockNow();
 		const rental = requireRental(db, input.number);
-		if (!rental.payments.some((payment) => payment.kind === "SIGNAL")) {
-			throw precondition("SIGNAL_REQUIRED");
-		}
+		if (!hasPaidSignal(rental)) throw precondition("SIGNAL_REQUIRED");
 		moveRental(rental, "CONFIRMED");
 		rental.confirmedAt = now.toISOString();
 		addEvent(db, rental, user, "Reserva confirmada", rental.confirmedAt);

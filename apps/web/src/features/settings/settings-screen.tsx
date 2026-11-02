@@ -391,14 +391,27 @@ function RulesPanel({ settings }: { settings: Settings }) {
 	);
 }
 
-function NewUserDialog({ onClose }: { onClose: () => void }) {
+const PASSWORD_ALPHABET = "abcdefghjkmnpqrstuvwxyzK23456789";
+const GENERATED_PASSWORD_LENGTH = 12;
+
+function generatePassword(): string {
+	const bytes = crypto.getRandomValues(
+		new Uint8Array(GENERATED_PASSWORD_LENGTH),
+	);
+	return Array.from(
+		bytes,
+		(byte) => PASSWORD_ALPHABET[byte % PASSWORD_ALPHABET.length],
+	).join("");
+}
+
+function CreatePersonDialog({ onClose }: { onClose: () => void }) {
 	const create = useMutation(orpc.users.create.mutationOptions());
 	const [error, setError] = useState<string | null>(null);
 
 	const form = useForm({
 		defaultValues: {
 			name: "",
-			email: "",
+			username: "",
 			role: "ATTENDANT" as Role,
 			password: "",
 		},
@@ -406,7 +419,7 @@ function NewUserDialog({ onClose }: { onClose: () => void }) {
 		onSubmit: async ({ value }) => {
 			try {
 				await create.mutateAsync(value);
-				toast.success("Acesso criado.");
+				toast.success("Pessoa criada.");
 				onClose();
 			} catch (mutationError) {
 				if (isLocallyHandled(mutationError)) {
@@ -420,7 +433,7 @@ function NewUserDialog({ onClose }: { onClose: () => void }) {
 		<Dialog open onOpenChange={(open) => !open && onClose()}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Nova pessoa</DialogTitle>
+					<DialogTitle>Criar pessoa</DialogTitle>
 					<DialogDescription>
 						Não há cadastro público: só a gestão cria acessos.
 					</DialogDescription>
@@ -436,13 +449,14 @@ function NewUserDialog({ onClose }: { onClose: () => void }) {
 						<form.Field name="name">
 							{(field) => <TextField field={field} label="Nome" />}
 						</form.Field>
-						<form.Field name="email">
+						<form.Field name="username">
 							{(field) => (
 								<TextField
 									field={field}
-									label="E-mail"
-									type="email"
+									label="Usuário"
+									hint="É o que a pessoa digita para entrar."
 									autoComplete="off"
+									autoCapitalize="none"
 								/>
 							)}
 						</form.Field>
@@ -463,6 +477,7 @@ function NewUserDialog({ onClose }: { onClose: () => void }) {
 								<TextField
 									field={field}
 									label="Senha inicial"
+									hint="Mínimo de 8 caracteres."
 									type="password"
 									autoComplete="new-password"
 								/>
@@ -478,7 +493,7 @@ function NewUserDialog({ onClose }: { onClose: () => void }) {
 								Cancelar
 							</Button>
 							<Button type="submit" disabled={create.isPending}>
-								Criar acesso
+								Criar pessoa
 							</Button>
 						</DialogFooter>
 					</FieldGroup>
@@ -488,39 +503,142 @@ function NewUserDialog({ onClose }: { onClose: () => void }) {
 	);
 }
 
+function ResetPasswordDialog({
+	user,
+	onClose,
+}: {
+	user: User;
+	onClose: () => void;
+}) {
+	const setPassword = useMutation(orpc.users.setPassword.mutationOptions());
+	const [newPassword, setNewPassword] = useState(generatePassword);
+	const [saved, setSaved] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const submit = async () => {
+		if (newPassword.length < 8) {
+			setError("Use pelo menos 8 caracteres.");
+			return;
+		}
+		await setPassword.mutateAsync({ id: user.id, newPassword });
+		setSaved(true);
+	};
+
+	const copy = async () => {
+		try {
+			await navigator.clipboard.writeText(newPassword);
+			toast.success("Senha copiada.");
+		} catch {
+			toast.error("Não deu para copiar. Anote a senha.");
+		}
+	};
+
+	return (
+		<Dialog open onOpenChange={(open) => !open && onClose()}>
+			<DialogContent showCloseButton={!saved}>
+				<DialogHeader>
+					<DialogTitle>
+						{saved ? "Senha redefinida" : `Redefinir senha de ${user.name}`}
+					</DialogTitle>
+					<DialogDescription>
+						{saved
+							? "Anote agora: esta senha não aparece de novo."
+							: "Use a senha gerada ou digite outra."}
+					</DialogDescription>
+				</DialogHeader>
+				{saved ? (
+					<output className="bg-background rounded-lg px-4 py-3.5 text-center font-mono text-xl font-bold break-all">
+						{newPassword}
+					</output>
+				) : (
+					<FieldShell label="Senha nova" errors={error ? [error] : []}>
+						{({ id, invalid, describedBy }) => (
+							<Input
+								id={id}
+								value={newPassword}
+								autoComplete="off"
+								autoCapitalize="none"
+								spellCheck={false}
+								onChange={(event) => setNewPassword(event.target.value)}
+								aria-invalid={invalid}
+								aria-describedby={describedBy}
+							/>
+						)}
+					</FieldShell>
+				)}
+				<DialogFooter>
+					{saved ? (
+						<>
+							<Button type="button" variant="outline" onClick={copy}>
+								Copiar senha
+							</Button>
+							<Button type="button" onClick={onClose}>
+								Já anotei
+							</Button>
+						</>
+					) : (
+						<>
+							<Button type="button" variant="outline" onClick={onClose}>
+								Cancelar
+							</Button>
+							<Button
+								type="button"
+								disabled={setPassword.isPending}
+								onClick={submit}
+							>
+								Redefinir senha
+							</Button>
+						</>
+					)}
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 function UserRow({ user }: { user: User }) {
-	const update = useMutation(orpc.users.update.mutationOptions());
+	const setRole = useMutation(orpc.users.setRole.mutationOptions());
+	const [resetting, setResetting] = useState(false);
+
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t py-3">
 			<span className="flex min-w-0 flex-col">
 				<b className="text-[15px]">{user.name}</b>
-				<span className="text-muted-foreground text-sm">{user.email}</span>
+				<span className="text-muted-foreground text-sm">{user.username}</span>
 			</span>
-			<FieldShell
-				label={<span className="sr-only">Papel de {user.name}</span>}
-				className="w-48 flex-none"
-			>
-				{({ id }) => (
-					<NativeSelect
-						id={id}
-						value={user.role}
-						disabled={update.isPending}
-						onChange={async (event) => {
-							await update.mutateAsync({
-								id: user.id,
-								role: event.target.value as Role,
-							});
-							toast.success(`Papel de ${user.name} atualizado.`);
-						}}
-					>
-						{ROLES.map((role) => (
-							<NativeSelectOption key={role} value={role}>
-								{ROLE_LABELS[role]}
-							</NativeSelectOption>
-						))}
-					</NativeSelect>
-				)}
-			</FieldShell>
+			<div className="flex flex-wrap items-center gap-3">
+				<FieldShell
+					label={<span className="sr-only">Papel de {user.name}</span>}
+					className="w-48 flex-none"
+				>
+					{({ id }) => (
+						<NativeSelect
+							id={id}
+							value={user.role}
+							disabled={setRole.isPending}
+							onChange={async (event) => {
+								await setRole.mutateAsync({
+									id: user.id,
+									role: event.target.value as Role,
+								});
+								toast.success(`Papel de ${user.name} atualizado.`);
+							}}
+						>
+							{ROLES.map((role) => (
+								<NativeSelectOption key={role} value={role}>
+									{ROLE_LABELS[role]}
+								</NativeSelectOption>
+							))}
+						</NativeSelect>
+					)}
+				</FieldShell>
+				<Button variant="secondary" onClick={() => setResetting(true)}>
+					Redefinir senha
+				</Button>
+			</div>
+			{resetting && (
+				<ResetPasswordDialog user={user} onClose={() => setResetting(false)} />
+			)}
 		</div>
 	);
 }
@@ -540,13 +658,13 @@ function PeoplePanel() {
 				<h2 className="type-title text-xl/6">Pessoas e acessos</h2>
 				<Button variant="secondary" onClick={() => setCreating(true)}>
 					<Plus aria-hidden strokeWidth={2.4} />
-					Nova pessoa
+					Criar pessoa
 				</Button>
 			</div>
 			{users.data.map((user) => (
 				<UserRow key={user.id} user={user} />
 			))}
-			{creating && <NewUserDialog onClose={() => setCreating(false)} />}
+			{creating && <CreatePersonDialog onClose={() => setCreating(false)} />}
 		</Card>
 	);
 }

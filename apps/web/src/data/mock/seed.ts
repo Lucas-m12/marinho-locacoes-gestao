@@ -30,6 +30,8 @@ import type {
 	UserRecord,
 } from "./db";
 
+export const MOCK_DB_VERSION = 2;
+
 const PLACEHOLDER_FILE_PREFIX = "seed/";
 export const isSeedFile = (fileKey: string) =>
 	fileKey.startsWith(PLACEHOLDER_FILE_PREFIX);
@@ -219,34 +221,25 @@ const unit = (
 	...extra,
 });
 
+const user = (username: string, name: string, role: Role): UserRecord => ({
+	id: `user-${username}`,
+	name,
+	username,
+	email: `${username}@marinho.local`,
+	role,
+	password: "marinho123",
+});
+
 const USERS: UserRecord[] = [
-	{
-		id: "user-lucas",
-		name: "Lucas",
-		email: "lucas@marinho.local",
-		role: "MANAGER",
-		password: "marinho123",
-	},
-	{
-		id: "user-atendimento",
-		name: "Esposa",
-		email: "atendimento@marinho.local",
-		role: "ATTENDANT",
-		password: "marinho123",
-	},
-	{
-		id: "user-equipamentos",
-		name: "Pai",
-		email: "equipamentos@marinho.local",
-		role: "EQUIPMENT",
-		password: "marinho123",
-	},
+	user("lucas", "Lucas", "MANAGER"),
+	user("atendimento", "Atendimento", "ATTENDANT"),
+	user("equipamentos", "Equipamentos", "EQUIPMENT"),
 ];
 
 const ACTOR: Record<Role, string> = {
 	MANAGER: "Lucas",
-	ATTENDANT: "Esposa",
-	EQUIPMENT: "Pai",
+	ATTENDANT: "Atendimento",
+	EQUIPMENT: "Equipamentos",
 };
 
 const DELIVERY_CITIES = [
@@ -619,6 +612,7 @@ export function buildSeed(now: Date): MockDb {
 		method,
 		paidAt,
 		recordedBy: ACTOR.ATTENDANT,
+		reversedAt: null,
 	});
 
 	type RentalSeed = {
@@ -1002,7 +996,11 @@ export function buildSeed(now: Date): MockDb {
 		links: Partial<
 			Pick<
 				LedgerRecord,
-				"rentalNumber" | "unitCode" | "maintenanceNumber" | "account"
+				| "rentalNumber"
+				| "unitCode"
+				| "maintenanceNumber"
+				| "account"
+				| "paymentId"
 			>
 		> = {},
 	): LedgerRecord => ({
@@ -1019,6 +1017,10 @@ export function buildSeed(now: Date): MockDb {
 		receiptFileKey: null,
 		recordedBy: direction === "IN" ? ACTOR.ATTENDANT : ACTOR.MANAGER,
 		maintenanceNumber: null,
+		paymentId: null,
+		pairId: null,
+		reversalOfId: null,
+		reversalReason: null,
 		...links,
 	});
 
@@ -1040,6 +1042,7 @@ export function buildSeed(now: Date): MockDb {
 				{
 					rentalNumber: record.number,
 					unitCode: firstItem?.kind === "UNIT" ? firstItem.code : null,
+					paymentId: item.id,
 				},
 			);
 		}),
@@ -1229,11 +1232,11 @@ export function buildSeed(now: Date): MockDb {
 	});
 
 	return {
-		version: 1,
+		version: MOCK_DB_VERSION,
 		seededDay: today,
 		touchedByUser: false,
 		sequence: 1000,
-		users: USERS.map((user) => ({ ...user })),
+		users: USERS.map((entry) => ({ ...entry })),
 		types,
 		units,
 		lots,
@@ -1268,5 +1271,6 @@ export function buildSeed(now: Date): MockDb {
 		},
 		files: {},
 		pendingUploads: {},
+		idempotency: {},
 	};
 }

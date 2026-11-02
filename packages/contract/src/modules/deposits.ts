@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { base } from "../base";
 import {
+	IdempotencyKey,
 	IsoDateTime,
 	PaymentMethod,
 	PositiveCents,
@@ -11,6 +12,7 @@ import { Rental } from "./rentals";
 const Movement = z.object({
 	rentalNumber: RentalNumber,
 	amountCents: PositiveCents,
+	idempotencyKey: IdempotencyKey,
 });
 
 export const DepositMovementInput = Movement.extend({

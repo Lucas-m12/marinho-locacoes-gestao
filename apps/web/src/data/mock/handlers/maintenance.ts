@@ -2,6 +2,7 @@ import type { MaintenanceOrder } from "@marinho-gestao/contract";
 import {
 	addHours,
 	nextCode,
+	signedAmountCents,
 	sumCents,
 	toMs,
 	unitStatusMachine,
@@ -18,7 +19,7 @@ function postedFor(db: MockDb, number: string): number {
 	return sumCents(
 		db.ledger
 			.filter((entry) => entry.maintenanceNumber === number)
-			.map((entry) => entry.amountCents),
+			.map(signedAmountCents),
 	);
 }
 
@@ -71,7 +72,7 @@ export const maintenance = {
 							entry.category === "MAINTENANCE" &&
 							toMs(entry.occurredAt) >= windowStart,
 					)
-					.map((entry) => entry.amountCents),
+					.map(signedAmountCents),
 			),
 		};
 	}),

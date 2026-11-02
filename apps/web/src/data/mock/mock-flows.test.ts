@@ -8,6 +8,8 @@ import {
 import { isDefinedError, ORPCError } from "@orpc/client";
 import { createRouterClient } from "@orpc/server";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { createMockAuthGateway, readMockSession } from "@/data/auth/mock";
+import { InvalidCredentialsError } from "@/data/auth/types";
 import { setMockLatency } from "./base";
 import { resetMockClock, setMockClock } from "./clock";
 import { getDb, resetDb } from "./db";
@@ -22,7 +24,7 @@ function sessionOf(role: Role): Session {
 	const user = getDb().users.find((entry) => entry.role === role);
 	if (!user) throw new Error(`sem usuário ${role}`);
 	return {
-		user: { id: user.id, name: user.name, email: user.email, role },
+		user: { id: user.id, name: user.name, username: user.username, role },
 		expiresAt: day(30),
 	};
 }
@@ -44,6 +46,12 @@ async function errorOf(
 	}
 	throw new Error("deveria ter falhado");
 }
+
+let keySequence = 0;
+const newKey = () => {
+	keySequence += 1;
+	return `chave-de-teste-${keySequence}`;
+};
 
 const quote = {
 	customerId: "c-maria",
@@ -406,6 +414,7 @@ describe("sinal", () => {
 			kind: "SIGNAL",
 			amountCents: 3000,
 			method: "PIX",
+			idempotencyKey: newKey(),
 		});
 		await raise(12000);
 		expect(await cost()).toBe(9000);
@@ -725,6 +734,7 @@ describe("caução", () => {
 			rentalNumber: "LOC-0026",
 			amountCents: 8000,
 			reason: "Cabo cortado",
+			idempotencyKey: newKey(),
 		});
 		expect(rental.deposit.heldCents).toBe(12000);
 		expect(rental.balanceCents).toBe(0);
@@ -757,6 +767,7 @@ describe("caução", () => {
 			rentalNumber: "LOC-0026",
 			amountCents: 20000,
 			method: "PIX",
+			idempotencyKey: newKey(),
 		});
 		expect(refunded.deposit.heldCents).toBe(0);
 
@@ -776,6 +787,7 @@ describe("caução", () => {
 				rentalNumber: "LOC-0026",
 				amountCents: 90000,
 				method: "PIX",
+				idempotencyKey: newKey(),
 			}),
 		);
 		expect(error.data).toMatchObject({ reason: "INSUFFICIENT_DEPOSIT" });
@@ -898,6 +910,7 @@ describe("status da locação", () => {
 				kind: "SIGNAL",
 				amountCents: 1000,
 				method: "PIX",
+				idempotencyKey: newKey(),
 			}),
 		);
 		expect(error.code).toBe("INVALID_TRANSITION");
@@ -938,5 +951,595 @@ describe("texto do orçamento", () => {
 		expect(text).toContain("R$ 2 × 12 × 4 = R$ 96");
 		expect(text).toContain("Total: R$ 296 + taxa de entrega");
 		expect(text).toContain("Caução, devolvida depois: a definir");
+	});
+});
+
+describe("login por usuário", () => {
+	const gateway = createMockAuthGateway();
+
+	it("entra com usuário e senha", async () => {
+		const session = await gateway.signIn({
+			username: "Atendimento",
+			password: "marinho123",
+			rememberMe: true,
+		});
+		expect(session.user).toEqual({
+			id: "user-atendimento",
+			name: "Atendimento",
+			username: "atendimento",
+			role: "ATTENDANT",
+		});
+		expect(JSON.stringify(session)).not.toContain("@marinho.local");
+	});
+
+	it("recusa senha errada", async () => {
+		await expect(
+			gateway.signIn({
+				username: "lucas",
+				password: "errada",
+				rememberMe: true,
+			}),
+		).rejects.toBeInstanceOf(InvalidCredentialsError);
+	});
+
+	it("não aceita o e-mail interno como login", async () => {
+		await expect(
+			gateway.signIn({
+				username: "lucas@marinho.local",
+				password: "marinho123",
+				rememberMe: true,
+			}),
+		).rejects.toBeInstanceOf(InvalidCredentialsError);
+	});
+
+	it("com continuar conectado, a sessão dura 90 dias", async () => {
+		await gateway.signIn({
+			username: "lucas",
+			password: "marinho123",
+			rememberMe: true,
+		});
+		setMockClock(() => new Date(NOW.getTime() + 89 * 86_400_000));
+		expect(readMockSession()?.user.username).toBe("lucas");
+		setMockClock(() => new Date(NOW.getTime() + 91 * 86_400_000));
+		expect(readMockSession()).toBeNull();
+	});
+
+	it("sair encerra a sessão", async () => {
+		await gateway.signIn({
+			username: "lucas",
+			password: "marinho123",
+			rememberMe: false,
+		});
+		await gateway.signOut();
+		expect(await gateway.getSession()).toBeNull();
+	});
+});
+
+describe("pessoas", () => {
+	it("cria pessoa que consegue entrar", async () => {
+		const client = clientAs("MANAGER");
+		const user = await client.users.create({
+			name: "Maria",
+			username: " Maria.Silva ",
+			role: "ATTENDANT",
+			password: "senha-forte",
+		});
+		expect(user.username).toBe("maria.silva");
+		const session = await createMockAuthGateway().signIn({
+			username: "maria.silva",
+			password: "senha-forte",
+			rememberMe: false,
+		});
+		expect(session.user.role).toBe("ATTENDANT");
+	});
+
+	it("recusa usuário repetido e senha curta", async () => {
+		const client = clientAs("MANAGER");
+		const repeated = await errorOf(
+			client.users.create({
+				name: "Outro",
+				username: "lucas",
+				role: "ATTENDANT",
+				password: "senha-forte",
+			}),
+		);
+		expect(repeated.data).toMatchObject({ reason: "DUPLICATE" });
+		const short = await errorOf(
+			client.users.create({
+				name: "Outro",
+				username: "outro",
+				role: "ATTENDANT",
+				password: "curta",
+			}),
+		);
+		expect(short.code).toBe("BAD_REQUEST");
+	});
+
+	it("muda o papel e redefine a senha", async () => {
+		const client = clientAs("MANAGER");
+		const role = await client.users.setRole({
+			id: "user-atendimento",
+			role: "EQUIPMENT",
+		});
+		expect(role.role).toBe("EQUIPMENT");
+
+		await client.users.setPassword({
+			id: "user-atendimento",
+			newPassword: "senha-nova-1",
+		});
+		const gateway = createMockAuthGateway();
+		await expect(
+			gateway.signIn({
+				username: "atendimento",
+				password: "marinho123",
+				rememberMe: false,
+			}),
+		).rejects.toBeInstanceOf(InvalidCredentialsError);
+		const session = await gateway.signIn({
+			username: "atendimento",
+			password: "senha-nova-1",
+			rememberMe: false,
+		});
+		expect(session.user.role).toBe("EQUIPMENT");
+	});
+
+	it("só gestão redefine senha", async () => {
+		const error = await errorOf(
+			clientAs("ATTENDANT").users.setPassword({
+				id: "user-lucas",
+				newPassword: "senha-nova-1",
+			}),
+		);
+		expect(error.code).toBe("FORBIDDEN");
+	});
+});
+
+const range = { from: day(-29, "00:00"), to: day(2, "00:00") };
+
+async function cashEntry(description: string) {
+	const { entries } = await clientAs("MANAGER").ledger.list({
+		...range,
+		account: "CASH",
+	});
+	const entry = entries.find((item) => item.description === description);
+	if (!entry) throw new Error(`sem lançamento ${description}`);
+	return entry;
+}
+
+describe("estorno", () => {
+	it("anula o saldo e liga o inverso ao original", async () => {
+		const client = clientAs("MANAGER");
+		const before = await client.dashboard.summary(range);
+		const entry = await client.ledger.create({
+			direction: "IN",
+			category: "OTHER_IN",
+			amountCents: 12345,
+			occurredAt: day(0, "09:00"),
+			method: "PIX",
+			description: "Entrada lançada errada",
+			rentalNumber: null,
+			unitCode: null,
+			receiptFileKey: null,
+			idempotencyKey: newKey(),
+		});
+		const reversal = await client.ledger.reverse({
+			entryId: entry.id,
+			reason: "Lançada na conta errada",
+			idempotencyKey: newKey(),
+		});
+
+		expect(reversal).toMatchObject({
+			direction: "OUT",
+			amountCents: 12345,
+			reversalOfId: entry.id,
+			reversalOfDescription: "Entrada lançada errada",
+			reversalReason: "Lançada na conta errada",
+		});
+		expect(await client.dashboard.summary(range)).toEqual(before);
+
+		const original = await cashEntry("Entrada lançada errada");
+		expect(original.reversedById).toBe(reversal.id);
+		const totals = await client.ledger.byCategory(range);
+		expect(totals.in.some((row) => row.category === "OTHER_IN")).toBe(false);
+	});
+
+	it("lançamento nunca muda: o original continua na lista", async () => {
+		const client = clientAs("MANAGER");
+		const original = await cashEntry("Anúncio no Google");
+		await client.ledger.reverse({
+			entryId: original.id,
+			reason: "Foi pago pelo cartão pessoal",
+			idempotencyKey: newKey(),
+		});
+		const after = await cashEntry("Anúncio no Google");
+		expect(after.amountCents).toBe(original.amountCents);
+		expect(after.direction).toBe(original.direction);
+		expect(after.occurredAt).toBe(original.occurredAt);
+	});
+
+	it("não estorna duas vezes nem estorna um estorno", async () => {
+		const client = clientAs("MANAGER");
+		const entry = await cashEntry("Anúncio no Google");
+		const reversal = await client.ledger.reverse({
+			entryId: entry.id,
+			reason: "Lançado errado",
+			idempotencyKey: newKey(),
+		});
+		const twice = await errorOf(
+			client.ledger.reverse({
+				entryId: entry.id,
+				reason: "De novo",
+				idempotencyKey: newKey(),
+			}),
+		);
+		expect(twice.data).toMatchObject({ reason: "ALREADY_REVERSED" });
+		const ofReversal = await errorOf(
+			client.ledger.reverse({
+				entryId: reversal.id,
+				reason: "Desfazer",
+				idempotencyKey: newKey(),
+			}),
+		);
+		expect(ofReversal.data).toMatchObject({ reason: "IS_REVERSAL" });
+	});
+
+	it("estornar pagamento devolve o saldo da locação", async () => {
+		const client = clientAs("ATTENDANT");
+		const signal = await cashEntry("Sinal da LOC-0029");
+		await client.ledger.reverse({
+			entryId: signal.id,
+			reason: "Pix voltou",
+			idempotencyKey: newKey(),
+		});
+		const rental = await client.rentals.get({ number: "LOC-0029" });
+		expect(rental.balanceCents).toBe(70000);
+		expect(rental.signalPaidCents).toBe(0);
+		expect(rental.payments[0]?.reversedAt).not.toBeNull();
+		expect(rental.history[0]?.message).toContain("Pix voltou");
+	});
+
+	it("saldo estornado de locação entregue fica em aberto", async () => {
+		const client = clientAs("ATTENDANT");
+		await client.ledger.reverse({
+			entryId: (await cashEntry("Saldo da LOC-0026")).id,
+			reason: "Pix devolvido",
+			idempotencyKey: newKey(),
+		});
+		const { items } = await client.ledger.receivables();
+		expect(
+			items.find((item) => item.rentalNumber === "LOC-0026"),
+		).toMatchObject({
+			kind: "BALANCE",
+			amountCents: 15000,
+			delivered: true,
+		});
+		expect(
+			items.find((item) => item.rentalNumber === "LOC-0029")?.delivered,
+		).toBe(false);
+	});
+
+	it("sinal estornado volta a exigir sinal e deixa expirar", async () => {
+		const client = clientAs("ATTENDANT");
+		await client.rentals.recordPayment({
+			number: "LOC-0031",
+			kind: "SIGNAL",
+			amountCents: 3000,
+			method: "PIX",
+			idempotencyKey: newKey(),
+		});
+		await client.ledger.reverse({
+			entryId: (await cashEntry("Sinal da LOC-0031")).id,
+			reason: "Pix não caiu",
+			idempotencyKey: newKey(),
+		});
+		const confirm = await errorOf(
+			client.rentals.confirm({ number: "LOC-0031" }),
+		);
+		expect(confirm.data).toMatchObject({ reason: "SIGNAL_REQUIRED" });
+
+		setMockClock(() => new Date(NOW.getTime() + 6 * 3_600_000));
+		const rental = await client.rentals.get({ number: "LOC-0031" });
+		expect(rental.status).toBe("EXPIRED");
+	});
+
+	it("caução recebida estornada sai de mãos", async () => {
+		const client = clientAs("MANAGER");
+		const { entries } = await client.ledger.list({
+			...range,
+			account: "DEPOSIT",
+		});
+		const deposit = entries.find((entry) => entry.rentalNumber === "LOC-0026");
+		if (!deposit) throw new Error("sem caução");
+		await client.ledger.reverse({
+			entryId: deposit.id,
+			reason: "Valor anotado errado",
+			idempotencyKey: newKey(),
+		});
+		const rental = await client.rentals.get({ number: "LOC-0026" });
+		expect(rental.deposit.heldCents).toBe(0);
+		expect(rental.deposit.receivedAt).toBeNull();
+		expect((await client.dashboard.summary(range)).depositHeldCents).toBe(
+			70000,
+		);
+	});
+
+	it("não estorna caução recebida que já foi devolvida", async () => {
+		const client = clientAs("MANAGER");
+		await client.deposits.recordRefund({
+			rentalNumber: "LOC-0026",
+			amountCents: 20000,
+			method: "PIX",
+			idempotencyKey: newKey(),
+		});
+		const { entries } = await client.ledger.list({
+			...range,
+			account: "DEPOSIT",
+		});
+		const received = entries.find(
+			(entry) =>
+				entry.rentalNumber === "LOC-0026" &&
+				entry.category === "DEPOSIT_RECEIVED",
+		);
+		if (!received) throw new Error("sem caução");
+		const error = await errorOf(
+			client.ledger.reverse({
+				entryId: received.id,
+				reason: "Lançado errado",
+				idempotencyKey: newKey(),
+			}),
+		);
+		expect(error.data).toMatchObject({ reason: "INSUFFICIENT_DEPOSIT" });
+	});
+
+	it("estornar retenção desfaz os dois lados", async () => {
+		const client = clientAs("MANAGER");
+		await client.deposits.recordRetention({
+			rentalNumber: "LOC-0026",
+			amountCents: 8000,
+			reason: "Disco quebrado",
+			idempotencyKey: newKey(),
+		});
+		const before = await client.dashboard.summary(range);
+		expect(before.inCents).toBe(234000 + 8000);
+
+		const retained = await cashEntry(
+			"Caução retida da LOC-0026: Disco quebrado",
+		);
+		await client.ledger.reverse({
+			entryId: retained.id,
+			reason: "Cliente trouxe o disco",
+			idempotencyKey: newKey(),
+		});
+
+		const after = await client.dashboard.summary(range);
+		expect(after.inCents).toBe(234000);
+		expect(after.depositHeldCents).toBe(90000);
+		const rental = await client.rentals.get({ number: "LOC-0026" });
+		expect(rental.deposit.retainedCents).toBe(0);
+		expect(rental.deposit.retentionReason).toBeNull();
+	});
+
+	it("estorno de manutenção volta a cobrar o que faltava", async () => {
+		const client = clientAs("MANAGER");
+		await client.ledger.reverse({
+			entryId: (await cashEntry("Escovas da serra tico-tico")).id,
+			reason: "Devolvidas na loja",
+			idempotencyKey: newKey(),
+		});
+		const { orders, spentLast30DaysCents } = await client.maintenance.list();
+		expect(spentLast30DaysCents).toBe(0);
+		expect(
+			orders.find((order) => order.number === "OS-004")?.alreadyPostedCents,
+		).toBe(0);
+	});
+
+	it("equipamentos não estorna", async () => {
+		const error = await errorOf(
+			clientAs("EQUIPMENT").ledger.reverse({
+				entryId: "qualquer",
+				reason: "Sem acesso",
+				idempotencyKey: newKey(),
+			}),
+		);
+		expect(error.code).toBe("FORBIDDEN");
+	});
+});
+
+describe("idempotência", () => {
+	const expense = {
+		direction: "OUT" as const,
+		category: "FUEL" as const,
+		amountCents: 5000,
+		occurredAt: day(0, "09:00"),
+		method: "CASH" as const,
+		description: "Combustível repetido",
+		rentalNumber: null,
+		unitCode: null,
+		receiptFileKey: null,
+	};
+
+	it("a mesma chave não duplica o lançamento", async () => {
+		const client = clientAs("MANAGER");
+		const idempotencyKey = newKey();
+		const first = await client.ledger.create({ ...expense, idempotencyKey });
+		const second = await client.ledger.create({ ...expense, idempotencyKey });
+		expect(second).toEqual(first);
+		const { outCents } = await client.dashboard.summary(range);
+		expect(outCents).toBe(61000 + 5000);
+	});
+
+	it("chaves diferentes lançam duas vezes", async () => {
+		const client = clientAs("MANAGER");
+		await client.ledger.create({ ...expense, idempotencyKey: newKey() });
+		await client.ledger.create({ ...expense, idempotencyKey: newKey() });
+		const { outCents } = await client.dashboard.summary(range);
+		expect(outCents).toBe(61000 + 10000);
+	});
+
+	it("não repete pagamento nem devolve o saldo errado", async () => {
+		const client = clientAs("ATTENDANT");
+		const input = {
+			number: "LOC-0029",
+			kind: "BALANCE" as const,
+			amountCents: 10000,
+			method: "PIX" as const,
+			idempotencyKey: newKey(),
+		};
+		const first = await client.rentals.recordPayment(input);
+		const second = await client.rentals.recordPayment(input);
+		expect(second.balanceCents).toBe(first.balanceCents);
+		const rental = await client.rentals.get({ number: "LOC-0029" });
+		expect(rental.payments).toHaveLength(2);
+		expect(rental.balanceCents).toBe(40000);
+	});
+
+	it("não repete caução, devolução, retenção nem estorno", async () => {
+		const client = clientAs("MANAGER");
+		const received = {
+			rentalNumber: "LOC-0029",
+			amountCents: 30000,
+			method: "PIX" as const,
+			idempotencyKey: newKey(),
+		};
+		await client.deposits.recordReceived(received);
+		await client.deposits.recordReceived(received);
+
+		const retained = {
+			rentalNumber: "LOC-0029",
+			amountCents: 5000,
+			reason: "Peça perdida",
+			idempotencyKey: newKey(),
+		};
+		await client.deposits.recordRetention(retained);
+		await client.deposits.recordRetention(retained);
+
+		const refunded = {
+			rentalNumber: "LOC-0029",
+			amountCents: 5000,
+			method: "PIX" as const,
+			idempotencyKey: newKey(),
+		};
+		await client.deposits.recordRefund(refunded);
+		await client.deposits.recordRefund(refunded);
+
+		const rental = await client.rentals.get({ number: "LOC-0029" });
+		expect(rental.deposit).toMatchObject({
+			receivedCents: 30000,
+			retainedCents: 5000,
+			refundedCents: 5000,
+			heldCents: 20000,
+		});
+
+		const reverse = {
+			entryId: (await cashEntry("Anúncio no Google")).id,
+			reason: "Lançado errado",
+			idempotencyKey: newKey(),
+		};
+		const first = await client.ledger.reverse(reverse);
+		const second = await client.ledger.reverse(reverse);
+		expect(second.id).toBe(first.id);
+	});
+
+	it("chave de outra pessoa ou outro procedimento não colide", async () => {
+		const idempotencyKey = newKey();
+		const manager = clientAs("MANAGER");
+		const attendant = clientAs("ATTENDANT");
+		await manager.ledger.create({ ...expense, idempotencyKey });
+		await attendant.ledger.create({ ...expense, idempotencyKey });
+		const { outCents } = await manager.dashboard.summary(range);
+		expect(outCents).toBe(61000 + 10000);
+	});
+
+	it("tentativa que falhou não consome a chave", async () => {
+		const client = clientAs("MANAGER");
+		const input = {
+			rentalNumber: "LOC-0029",
+			amountCents: 1000,
+			method: "PIX" as const,
+			idempotencyKey: newKey(),
+		};
+		const failed = await errorOf(client.deposits.recordRefund(input));
+		expect(failed.data).toMatchObject({ reason: "INSUFFICIENT_DEPOSIT" });
+		await client.deposits.recordReceived({
+			...input,
+			idempotencyKey: newKey(),
+		});
+		const rental = await client.deposits.recordRefund(input);
+		expect(rental.deposit.refundedCents).toBe(1000);
+	});
+});
+
+describe("exportação CSV", () => {
+	const month = TODAY.slice(0, 7);
+
+	it("gera o arquivo do mês com BOM, ponto e vírgula e vírgula decimal", async () => {
+		const client = clientAs("ATTENDANT");
+		const { fileName, content } = await client.ledger.exportCsv({ month });
+		expect(fileName).toBe(`marinho-caixa-${month}.csv`);
+		expect(content.charCodeAt(0)).toBe(0xfeff);
+		const [header, ...rows] = content.slice(1).trimEnd().split("\r\n");
+		expect(header).toBe(
+			"Data;Tipo;Categoria;Descrição;Forma;Valor;Locação;Unidade",
+		);
+		expect(rows.length).toBeGreaterThan(0);
+		expect(content).toContain(
+			";Saída;Combustível;Combustível da entrega em Capela;Dinheiro;40,00;LOC-0029;",
+		);
+	});
+
+	it("deixa a caução de fora e inclui a retida no caixa", async () => {
+		const client = clientAs("MANAGER");
+		await client.deposits.recordRetention({
+			rentalNumber: "LOC-0026",
+			amountCents: 8000,
+			reason: "Disco quebrado",
+			idempotencyKey: newKey(),
+		});
+		const { content } = await client.ledger.exportCsv({ month });
+		expect(content).not.toContain("Caução recebida");
+		expect(content).not.toContain("Caução da LOC-0026");
+		expect(content.match(/Caução retida da LOC-0026/g)).toHaveLength(1);
+	});
+
+	it("estorno entra com o sinal invertido", async () => {
+		const client = clientAs("MANAGER");
+		const entry = await client.ledger.create({
+			direction: "IN",
+			category: "OTHER_IN",
+			amountCents: 12345,
+			occurredAt: day(0, "09:00"),
+			method: "PIX",
+			description: "Entrada errada",
+			rentalNumber: null,
+			unitCode: null,
+			receiptFileKey: null,
+			idempotencyKey: newKey(),
+		});
+		await client.ledger.reverse({
+			entryId: entry.id,
+			reason: "Duplicada",
+			idempotencyKey: newKey(),
+		});
+		const { content } = await client.ledger.exportCsv({ month });
+		expect(content).toContain(
+			";Entrada;Outras entradas;Entrada errada;Pix;123,45;;",
+		);
+		expect(content).toContain(
+			";Entrada;Outras entradas;Estorno de Entrada errada: Duplicada;Pix;-123,45;;",
+		);
+	});
+
+	it("equipamentos não exporta", async () => {
+		const error = await errorOf(
+			clientAs("EQUIPMENT").ledger.exportCsv({ month }),
+		);
+		expect(error.code).toBe("FORBIDDEN");
+	});
+
+	it("recusa mês inválido", async () => {
+		const error = await errorOf(
+			clientAs("MANAGER").ledger.exportCsv({ month: "2026-13" }),
+		);
+		expect(error.code).toBe("BAD_REQUEST");
 	});
 });

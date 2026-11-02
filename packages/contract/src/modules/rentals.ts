@@ -10,6 +10,7 @@ import {
 	DeliveryMode,
 	FileKey,
 	Id,
+	IdempotencyKey,
 	IsoDateTime,
 	ItemCode,
 	ItemKind,
@@ -53,6 +54,7 @@ export const RentalPayment = z.object({
 	method: PaymentMethod,
 	paidAt: IsoDateTime,
 	recordedBy: z.string(),
+	reversedAt: IsoDateTime.nullable(),
 });
 export type RentalPayment = z.infer<typeof RentalPayment>;
 
@@ -203,6 +205,7 @@ export const RecordPaymentInput = RentalRef.extend({
 	method: PaymentMethod,
 	paidAt: IsoDateTime.optional(),
 	receiptFileKey: FileKey.nullable().optional(),
+	idempotencyKey: IdempotencyKey,
 });
 export type RecordPaymentInput = z.input<typeof RecordPaymentInput>;
 

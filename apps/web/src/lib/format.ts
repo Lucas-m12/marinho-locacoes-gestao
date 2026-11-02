@@ -58,6 +58,12 @@ export function formatWeekdayName(value: DateInput): string {
 	return formatZoned(value, "EEEE").replace("-feira", "");
 }
 
+export function formatMonthYear(month: string): string {
+	return capitalize(
+		formatZoned(`${month}-15T12:00:00-03:00`, "MMMM 'de' yyyy"),
+	);
+}
+
 export function formatMonthName(value: DateInput): string {
 	return formatZoned(value, "MMMM");
 }
