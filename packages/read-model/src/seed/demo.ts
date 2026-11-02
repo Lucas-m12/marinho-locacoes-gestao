@@ -40,6 +40,15 @@ const PLACEHOLDER_FILE_PREFIX = "seed/";
 export const isSeedFile = (fileKey: string) =>
 	fileKey.startsWith(PLACEHOLDER_FILE_PREFIX);
 
+export const SEED_FILE_CONTENT_TYPE = "image/svg+xml";
+
+export function seedFileSvg(fileKey: string): string {
+	const label = fileKey
+		.replace(PLACEHOLDER_FILE_PREFIX, "")
+		.replace(/[^a-zA-Z0-9-]/g, " ");
+	return `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320"><rect width="480" height="320" fill="#F2E8D7"/><text x="240" y="150" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#13294B">Arquivo de exemplo</text><text x="240" y="182" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#5E544C">${label}</text></svg>`;
+}
+
 const ACTOR: Record<Role, string> = {
 	MANAGER: "Lucas",
 	ATTENDANT: "Atendimento",

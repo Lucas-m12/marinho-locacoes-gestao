@@ -23,6 +23,7 @@ export type AppServices = {
 	corsOrigin: string;
 	exposeApiReference: boolean;
 	clock?: () => Date;
+	testRoutes?: Hono;
 	reportError?: (error: unknown, tags?: Record<string, string>) => void;
 };
 
@@ -95,6 +96,8 @@ export function createApp(services: AppServices) {
 	app.on(["POST", "GET"], "/api/auth/*", (c) =>
 		services.auth.handler(c.req.raw),
 	);
+
+	if (services.testRoutes) app.route("/__test", services.testRoutes);
 
 	app.use("/*", async (c, next) => {
 		const path = new URL(c.req.url).pathname;

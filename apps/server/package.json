@@ -20,6 +20,7 @@
 		"@marinho-gestao/auth": "workspace:*",
 		"@marinho-gestao/db": "workspace:*",
 		"@marinho-gestao/domain": "workspace:*",
+		"@marinho-gestao/read-model": "workspace:*",
 		"@orpc/openapi": "catalog:",
 		"@orpc/server": "catalog:",
 		"@orpc/zod": "catalog:",

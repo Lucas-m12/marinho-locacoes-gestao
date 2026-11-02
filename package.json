@@ -49,6 +49,8 @@
 		"db:down": "docker compose down postgres",
 		"db:test:start": "docker compose --profile test up -d --wait postgres-test",
 		"db:test:stop": "docker compose --profile test rm -sf postgres-test",
+		"storage:start": "docker compose --profile dev up -d --wait minio && bun apps/e2e/scripts/minio.ts",
+		"storage:stop": "docker compose --profile dev stop minio",
 		"deploy": "turbo run deploy -F @marinho-gestao/infra --",
 		"destroy": "turbo run destroy -F @marinho-gestao/infra --",
 		"docker:build": "docker compose build",

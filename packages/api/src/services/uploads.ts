@@ -131,7 +131,7 @@ export async function getDownloadUrl(
 	fileKey: string,
 ): Promise<DownloadUrl> {
 	const upload = await deps.db.upload.findUnique({ where: { fileKey } });
-	if (!upload || upload.status !== "COMPLETED") throw notFound("file", fileKey);
+	if (upload?.status !== "COMPLETED") throw notFound("file", fileKey);
 	if (!canReadFile(deps.actor.role, upload.purpose)) {
 		throw new ORPCError("FORBIDDEN");
 	}

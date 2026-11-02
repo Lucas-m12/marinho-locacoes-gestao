@@ -93,7 +93,7 @@ export function createServerHarness() {
 			cookies.clear();
 			passwordHash ??= hashPassword(DEMO_PASSWORD);
 			await truncateAll(db);
-			await loadDemoSeed(db, buildSeed(at), await passwordHash);
+			await loadDemoSeed(db, buildSeed(at), await passwordHash, at);
 		},
 		setNow(at) {
 			now = at;

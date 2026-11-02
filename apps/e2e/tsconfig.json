@@ -1,0 +1,15 @@
+{
+	"extends": "@marinho-gestao/config/tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"types": ["node"],
+		"noEmit": true
+	},
+	"include": ["**/*.ts"],
+	"exclude": [
+		"node_modules",
+		"visual-output",
+		"test-results",
+		"playwright-report"
+	]
+}
