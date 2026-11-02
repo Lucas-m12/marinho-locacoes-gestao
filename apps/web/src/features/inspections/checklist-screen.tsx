@@ -38,7 +38,7 @@ import {
 import { cn } from "@marinho-gestao/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Video } from "lucide-react";
+import { MessageSquarePlus, Video } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { F2Badge } from "@/components/f2-badge";
@@ -199,37 +199,41 @@ function ChecklistRow({
 						Já tinha
 					</span>
 				) : (
-					<fieldset className="m-0 flex gap-1.5 border-0 p-0">
-						<legend className="sr-only">{item.label}</legend>
-						{ANSWERS.map((option) => (
+					<div className="flex gap-1.5">
+						<fieldset className="m-0 flex gap-1.5 border-0 p-0">
+							<legend className="sr-only">{item.label}</legend>
+							{ANSWERS.map((option) => (
+								<button
+									key={option.value}
+									type="button"
+									disabled={readOnly}
+									aria-pressed={draft.answer === option.value}
+									onClick={() => onAnswer(option.value)}
+									className={cn(
+										"min-h-11 min-w-16 rounded-lg border-[1.5px] px-3 text-sm font-bold transition-colors disabled:cursor-not-allowed",
+										draft.answer === option.value
+											? option.selected
+											: "border-input bg-field text-foreground",
+									)}
+								>
+									{option.label}
+								</button>
+							))}
+						</fieldset>
+						{!readOnly && !showNote && (
 							<button
-								key={option.value}
 								type="button"
-								disabled={readOnly}
-								aria-pressed={draft.answer === option.value}
-								onClick={() => onAnswer(option.value)}
-								className={cn(
-									"min-h-11 min-w-16 rounded-lg border-[1.5px] px-3 text-sm font-bold transition-colors disabled:cursor-not-allowed",
-									draft.answer === option.value
-										? option.selected
-										: "border-input bg-field text-foreground",
-								)}
+								aria-label={`Adicionar observação de ${item.label}`}
+								title="Adicionar observação"
+								onClick={() => setNoteOpen(true)}
+								className="border-input bg-field text-muted-foreground flex size-11 flex-none items-center justify-center rounded-lg border-[1.5px]"
 							>
-								{option.label}
+								<MessageSquarePlus aria-hidden className="size-5" />
 							</button>
-						))}
-					</fieldset>
+						)}
+					</div>
 				)}
 			</div>
-			{!item.preexisting && !readOnly && !showNote && (
-				<button
-					type="button"
-					onClick={() => setNoteOpen(true)}
-					className="min-h-11 self-start text-[13px] font-semibold underline underline-offset-2"
-				>
-					Adicionar observação
-				</button>
-			)}
 			{showNote && (
 				<FieldShell label={`Observação de ${item.label}`}>
 					{({ id }) => (

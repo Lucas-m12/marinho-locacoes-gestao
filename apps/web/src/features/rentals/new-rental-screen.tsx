@@ -7,6 +7,7 @@ import type {
 import { CreateQuoteInput } from "@marinho-gestao/contract";
 import {
 	addCalendarDays,
+	type CustomerKind,
 	calendarDay,
 	countDailies,
 	type DeliveryMode,
@@ -75,7 +76,7 @@ import {
 	initials,
 	money,
 } from "@/lib/format";
-import { DELIVERY_MODE_LABELS } from "@/lib/labels";
+import { DELIVERY_MODE_LABELS, referralNote, taxIdLabel } from "@/lib/labels";
 import { useCopyQuoteText } from "./copy-quote";
 
 export type NewRentalSearch = {
@@ -87,12 +88,17 @@ export type NewRentalSearch = {
 
 type ItemDraft = { kind: ItemKind; code: string; quantity: number };
 
-const MISSING_DOCUMENT_TEXT: Record<DocumentKind, string> = {
-	PHOTO_ID: "o documento com foto",
-	TAX_ID: "o CPF ou CNPJ",
-	PROOF_OF_ADDRESS: "o comprovante de endereço",
-	OTHER: "outro documento",
-};
+function missingDocumentText(
+	document: DocumentKind,
+	customer: CustomerKind,
+): string {
+	if (document === "TAX_ID") return `o ${taxIdLabel(customer)}`;
+	return {
+		PHOTO_ID: "o documento com foto",
+		PROOF_OF_ADDRESS: "o comprovante de endereço",
+		OTHER: "outro documento",
+	}[document];
+}
 
 function kindOfCode(code: string): ItemKind {
 	return code.startsWith("MAR") ? "UNIT" : "LOT";
@@ -221,7 +227,9 @@ function CustomerStep({
 					<span className="flex flex-[1_1_180px] flex-col gap-0.5">
 						<b className="text-base">{customer.name}</b>
 						<span className="text-muted-foreground text-sm">
-							{[customer.occupation, customer.city].filter(Boolean).join(" · ")}
+							{[customer.occupation, customer.city, referralNote(customer)]
+								.filter(Boolean)
+								.join(" · ")}
 						</span>
 					</span>
 					<StatusChip kind="customer" status={customer.tier} />
@@ -244,7 +252,7 @@ function CustomerStep({
 							: "Falta"}{" "}
 						receber{" "}
 						{customer.missingDocuments
-							.map((kind) => MISSING_DOCUMENT_TEXT[kind])
+							.map((kind) => missingDocumentText(kind, customer.kind))
 							.join(" e ")}{" "}
 						antes da entrega.
 					</AlertDescription>
@@ -414,8 +422,8 @@ function ItemRow({
 				conflict && "border-destructive bg-alert/40 rounded-lg border-2 px-3",
 			)}
 		>
-			<div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
-				<span className="flex min-w-0 flex-[1_1_240px] flex-col gap-1">
+			<div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+				<span className="flex min-w-0 flex-[1_1_200px] flex-col gap-1">
 					<b className="text-base/[22px]">{name}</b>
 					<span
 						className={cn(
@@ -425,24 +433,24 @@ function ItemRow({
 					>
 						{freeLabel}
 					</span>
+					{info?.perPiece && (
+						<FieldShell label="Peças" className="mt-1 w-24">
+							{({ id }) => (
+								<Input
+									id={id}
+									type="number"
+									inputMode="numeric"
+									min={1}
+									max={info.totalQuantity ?? undefined}
+									value={item.quantity}
+									onChange={(event) =>
+										onQuantity(Math.max(1, Number(event.target.value) || 1))
+									}
+								/>
+							)}
+						</FieldShell>
+					)}
 				</span>
-				{info?.perPiece && (
-					<FieldShell label="Peças" className="w-24 flex-none">
-						{({ id }) => (
-							<Input
-								id={id}
-								type="number"
-								inputMode="numeric"
-								min={1}
-								max={info.totalQuantity ?? undefined}
-								value={item.quantity}
-								onChange={(event) =>
-									onQuantity(Math.max(1, Number(event.target.value) || 1))
-								}
-							/>
-						)}
-					</FieldShell>
-				)}
 				<span className="flex min-w-[150px] flex-none flex-col gap-0.5">
 					<span className="text-muted-foreground text-sm">
 						{price === null

@@ -66,7 +66,7 @@ function UnitTable({ units, now }: { units: UnitListItem[]; now: Date }) {
 					to="/estoque/$codigo"
 					params={{ codigo: unit.code }}
 					className={cn(
-						"hover:bg-background/50 grid min-h-[52px] items-center gap-4 border-t py-1.5 text-[15px]",
+						"hover:bg-background/50 grid min-h-16 items-center gap-4 border-t py-1.5 text-[15px]",
 						TABLE_COLUMNS,
 					)}
 				>

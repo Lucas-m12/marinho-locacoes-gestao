@@ -31,7 +31,8 @@ import { formatDate, formatPeriod, initials, money } from "@/lib/format";
 import {
 	CUSTOMER_KIND_LABELS,
 	CUSTOMER_ORIGIN_LABELS,
-	DOCUMENT_KIND_LABELS,
+	documentLabel,
+	taxIdLabel,
 } from "@/lib/labels";
 import { CustomerSheet } from "./customer-sheet";
 
@@ -70,7 +71,7 @@ function DataCard({ customer }: { customer: CustomerDetail }) {
 			</h2>
 			<dl className="flex flex-col">
 				<Row label="Tipo">{CUSTOMER_KIND_LABELS[customer.kind]}</Row>
-				<Row label="CPF ou CNPJ">
+				<Row label={taxIdLabel(customer.kind)}>
 					{customer.taxId ? maskTaxId(customer.taxId) : <ToDefine />}
 				</Row>
 				{customer.kind === "COMPANY" && (
@@ -159,7 +160,9 @@ function DocumentsCard({ customer }: { customer: CustomerDetail }) {
 							{document && <Check className="size-4" strokeWidth={3} />}
 						</span>
 						<span className="flex grow flex-col">
-							<b className="text-[15px]">{DOCUMENT_KIND_LABELS[kind]}</b>
+							<b className="text-[15px]">
+								{documentLabel(kind, customer.kind)}
+							</b>
 							<span className="text-muted-foreground text-[13px]">
 								{document
 									? `Recebido em ${formatDate(document.receivedAt)}`
@@ -170,7 +173,7 @@ function DocumentsCard({ customer }: { customer: CustomerDetail }) {
 							<Button
 								variant="secondary"
 								size="xs"
-								aria-label={`Ver ${DOCUMENT_KIND_LABELS[kind]}`}
+								aria-label={`Ver ${documentLabel(kind, customer.kind)}`}
 								onClick={() => setViewing(document)}
 							>
 								Ver
@@ -179,7 +182,7 @@ function DocumentsCard({ customer }: { customer: CustomerDetail }) {
 							<UploadButton
 								purpose="CUSTOMER_DOCUMENT"
 								label="Enviar"
-								accessibleLabel={`Enviar ${DOCUMENT_KIND_LABELS[kind]}`}
+								accessibleLabel={`Enviar ${documentLabel(kind, customer.kind)}`}
 								onUploaded={save(kind)}
 							/>
 						)}
@@ -212,7 +215,7 @@ function RentalsCard({ customer }: { customer: CustomerDetail }) {
 					key={rental.number}
 					to="/locacoes/$numero"
 					params={{ numero: rental.number }}
-					className="flex min-h-14 flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t py-2.5"
+					className="flex min-h-[76px] flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t py-2.5"
 				>
 					<b className="w-[84px] flex-none text-sm">{rental.number}</b>
 					<span className="flex flex-[1_1_180px] flex-col">

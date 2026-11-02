@@ -87,7 +87,7 @@ function EntryRow({
 	const isReversal = entry.reversalOfId !== null;
 	const link = entry.unitCode ?? entry.rentalNumber;
 	return (
-		<li className="flex min-h-[60px] items-center gap-3.5 border-t py-2.5">
+		<li className="flex min-h-20 items-center gap-3.5 border-t py-2.5">
 			<span
 				aria-hidden
 				className={cn(

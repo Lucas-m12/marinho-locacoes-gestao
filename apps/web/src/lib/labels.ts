@@ -9,6 +9,7 @@ import type {
 	CustomerOrigin,
 	CustomerTier,
 	DeliveryMode,
+	DocumentKind,
 	LedgerAccount,
 	MaintenanceLocation,
 	MaintenanceStatus,
@@ -19,6 +20,8 @@ import type {
 	UnitPhotoSlot,
 	UnitStatus,
 } from "@marinho-gestao/domain";
+
+import { DOCUMENT_KIND_LABELS } from "@marinho-gestao/domain";
 
 export {
 	DOCUMENT_KIND_LABELS,
@@ -179,3 +182,27 @@ export const PRECONDITION_MESSAGES: Record<PreconditionReason, string> = {
 	ALREADY_REVERSED: "Este lançamento já foi estornado.",
 	IS_REVERSAL: "Um estorno não pode ser estornado.",
 };
+
+export function taxIdLabel(kind: CustomerKind): string {
+	return kind === "COMPANY" ? "CNPJ" : "CPF";
+}
+
+export function documentLabel(
+	document: DocumentKind,
+	customer: CustomerKind,
+): string {
+	return document === "TAX_ID"
+		? taxIdLabel(customer)
+		: DOCUMENT_KIND_LABELS[document];
+}
+
+export function referralNote(customer: {
+	origin: CustomerOrigin | null;
+	referredBy: string | null;
+}): string | null {
+	if (customer.origin === "PARTNER_STORE") return "indicado por loja parceira";
+	if (customer.origin === "REFERRAL" && customer.referredBy) {
+		return `indicado por ${customer.referredBy}`;
+	}
+	return null;
+}

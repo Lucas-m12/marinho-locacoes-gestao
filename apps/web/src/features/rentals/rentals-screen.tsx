@@ -70,7 +70,7 @@ function RentalTable({ rentals }: { rentals: RentalListItem[] }) {
 					to="/locacoes/$numero"
 					params={{ numero: rental.number }}
 					className={cn(
-						"hover:bg-background/50 grid min-h-16 items-center gap-4 border-t py-2 text-[15px]",
+						"hover:bg-background/50 grid min-h-20 items-center gap-4 border-t py-2 text-[15px]",
 						TABLE_COLUMNS,
 					)}
 				>
