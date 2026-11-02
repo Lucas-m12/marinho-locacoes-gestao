@@ -153,7 +153,7 @@ function EntryRow({
 				<Button
 					variant="ghost"
 					size="xs"
-					className="flex-none px-2.5"
+					className="min-w-11 flex-none px-2.5"
 					aria-label={`Estornar ${entry.description}`}
 					onClick={onReverse}
 				>

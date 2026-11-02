@@ -214,7 +214,11 @@ function ResultsCard({
 				</p>
 			)}
 			{results.isFetching && !results.data && (
-				<div className="flex flex-col gap-3 border-t py-4">
+				<div
+					role="status"
+					aria-label="Carregando"
+					className="flex flex-col gap-3 border-t py-4"
+				>
 					<Skeleton className="h-6 w-3/4" />
 					<Skeleton className="h-6 w-1/2" />
 				</div>
@@ -333,7 +337,7 @@ function CalendarCard({ today }: { today: string }) {
 	return (
 		<Card
 			aria-labelledby="cal"
-			className="gap-2.5 px-(--card-spacing) [--label-column:92px] md:[--label-column:170px] xl:[--label-column:200px]"
+			className="gap-2.5 px-(--card-spacing) [--label-column:84px] md:[--label-column:170px] xl:[--label-column:200px]"
 		>
 			<div className="flex flex-wrap items-center justify-between gap-3 pb-1.5">
 				<h2 id="cal" className="type-title text-xl/6">
@@ -362,7 +366,13 @@ function CalendarCard({ today }: { today: string }) {
 			{calendar.isError && (
 				<ErrorState error={calendar.error} onRetry={() => calendar.refetch()} />
 			)}
-			{calendar.isPending && <Skeleton className="h-96 rounded-lg" />}
+			{calendar.isPending && (
+				<Skeleton
+					role="status"
+					aria-label="Carregando"
+					className="h-96 rounded-lg"
+				/>
+			)}
 			{calendar.data && (
 				<div className="flex flex-col gap-1">
 					<div

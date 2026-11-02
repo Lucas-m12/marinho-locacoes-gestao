@@ -116,7 +116,7 @@ export function EmptyState({
 
 export function ListSkeleton({ rows = 6 }: { rows?: number }) {
 	return (
-		<Card className="gap-0 px-5 py-3">
+		<Card role="status" aria-label="Carregando" className="gap-0 px-5 py-3">
 			{Array.from({ length: rows }, (_, index) => (
 				<div
 					// biome-ignore lint/suspicious/noArrayIndexKey: linhas de esqueleto não têm identidade
