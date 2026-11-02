@@ -228,7 +228,7 @@ function ChecklistLink({ rental, item }: { rental: Rental; item: RentalItem }) {
 function EquipmentCard({ rental }: { rental: Rental }) {
 	return (
 		<Card aria-labelledby="equip" className="gap-3.5 px-(--card-spacing)">
-			<h2 id="equip" className="text-title text-xl/6">
+			<h2 id="equip" className="type-title text-xl/6">
 				{rental.items.length > 1 ? "Equipamentos" : "Equipamento"}
 			</h2>
 			{rental.items.map((item) => (
@@ -304,7 +304,7 @@ function SiteCard({ rental }: { rental: Rental }) {
 		.join(", ");
 	return (
 		<Card aria-labelledby="obra" className="px-(--card-spacing)">
-			<h2 id="obra" className="text-title text-xl/6">
+			<h2 id="obra" className="type-title text-xl/6">
 				Obra e entrega
 			</h2>
 			<dl className="grid gap-x-6 gap-y-3 md:grid-cols-2">
@@ -342,7 +342,7 @@ function OccurrencesCard({ rental }: { rental: Rental }) {
 	if (rental.occurrences.length === 0) return null;
 	return (
 		<Card aria-labelledby="ocorrencias" className="gap-1 px-(--card-spacing)">
-			<h2 id="ocorrencias" className="text-title mb-2 text-xl/6">
+			<h2 id="ocorrencias" className="type-title mb-2 text-xl/6">
 				Ocorrências
 			</h2>
 			{rental.occurrences.map((occurrence) => (
@@ -381,7 +381,7 @@ function OccurrencesCard({ rental }: { rental: Rental }) {
 function HistoryCard({ rental }: { rental: Rental }) {
 	return (
 		<Card aria-labelledby="hist" className="gap-1 px-(--card-spacing)">
-			<h2 id="hist" className="text-title mb-2.5 text-xl/6">
+			<h2 id="hist" className="type-title mb-2.5 text-xl/6">
 				Histórico
 			</h2>
 			{rental.history.map((event) => (
@@ -415,10 +415,10 @@ function PaymentsCard({ rental }: { rental: Rental }) {
 	return (
 		<Card aria-labelledby="pag" className="px-(--card-spacing)">
 			<div className="flex items-baseline justify-between gap-3">
-				<h2 id="pag" className="text-title text-xl/6">
+				<h2 id="pag" className="type-title text-xl/6">
 					Pagamentos
 				</h2>
-				<b className="text-condensed text-2xl">{money(rental.totalCents)}</b>
+				<b className="type-condensed text-2xl">{money(rental.totalCents)}</b>
 			</div>
 			{rental.payments.map((payment) => (
 				<div key={payment.id} className="flex items-center gap-3 border-t py-3">
@@ -503,7 +503,7 @@ function DepositCard({ rental }: { rental: Rental }) {
 			className="border-terracotta gap-2.5 border-2 px-(--card-spacing)"
 		>
 			<div className="flex items-baseline justify-between gap-3">
-				<h2 id="cau" className="text-title text-xl/6">
+				<h2 id="cau" className="type-title text-xl/6">
 					Caução
 				</h2>
 				<b className="text-lg">
@@ -549,7 +549,7 @@ function CustomerCard({ rental }: { rental: Rental }) {
 	const { customer } = rental;
 	return (
 		<Card aria-labelledby="cli" className="gap-2.5 px-(--card-spacing)">
-			<h2 id="cli" className="text-title text-xl/6">
+			<h2 id="cli" className="type-title text-xl/6">
 				Cliente
 			</h2>
 			<div className="flex items-center gap-3">
@@ -579,7 +579,7 @@ function CustomerCard({ rental }: { rental: Rental }) {
 				<Link
 					to="/clientes/$id"
 					params={{ id: customer.id }}
-					className="self-start py-2 text-sm font-semibold underline underline-offset-2"
+					className="flex min-h-11 items-center self-start text-sm font-semibold underline underline-offset-2"
 				>
 					Ver cliente
 				</Link>

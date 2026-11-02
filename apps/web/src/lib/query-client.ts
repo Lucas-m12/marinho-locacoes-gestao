@@ -19,7 +19,14 @@ export const queryClient: QueryClient = new QueryClient({
 	},
 	queryCache: new QueryCache({
 		onError: (error) => {
-			if (errorCode(error) === "UNAUTHORIZED") redirectToLogin();
+			if (errorCode(error) === "UNAUTHORIZED") {
+				redirectToLogin();
+				return;
+			}
+			if (!isLocallyHandled(error)) {
+				const message = describeError(error);
+				toast.error(message, { id: message });
+			}
 		},
 	}),
 	mutationCache: new MutationCache({

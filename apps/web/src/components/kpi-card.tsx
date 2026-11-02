@@ -30,7 +30,7 @@ export function KpiCard({
 			</span>
 			<b
 				className={cn(
-					"text-condensed text-2xl/[1.1] font-extrabold md:text-3xl/[1.1]",
+					"type-condensed text-2xl/[1.1] font-extrabold md:text-3xl/[1.1]",
 					tone === "positive" && "text-positive",
 				)}
 			>

@@ -59,7 +59,7 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 			<div className="bg-primary text-on-navy hidden flex-col justify-between gap-10 p-16 xl:flex">
 				<BrandLogo negative className="w-[300px]" />
 				<div className="flex max-w-[520px] flex-col gap-4">
-					<p className="text-title text-[56px]/[1.02]">
+					<p className="type-title text-[56px]/[1.02]">
 						Alugue o que sua obra precisa.
 					</p>
 					<p className="text-on-navy-muted text-lg/[27px]">
@@ -77,7 +77,7 @@ export function SignInScreen({ redirectTo }: { redirectTo?: string }) {
 				<div className="flex w-full max-w-[420px] flex-col gap-7">
 					<BrandLogo className="w-[250px] xl:hidden" />
 					<div className="flex flex-col gap-1.5">
-						<h1 className="text-title text-4xl/[1.1]">Entrar</h1>
+						<h1 className="type-title text-4xl/[1.1]">Entrar</h1>
 						<p className="text-muted-foreground text-base/6">
 							Use o e-mail e a senha que o Lucas criou para você.
 						</p>

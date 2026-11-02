@@ -109,7 +109,7 @@ function EntriesCard({
 	return (
 		<Card aria-labelledby="lanc" className="min-w-0 gap-1 px-(--card-spacing)">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 pb-2">
-				<h2 id="lanc" className="text-title text-xl/6">
+				<h2 id="lanc" className="type-title text-xl/6">
 					Lançamentos
 				</h2>
 				<span className="text-muted-foreground text-sm">últimos 30 dias</span>
@@ -177,7 +177,7 @@ function CategoriesCard({ range }: { range: { from: string; to: string } }) {
 		"text-[13px] font-bold tracking-[0.06em] text-muted-foreground uppercase";
 	return (
 		<Card aria-labelledby="cat" className="px-(--card-spacing)">
-			<h2 id="cat" className="text-title text-xl/6">
+			<h2 id="cat" className="type-title text-xl/6">
 				Por categoria
 			</h2>
 			{totals.isPending && <Skeleton className="h-40 rounded-lg" />}
@@ -202,11 +202,11 @@ function ReceivableRow({ item }: { item: Receivable }) {
 			? `${RECEIVABLE_LABELS.BALANCE} na entrega`
 			: RECEIVABLE_LABELS[item.kind];
 	return (
-		<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[15px]">
+		<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-[15px]">
 			<Link
 				to="/locacoes/$numero"
 				params={{ numero: item.rentalNumber }}
-				className="min-w-0 hover:underline"
+				className="flex min-h-11 min-w-0 items-center hover:underline"
 			>
 				{item.rentalNumber} · {item.customerName} · {when}
 			</Link>
@@ -228,7 +228,7 @@ function ReceivablesCard() {
 	const receivables = useQuery(orpc.ledger.receivables.queryOptions());
 	return (
 		<Card aria-labelledby="receber" className="gap-2.5 px-(--card-spacing)">
-			<h2 id="receber" className="text-title text-xl/6">
+			<h2 id="receber" className="type-title text-xl/6">
 				A receber
 			</h2>
 			{receivables.isPending && <Skeleton className="h-20 rounded-lg" />}

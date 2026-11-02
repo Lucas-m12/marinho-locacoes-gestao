@@ -145,7 +145,7 @@ function LostDemandCard({ groups }: { groups: LostDemandGroup[] | undefined }) {
 	return (
 		<Card aria-labelledby="perdida" className="px-(--card-spacing)">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-				<h2 id="perdida" className="text-title text-xl/6">
+				<h2 id="perdida" className="type-title text-xl/6">
 					Demanda perdida em {formatMonthName(new Date())}
 				</h2>
 				<span className="text-muted-foreground text-sm">
@@ -196,7 +196,7 @@ function LostDemandCard({ groups }: { groups: LostDemandGroup[] | undefined }) {
 function LostDemandList({ records }: { records: LostDemandRecord[] }) {
 	return (
 		<Card className="gap-0 px-(--card-spacing)">
-			<h2 className="text-title mb-2 text-xl/6">Todos os pedidos</h2>
+			<h2 className="type-title mb-2 text-xl/6">Todos os pedidos</h2>
 			{records.map((record) => (
 				<div
 					key={record.id}

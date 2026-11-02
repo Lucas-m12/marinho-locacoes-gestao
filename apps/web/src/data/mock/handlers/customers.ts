@@ -34,8 +34,7 @@ export const customers = {
 					customer.city,
 					customer.occupation,
 				]),
-			)
-			.sort((a, b) => b.stats.rentalCount - a.stats.rentalCount);
+			);
 		const count = (segment: CustomerSegment) =>
 			matching.filter((customer) => matchesSegment(customer, segment)).length;
 		return {

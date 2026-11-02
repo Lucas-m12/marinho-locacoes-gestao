@@ -335,7 +335,7 @@ function OrderCard({
 				<Link
 					to="/estoque/$codigo"
 					params={{ codigo: order.unitCode }}
-					className="text-[17px]/[23px] font-bold"
+					className="flex min-h-11 items-center text-[17px]/[23px] font-bold"
 				>
 					{order.unitCode} · {order.unitName}
 				</Link>
@@ -427,7 +427,7 @@ export function MaintenanceScreen() {
 			</div>
 
 			<section aria-labelledby="os" className="flex flex-col gap-3">
-				<h2 id="os" className="text-title text-xl/6">
+				<h2 id="os" className="type-title text-xl/6">
 					Ordens de serviço
 				</h2>
 				{data.orders.length === 0 ? (
@@ -452,7 +452,7 @@ export function MaintenanceScreen() {
 			</section>
 
 			<Card aria-labelledby="rev" className="gap-2.5 px-(--card-spacing)">
-				<h2 id="rev" className="text-title text-xl/6">
+				<h2 id="rev" className="type-title text-xl/6">
 					Revisões programadas
 				</h2>
 				<p className="text-[15px]/[22px]">

@@ -197,7 +197,7 @@ function ResultsCard({
 	return (
 		<Card className="gap-1 px-(--card-spacing)" aria-labelledby="res">
 			<div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1.5 pb-2">
-				<h2 id="res" className="text-title text-xl/6">
+				<h2 id="res" className="type-title text-xl/6">
 					Resultado
 				</h2>
 				{results.data && (
@@ -332,7 +332,7 @@ function CalendarCard({ today }: { today: string }) {
 			className="gap-2.5 px-(--card-spacing) [--label-column:92px] md:[--label-column:170px] xl:[--label-column:200px]"
 		>
 			<div className="flex flex-wrap items-center justify-between gap-3 pb-1.5">
-				<h2 id="cal" className="text-title text-xl/6">
+				<h2 id="cal" className="type-title text-xl/6">
 					Próximos dias
 				</h2>
 				<div className="flex gap-2">

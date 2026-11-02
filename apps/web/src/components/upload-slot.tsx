@@ -1,8 +1,9 @@
 import type { FileRef } from "@marinho-gestao/contract";
 import type { UploadPurpose } from "@marinho-gestao/domain";
+import { Button } from "@marinho-gestao/ui/components/button";
 import { Progress } from "@marinho-gestao/ui/components/progress";
 import { cn } from "@marinho-gestao/ui/lib/utils";
-import { Camera, Plus, RotateCcw } from "lucide-react";
+import { Plus, RotateCcw } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FilePreview } from "@/components/file-preview";
@@ -164,4 +165,47 @@ export function UploadSlot({
 	);
 }
 
-export { Camera as CameraIcon };
+export function UploadButton({
+	purpose,
+	label,
+	onUploaded,
+}: {
+	purpose: UploadPurpose;
+	label: string;
+	onUploaded: (file: FileRef) => void | Promise<void>;
+}) {
+	const inputRef = useRef<HTMLInputElement>(null);
+	const { state, start } = useUploader({ purpose, onUploaded });
+	const uploading = state.phase === "uploading";
+
+	return (
+		<>
+			<input
+				ref={inputRef}
+				type="file"
+				hidden
+				accept={ACCEPT[purpose]}
+				onChange={(event) => {
+					const picked = event.target.files?.[0];
+					event.target.value = "";
+					if (picked) start(picked);
+				}}
+			/>
+			<Button
+				type="button"
+				variant="secondary"
+				size="xs"
+				disabled={uploading}
+				onClick={() =>
+					state.phase === "failed"
+						? start(state.file)
+						: inputRef.current?.click()
+				}
+			>
+				{uploading && `${Math.round(state.progress * 100)}%`}
+				{state.phase === "failed" && "Tentar de novo"}
+				{state.phase === "idle" && label}
+			</Button>
+		</>
+	);
+}

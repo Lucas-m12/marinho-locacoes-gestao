@@ -578,6 +578,43 @@ describe("saída", () => {
 	});
 });
 
+describe("checklist concluído", () => {
+	it("não conclui duas vezes nem lança o saldo em dobro", async () => {
+		const client = clientAs("EQUIPMENT");
+		const inspection = await answerAll(
+			client,
+			"LOC-0029",
+			"MAR-002",
+			"CHECKOUT",
+		);
+		const finish = {
+			inspectionId: inspection.id,
+			termSigned: true,
+			balance: { amountCents: 50000, method: "PIX" as const },
+		};
+		await client.inspections.complete(finish);
+
+		const again = await errorOf(client.inspections.complete(finish));
+		expect(again.data).toMatchObject({ reason: "CHECKLIST_ALREADY_DONE" });
+
+		const edit = await errorOf(
+			client.inspections.saveItem({
+				inspectionId: inspection.id,
+				itemId: "liga",
+				answer: "NOT_OK",
+				observation: null,
+			}),
+		);
+		expect(edit.data).toMatchObject({ reason: "CHECKLIST_ALREADY_DONE" });
+
+		const summary = await clientAs("MANAGER").dashboard.summary({
+			from: day(-29, "00:00"),
+			to: day(1, "00:00"),
+		});
+		expect(summary.inCents).toBe(234000 + 50000);
+	});
+});
+
 describe("volta", () => {
 	it("gera ocorrências para cada divergência", async () => {
 		const client = clientAs("EQUIPMENT");
@@ -842,6 +879,38 @@ describe("prorrogação", () => {
 			client.rentals.extend({ number: "LOC-0029", newEndAt: day(10, "17:00") }),
 		);
 		expect(error.code).toBe("CONFLICT");
+	});
+});
+
+describe("status da locação", () => {
+	it("não aceita pagamento em rascunho", async () => {
+		const client = clientAs("ATTENDANT");
+		const draft = await client.rentals.createQuote({
+			...quote,
+			startAt: day(20),
+			endAt: day(21),
+			items: [{ kind: "UNIT", code: "MAR-004", quantity: 1 }],
+			send: false,
+		});
+		const error = await errorOf(
+			client.rentals.recordPayment({
+				number: draft.number,
+				kind: "SIGNAL",
+				amountCents: 1000,
+				method: "PIX",
+			}),
+		);
+		expect(error.code).toBe("INVALID_TRANSITION");
+	});
+
+	it("não prorroga locação encerrada", async () => {
+		const error = await errorOf(
+			clientAs("ATTENDANT").rentals.extend({
+				number: "LOC-0009",
+				newEndAt: day(5),
+			}),
+		);
+		expect(error.code).toBe("INVALID_TRANSITION");
 	});
 });
 

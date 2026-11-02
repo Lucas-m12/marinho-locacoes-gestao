@@ -174,17 +174,17 @@
 	--radius-4xl: 22px;
 }
 
-@utility text-title {
+@utility type-title {
 	font-stretch: 75%;
 	font-weight: 800;
 	text-transform: uppercase;
 }
 
-@utility text-condensed {
+@utility type-condensed {
 	font-stretch: 75%;
 }
 
-@utility text-brand {
+@utility type-brand {
 	font-stretch: 125%;
 	font-weight: 800;
 	letter-spacing: 0.02em;

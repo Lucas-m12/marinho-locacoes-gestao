@@ -163,7 +163,7 @@ function StaticPhoto({
 function FichaCard({ unit }: { unit: UnitDetail }) {
 	return (
 		<Card className="gap-1.5 px-(--card-spacing)">
-			<h2 className="text-title mb-2 text-xl/6">Ficha</h2>
+			<h2 className="type-title mb-2 text-xl/6">Ficha</h2>
 			<dl className="flex flex-col">
 				<Row label="Tipo">{unit.typeName}</Row>
 				<Row label="Diária">
@@ -211,7 +211,7 @@ function EarningsSection({ unit }: { unit: UnitDetail }) {
 	return (
 		<section aria-labelledby="rendeu" className="flex flex-col gap-3">
 			<div className="flex items-center gap-2.5">
-				<h2 id="rendeu" className="text-title text-xl/6">
+				<h2 id="rendeu" className="type-title text-xl/6">
 					Quanto rendeu
 				</h2>
 				<F2Badge />
@@ -223,7 +223,7 @@ function EarningsSection({ unit }: { unit: UnitDetail }) {
 						className="bg-card flex flex-col gap-1 rounded-xl p-4"
 					>
 						<span className="text-muted-foreground text-[13px]">{label}</span>
-						<b className="text-condensed text-2xl/7">{value}</b>
+						<b className="type-condensed text-2xl/7">{value}</b>
 					</div>
 				))}
 			</div>
@@ -256,7 +256,7 @@ function EarningsSection({ unit }: { unit: UnitDetail }) {
 function RentalsCard({ unit, now }: { unit: UnitDetail; now: Date }) {
 	return (
 		<Card className="gap-1 px-(--card-spacing)">
-			<h2 className="text-title mb-2 text-xl/6">Locações desta unidade</h2>
+			<h2 className="type-title mb-2 text-xl/6">Locações desta unidade</h2>
 			{unit.rentals.length === 0 && (
 				<p className="text-muted-foreground border-t py-3">
 					Esta unidade ainda não saiu em nenhuma locação.
@@ -378,7 +378,7 @@ function DamagesCard({ unit }: { unit: UnitDetail }) {
 
 	return (
 		<Card className="gap-2.5 px-(--card-spacing)">
-			<h2 className="text-title text-xl/6">Danos que já tinha</h2>
+			<h2 className="type-title text-xl/6">Danos que já tinha</h2>
 			{unit.knownDamages.length === 0 && (
 				<p className="text-muted-foreground">Nenhum dano registrado.</p>
 			)}

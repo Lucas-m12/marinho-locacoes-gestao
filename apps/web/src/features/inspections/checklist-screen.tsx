@@ -220,7 +220,7 @@ function ChecklistRow({
 				<button
 					type="button"
 					onClick={() => setNoteOpen(true)}
-					className="min-h-8 self-start text-[13px] font-semibold underline underline-offset-2"
+					className="min-h-11 self-start text-[13px] font-semibold underline underline-offset-2"
 				>
 					Adicionar observação
 				</button>
@@ -483,7 +483,7 @@ function CheckoutPanel({
 
 	return (
 		<Card aria-labelledby="aceite" className="px-(--card-spacing)">
-			<h2 id="aceite" className="text-title text-xl/6">
+			<h2 id="aceite" className="type-title text-xl/6">
 				Na entrega
 			</h2>
 			<label
@@ -603,7 +603,7 @@ function ReturnPanel({
 
 	return (
 		<Card aria-labelledby="volta" className="px-(--card-spacing)">
-			<h2 id="volta" className="text-title text-xl/6">
+			<h2 id="volta" className="type-title text-xl/6">
 				Na volta
 			</h2>
 			{divergences.length === 0 ? (
@@ -867,7 +867,7 @@ export function ChecklistScreen({
 
 			<div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
 				<Card aria-labelledby="itens" className="gap-1 px-(--card-spacing)">
-					<h2 id="itens" className="text-title mb-2 text-xl/6">
+					<h2 id="itens" className="type-title mb-2 text-xl/6">
 						Checklist · {data.typeName}
 					</h2>
 					{data.items.map((item) => (
@@ -887,7 +887,7 @@ export function ChecklistScreen({
 
 				<div className="flex min-w-0 flex-col gap-6">
 					<Card aria-labelledby="fotos" className="px-(--card-spacing)">
-						<h2 id="fotos" className="text-title text-xl/6">
+						<h2 id="fotos" className="type-title text-xl/6">
 							Fotos e vídeo
 						</h2>
 						<div

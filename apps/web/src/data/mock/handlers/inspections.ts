@@ -80,6 +80,10 @@ function requireInspection(db: MockDb, id: string): InspectionRecord {
 	return inspection;
 }
 
+function assertOpen(inspection: InspectionRecord): void {
+	if (inspection.completedAt) throw precondition("CHECKLIST_ALREADY_DONE");
+}
+
 function mediaView(
 	db: MockDb,
 	inspection: InspectionRecord,
@@ -256,6 +260,7 @@ export const inspections = {
 		requirePermission(context, "inspections:run");
 		const db = getDb();
 		const inspection = requireInspection(db, input.inspectionId);
+		assertOpen(inspection);
 		const line = inspection.items.find((entry) => entry.id === input.itemId);
 		if (!line) throw notFound("inspectionItem", input.itemId);
 		line.answer = input.answer;
@@ -271,6 +276,7 @@ export const inspections = {
 		requirePermission(context, "inspections:run");
 		const db = getDb();
 		const inspection = requireInspection(db, input.inspectionId);
+		assertOpen(inspection);
 		inspection.media = [
 			...inspection.media.filter((entry) => entry.slot !== input.slot),
 			{ slot: input.slot, fileKey: input.fileKey },
@@ -288,6 +294,7 @@ export const inspections = {
 		const now = mockNow();
 		const at = now.toISOString();
 		const inspection = requireInspection(db, input.inspectionId);
+		assertOpen(inspection);
 		const rental = requireRental(db, inspection.rentalNumber);
 		const item = requireItem(rental, inspection.itemCode);
 		const unit = item.kind === "UNIT" ? requireUnit(db, item.code) : null;

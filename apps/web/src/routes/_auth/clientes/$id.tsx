@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RoleGate } from "@/features/auth/role-gate";
-import { PlaceholderScreen } from "@/features/placeholder-screen";
+import { CustomerScreen } from "@/features/customers/customer-screen";
 
 export const Route = createFileRoute("/_auth/clientes/$id")({
-	component: () => (
-		<RoleGate permission="customers:read">
-			<PlaceholderScreen title="Cliente" />
-		</RoleGate>
-	),
+	component: function ClienteRoute() {
+		const { id } = Route.useParams();
+		return (
+			<RoleGate permission="customers:read">
+				<CustomerScreen id={id} />
+			</RoleGate>
+		);
+	},
 });

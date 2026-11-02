@@ -19,7 +19,7 @@ import {
 	type RentalItemRecord,
 	type RentalRecord,
 } from "../db";
-import { conflict, precondition } from "../errors";
+import { conflict, invalidTransition, precondition } from "../errors";
 import { addEvent, holdUnits, moveRental, recordPayment } from "../flows";
 import {
 	findConflicts,
@@ -67,6 +67,35 @@ function assertFree(db: MockDb, rental: RentalRecord, now: Date): void {
 	);
 	if (conflicts.length > 0) throw conflict(conflicts);
 }
+
+function assertAccepts(
+	rental: RentalRecord,
+	statuses: readonly RentalStatus[],
+	to: RentalStatus,
+): void {
+	if (!statuses.includes(rental.status)) {
+		throw invalidTransition({
+			entity: "RENTAL",
+			from: rental.status,
+			to,
+			allowed: [...statuses],
+		});
+	}
+}
+
+const EXTENDABLE: readonly RentalStatus[] = [
+	"CONFIRMED",
+	"SEPARATED",
+	"ON_SITE",
+];
+const PAYABLE: readonly RentalStatus[] = [
+	"AWAITING_DEPOSIT",
+	"CONFIRMED",
+	"SEPARATED",
+	"ON_SITE",
+	"RETURNED",
+	"CLOSED",
+];
 
 function listRank(rental: RentalRecord, now: Date): number {
 	if (isRentalOverdue(rental, now)) return 0;
@@ -285,6 +314,7 @@ export const rentals = {
 		const db = getDb();
 		const now = mockNow();
 		const rental = requireRental(db, input.number);
+		assertAccepts(rental, PAYABLE, rental.status);
 		recordPayment(db, rental, user, {
 			kind: input.kind,
 			amountCents: input.amountCents,
@@ -358,6 +388,7 @@ export const rentals = {
 		const db = getDb();
 		const now = mockNow();
 		const rental = requireRental(db, input.number);
+		assertAccepts(rental, EXTENDABLE, rental.status);
 		if (toMs(input.newEndAt) <= toMs(rental.endAt)) {
 			throw precondition("INVALID_DATE");
 		}

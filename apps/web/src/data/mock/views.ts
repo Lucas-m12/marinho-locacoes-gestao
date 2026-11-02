@@ -237,7 +237,9 @@ export function equipmentSummary(db: MockDb, rental: RentalRecord): string {
 	return rental.items
 		.map((item, index) => {
 			const short = itemNames(db, item).shortName;
-			return index === 0 ? short : short.toLowerCase();
+			return index === 0
+				? short
+				: short.charAt(0).toLowerCase() + short.slice(1);
 		})
 		.join(" e ");
 }

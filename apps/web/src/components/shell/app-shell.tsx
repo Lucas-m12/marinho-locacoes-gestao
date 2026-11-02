@@ -169,13 +169,13 @@ function Rail({ user }: { user: SessionUser }) {
 
 function PhoneTopBar({ user }: { user: SessionUser }) {
 	return (
-		<div className="flex items-center justify-between gap-3 px-4 pt-4 md:hidden">
-			<Link to="/painel" className="flex items-center gap-2.5">
+		<header className="flex items-center justify-between gap-3 px-4 pt-4 md:hidden">
+			<Link to="/painel" className="flex min-h-11 items-center gap-2.5">
 				<BrandSymbol className="size-8" />
-				<span className="text-brand text-base">MARINHO</span>
+				<span className="type-brand text-base">MARINHO</span>
 			</Link>
 			<UserAvatar user={user} className="bg-primary size-9 text-[15px]" />
-		</div>
+		</header>
 	);
 }
 

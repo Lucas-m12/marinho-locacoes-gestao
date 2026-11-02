@@ -54,6 +54,10 @@ export function formatLongDay(value: DateInput): string {
 	return `${capitalize(weekday)}, ${formatZoned(value, "d 'de' MMMM")}`;
 }
 
+export function formatWeekdayName(value: DateInput): string {
+	return formatZoned(value, "EEEE").replace("-feira", "");
+}
+
 export function formatMonthName(value: DateInput): string {
 	return formatZoned(value, "MMMM");
 }

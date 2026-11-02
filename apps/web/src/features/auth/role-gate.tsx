@@ -19,7 +19,7 @@ export function RoleGate({
 	return (
 		<Card className="items-center gap-3 px-5 py-12 text-center">
 			<ShieldOff aria-hidden className="text-muted-foreground size-8" />
-			<h1 className="text-title text-2xl">Sem acesso</h1>
+			<h1 className="type-title text-2xl">Sem acesso</h1>
 			<p className="text-muted-foreground max-w-sm">
 				Seu login não usa esta parte do sistema. Se precisar dela, fale com o
 				Lucas.

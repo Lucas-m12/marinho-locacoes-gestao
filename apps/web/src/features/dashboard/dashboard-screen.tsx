@@ -85,7 +85,7 @@ function SummarySection() {
 
 	return (
 		<section aria-labelledby="mes" className="flex flex-col gap-3">
-			<h2 id="mes" className="text-title text-xl/6">
+			<h2 id="mes" className="type-title text-xl/6">
 				Últimos 30 dias
 			</h2>
 			{summary.isPending && (
@@ -132,7 +132,7 @@ function MovementRow({ movement }: { movement: DashboardMovement }) {
 	const first = movement.items[0];
 	return (
 		<li className="flex items-start gap-3.5 border-t py-3.5">
-			<span className="text-condensed w-[52px] flex-none text-lg/[22px] font-extrabold">
+			<span className="type-condensed w-[52px] flex-none text-lg/[22px] font-extrabold">
 				{formatTime(movement.at)}
 			</span>
 			<span className="flex min-w-0 grow flex-col gap-1">
@@ -184,7 +184,7 @@ function MovementCard({
 	return (
 		<Card aria-labelledby={id} className="gap-2 px-(--card-spacing)">
 			<div className="flex items-center gap-2.5">
-				<h2 id={id} className="text-title text-xl/6">
+				<h2 id={id} className="type-title text-xl/6">
 					{title}
 				</h2>
 				<span className="bg-primary text-primary-foreground flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-bold">
@@ -294,12 +294,12 @@ export function DashboardScreen() {
 			<div className="grid gap-6 xl:grid-cols-2">
 				<Card aria-labelledby="agora" className="gap-3.5 px-(--card-spacing)">
 					<div className="flex flex-wrap items-baseline justify-between gap-3">
-						<h2 id="agora" className="text-title text-xl/6">
+						<h2 id="agora" className="type-title text-xl/6">
 							Equipamentos agora
 						</h2>
 						<Link
 							to="/estoque"
-							className="text-sm font-semibold underline underline-offset-2"
+							className="flex min-h-11 items-center text-sm font-semibold underline underline-offset-2"
 						>
 							Ver estoque
 						</Link>
@@ -339,7 +339,7 @@ export function DashboardScreen() {
 
 				{seesMoney && (
 					<Card aria-labelledby="sinal" className="gap-3.5 px-(--card-spacing)">
-						<h2 id="sinal" className="text-title text-xl/6">
+						<h2 id="sinal" className="type-title text-xl/6">
 							Aguardando sinal
 						</h2>
 						{data.awaitingSignal.length === 0 && (

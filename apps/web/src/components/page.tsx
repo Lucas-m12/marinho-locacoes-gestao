@@ -31,14 +31,14 @@ export function PageHeader({
 					<Link
 						to={back.to}
 						params={back.params}
-						className="flex min-h-8 items-center gap-1.5 self-start text-sm font-semibold"
+						className="flex min-h-11 items-center gap-1.5 self-start text-sm font-semibold"
 					>
 						<ChevronLeft aria-hidden className="size-4" strokeWidth={2.2} />
 						{back.label}
 					</Link>
 				)}
 				{eyebrow && (
-					<span className="text-condensed text-muted-foreground text-[13px] font-bold tracking-[0.12em] uppercase">
+					<span className="type-condensed text-muted-foreground text-[13px] font-bold tracking-[0.12em] uppercase">
 						{eyebrow}
 					</span>
 				)}
@@ -46,7 +46,7 @@ export function PageHeader({
 					{leading}
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<div className="flex flex-wrap items-center gap-3">
-							<h1 className="text-title text-[28px]/[1.1] md:text-4xl/[1.1]">
+							<h1 className="type-title text-[28px]/[1.1] md:text-4xl/[1.1]">
 								{title}
 							</h1>
 							{titleAddon}
@@ -75,7 +75,7 @@ export function ErrorState({
 	return (
 		<Card className="items-center gap-3 px-5 py-10 text-center">
 			<CloudOff aria-hidden className="text-muted-foreground size-8" />
-			<p className="text-title text-lg/6">Não deu para carregar</p>
+			<p className="type-title text-lg/6">Não deu para carregar</p>
 			<p className="text-muted-foreground max-w-sm">{describeError(error)}</p>
 			<Button variant="outline" onClick={onRetry}>
 				Tentar de novo
@@ -105,7 +105,7 @@ export function EmptyState({
 			)}
 		>
 			{Icon && <Icon aria-hidden className="text-muted-foreground size-7" />}
-			<p className="text-title text-lg/6">{title}</p>
+			<p className="type-title text-lg/6">{title}</p>
 			<p className="text-muted-foreground max-w-sm text-[15px]">
 				{description}
 			</p>

@@ -68,7 +68,13 @@ import { orpc } from "@/data/client";
 import { CustomerSheet } from "@/features/customers/customer-sheet";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { conflictData, describeError, isLocallyHandled } from "@/lib/errors";
-import { dailiesLabel, formatDate, initials, money } from "@/lib/format";
+import {
+	dailiesLabel,
+	formatDate,
+	formatWeekdayName,
+	initials,
+	money,
+} from "@/lib/format";
 import { DELIVERY_MODE_LABELS } from "@/lib/labels";
 import { useCopyQuoteText } from "./copy-quote";
 
@@ -116,7 +122,7 @@ function Section({
 		>
 			<h2
 				id={`secao-${number}`}
-				className="text-title flex items-center gap-2.5 text-xl/6"
+				className="type-title flex items-center gap-2.5 text-xl/6"
 			>
 				<span
 					aria-hidden
@@ -259,17 +265,6 @@ function CustomerStep({
 			/>
 		</>
 	);
-}
-
-function weekdayRange(start: string, end: string): string {
-	const name = (value: string) =>
-		new Intl.DateTimeFormat("pt-BR", {
-			weekday: "long",
-			timeZone: "America/Maceio",
-		})
-			.format(new Date(value))
-			.replace("-feira", "");
-	return `${name(start)} a ${name(end)}`;
 }
 
 function AddItemDialog({
@@ -513,7 +508,7 @@ function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
 	);
 }
 
-const onNavyPending = <ToDefine className="text-highlight" />;
+const onNavyPending = <ToDefine className="text-on-navy" />;
 
 function SentDialog({
 	rental,
@@ -731,7 +726,7 @@ export function NewRentalScreen({ search }: { search: NewRentalSearch }) {
 							<p className="text-[15px]">
 								<b>{dailiesLabel(dailies)}</b>{" "}
 								<span className="text-muted-foreground">
-									· {weekdayRange(startAt, endAt)}
+									· {formatWeekdayName(startAt)} a {formatWeekdayName(endAt)}
 								</span>
 							</p>
 						) : (
@@ -933,7 +928,7 @@ export function NewRentalScreen({ search }: { search: NewRentalSearch }) {
 					aria-labelledby="resumo"
 					className="on-navy bg-primary text-on-navy flex flex-col gap-3.5 rounded-2xl p-4 md:p-6 xl:sticky xl:top-6"
 				>
-					<h2 id="resumo" className="text-title text-[22px]/[26px]">
+					<h2 id="resumo" className="type-title text-[22px]/[26px]">
 						Resumo
 					</h2>
 					<dl className="flex flex-col">
@@ -960,7 +955,7 @@ export function NewRentalScreen({ search }: { search: NewRentalSearch }) {
 					</dl>
 					<div className="flex items-baseline justify-between gap-4">
 						<span className="text-base font-bold">Total</span>
-						<span className="text-title text-[28px] normal-case">
+						<span className="type-title text-[28px] normal-case">
 							{money(totals.totalCents)}
 							{hasPendingFee && " + taxa"}
 						</span>

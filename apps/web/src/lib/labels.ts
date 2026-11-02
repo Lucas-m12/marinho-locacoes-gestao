@@ -201,6 +201,7 @@ export const PRECONDITION_MESSAGES: Record<PreconditionReason, string> = {
 		"Ainda há caução em mãos. Devolva ou retenha antes de encerrar.",
 	CHECKLIST_INCOMPLETE:
 		"Responda todos os itens do checklist antes de concluir.",
+	CHECKLIST_ALREADY_DONE: "Este checklist já foi concluído.",
 	TERM_NOT_SIGNED: "Marque o termo como assinado antes de concluir a saída.",
 	UNITS_NOT_SEPARATED: "Separe os equipamentos antes de registrar a entrega.",
 	INSUFFICIENT_DEPOSIT: "O valor é maior do que a caução em mãos.",

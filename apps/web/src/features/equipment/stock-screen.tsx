@@ -195,7 +195,7 @@ function LotsSection() {
 
 	return (
 		<section aria-labelledby="qtd" className="flex flex-col gap-3">
-			<h2 id="qtd" className="text-title text-xl/6">
+			<h2 id="qtd" className="type-title text-xl/6">
 				Itens contados por quantidade
 			</h2>
 			{lots.isPending && (
