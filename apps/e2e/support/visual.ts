@@ -57,6 +57,9 @@ async function prepareNewRental(page: Page) {
 	const form = quoteForm(page);
 	await form.getByLabel("Buscar por nome ou telefone").fill("Cícero");
 	await form.getByRole("button", { name: /^Cícero Santos/ }).click();
+	await expect(
+		form.getByRole("button", { name: /^Cícero Santos/ }),
+	).toHaveCount(0);
 
 	await form.getByRole("button", { name: "Adicionar equipamento" }).click();
 	const add = page.getByRole("dialog", { name: "Adicionar equipamento" });
@@ -139,19 +142,20 @@ export async function settleForScreenshot(page: Page, project: ProjectName) {
 	);
 	const width = page.viewportSize()?.width ?? 0;
 	const base = project === "celular" ? 844 : project === "tablet" ? 1194 : 900;
-	const fullHeight = await page.evaluate(
-		(minimum) => Math.max(document.documentElement.scrollHeight, minimum),
-		base,
-	);
-	await page.setViewportSize({ width, height: fullHeight });
-	await page.waitForTimeout(150);
-	const settled = await page.evaluate(
-		(minimum) => Math.max(document.documentElement.scrollHeight, minimum),
-		base,
-	);
-	if (settled !== fullHeight) {
-		await page.setViewportSize({ width, height: settled });
-		await page.waitForTimeout(150);
+	await page.setViewportSize({ width, height: base });
+	const contentHeight = () =>
+		page.evaluate(
+			(minimum) => Math.max(document.documentElement.scrollHeight, minimum),
+			base,
+		);
+	let previous = -1;
+	let settled = await contentHeight();
+	for (let attempt = 0; attempt < 20 && settled !== previous; attempt += 1) {
+		previous = settled;
+		await page.waitForTimeout(250);
+		settled = await contentHeight();
 	}
+	await page.setViewportSize({ width, height: settled });
+	await page.waitForTimeout(150);
 	return { width, height: settled };
 }

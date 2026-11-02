@@ -146,7 +146,8 @@ Enums do Prisma vêm de `packages/domain/src/enums.ts`: depois de mudar um enum,
 - **Pastas:** `tests/fluxos` (fluxos por papel), `tests/qualidade` (axe, rolagem horizontal, alvos de 44 px, menu certo e estados vazio, carregando e erro das 14 telas), `tests/visual/captura.spec.ts` (só com `e2e:visual`) e `tests/visual/regressao.spec.ts` (`toHaveScreenshot`, linhas de base em `tests/visual/__screenshots__`).
 - **Telas e estados de referência:** `support/screens.ts` e `support/visual.ts`. A captura e a regressão usam o mesmo estado; 04 cancela a LOC-0033 antes, porque a referência mostra a tela montando essa locação.
 - **Relatório visual:** `bun run e2e:visual` grava `apps/e2e/visual-output/index.html` (Design, App e Diferença, da maior diferença para a menor). Diferenças que ficam vão em `docs/design/diferencas-aceitas.md`, com motivo.
-- **Linhas de base:** dependem do sistema operacional. Gere sempre com `bun run e2e:update`, que roda na imagem `mcr.microsoft.com/playwright:v<versão>-noble`, a mesma do job `e2e` do CI. Fora do Linux, `bun run e2e` pula a regressão (force com `E2E_VISUAL_REGRESSION=1`). Ao subir a versão do Playwright, troque também a imagem no `ci.yml`.
+- **Linhas de base:** dependem do sistema operacional. Gere sempre com `bun run e2e:update`, que roda na imagem `mcr.microsoft.com/playwright:v<versão>-noble` (a versão sai do `@playwright/test` instalado); para só conferir, sem regravar, use `E2E_UPDATE=none bun run e2e:update`. Fora do Linux, `bun run e2e` pula a regressão (force com `E2E_VISUAL_REGRESSION=1`).
+- **Fora do CI:** o E2E roda só localmente. O CI e o deploy rodam apenas os testes unitários e de integração.
 
 ## Produção
 
