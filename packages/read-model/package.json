@@ -5,7 +5,8 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
-		"./seed": "./src/seed/index.ts"
+		"./seed": "./src/seed/index.ts",
+		"./errors": "./src/errors.ts"
 	},
 	"scripts": {
 		"check-types": "tsc --noEmit"

@@ -9,7 +9,7 @@
 		"dev": "bun run --hot src/index.ts",
 		"start": "bun run dist/index.mjs",
 		"env:generate": "varlock codegen",
-		"auth:generate": "varlock run -- bun x auth@latest generate --config src/services.ts --output ../../packages/db/prisma/schema/auth.prisma --yes"
+		"auth:generate": "varlock run -- bun x auth@latest generate --config src/auth-cli.ts --output ../../packages/db/prisma/schema/auth.prisma --yes"
 	},
 	"dependencies": {
 		"@marinho-gestao/api": "workspace:*",

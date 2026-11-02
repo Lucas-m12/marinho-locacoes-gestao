@@ -6,19 +6,25 @@
 		"./*": "./src/*.ts"
 	},
 	"scripts": {
-		"check-types": "tsc --noEmit"
+		"check-types": "tsc --noEmit",
+		"test": "vitest run",
+		"test:server": "vitest run --config vitest.server.config.ts"
 	},
 	"dependencies": {
 		"@marinho-gestao/auth": "workspace:*",
+		"@marinho-gestao/contract": "workspace:*",
 		"@marinho-gestao/db": "workspace:*",
+		"@marinho-gestao/domain": "workspace:*",
+		"@marinho-gestao/read-model": "workspace:*",
 		"@orpc/client": "catalog:",
-		"@orpc/openapi": "catalog:",
 		"@orpc/server": "catalog:",
-		"@orpc/zod": "catalog:",
+		"aws4fetch": "^1.0.20",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
 		"@marinho-gestao/config": "workspace:*",
-		"typescript": "catalog:"
+		"@types/bun": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
 	}
 }
