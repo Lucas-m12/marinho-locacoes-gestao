@@ -5,9 +5,6 @@ services:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
-      secrets:
-        - web_env
-        - server_env
     init: true
     ports:
       - "3000:3000"
@@ -16,18 +13,6 @@ services:
         required: false
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/marinho-gestao
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "bun",
-          "-e",
-          "fetch('http://localhost:3000/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,10 +66,3 @@ services:
 
 volumes:
   marinho-gestao_postgres_data:
-
-# BuildKit makes these available only while install/build commands run.
-secrets:
-  web_env:
-    file: apps/web/.env
-  server_env:
-    file: apps/server/.env

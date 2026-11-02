@@ -7,6 +7,7 @@ type StorageEnv = Pick<
 	| "R2_ACCESS_KEY_ID"
 	| "R2_SECRET_ACCESS_KEY"
 	| "R2_BUCKET"
+	| "R2_ENDPOINT"
 	| "R2_BACKUP_BUCKET"
 	| "R2_BACKUP_ACCESS_KEY_ID"
 	| "R2_BACKUP_SECRET_ACCESS_KEY"
@@ -18,6 +19,7 @@ export function uploadsStorage(env: StorageEnv): R2Storage {
 		accessKeyId: env.R2_ACCESS_KEY_ID,
 		secretAccessKey: env.R2_SECRET_ACCESS_KEY,
 		bucket: env.R2_BUCKET,
+		endpoint: env.R2_ENDPOINT || undefined,
 	});
 }
 
@@ -41,5 +43,6 @@ export function backupStorage(env: StorageEnv): R2Storage {
 		accessKeyId: R2_BACKUP_ACCESS_KEY_ID,
 		secretAccessKey: R2_BACKUP_SECRET_ACCESS_KEY,
 		bucket: R2_BACKUP_BUCKET,
+		endpoint: env.R2_ENDPOINT || undefined,
 	});
 }

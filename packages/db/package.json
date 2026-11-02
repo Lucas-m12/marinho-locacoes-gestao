@@ -16,6 +16,7 @@
 		"db:studio": "prisma studio",
 		"db:seed": "varlock run -- bun run prisma/seed.ts",
 		"db:seed:demo": "varlock run -- bun run prisma/seed-demo.ts",
+		"db:seed:image": "varlock run -- bun ../../apps/server/dist/seed.mjs",
 		"test": "vitest run"
 	},
 	"dependencies": {
@@ -25,14 +26,14 @@
 		"@prisma/client": "^7.10.0",
 		"better-auth": "catalog:",
 		"pg": "^8.23.0",
+		"prisma": "^7.10.0",
+		"varlock": "catalog:",
 		"zod": "catalog:"
 	},
 	"devDependencies": {
 		"@marinho-gestao/config": "workspace:*",
 		"@types/pg": "^8.23.1",
-		"prisma": "^7.10.0",
 		"typescript": "catalog:",
-		"varlock": "catalog:",
 		"vitest": "catalog:"
 	}
 }
