@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Tipos, lint, testes e build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: marinho_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d marinho_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/marinho_test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5433/marinho_test
+      TURBO_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
+
+      - name: Gerar enums e cliente do Prisma
+        run: bun run db:generate
+
+      - name: Tipos
+        run: bun run check-types
+
+      - name: Biome
+        run: bunx biome ci .
+
+      - name: Testes (domain, api, cenários contra o mock, tarefas)
+        run: bun run test
+
+      - name: Cenários, uploads e tarefas contra o Postgres
+        run: |
+          bun run --cwd packages/api test:server
+          bun run --cwd apps/server test:server
+
+      - name: Build do web e do servidor
+        env:
+          VITE_DATA_SOURCE: http
+          VITE_SERVER_URL: https://api.marinholocacoes.com
+        run: bun run build

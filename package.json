@@ -22,6 +22,9 @@
 			"vitest": "^5.0.5"
 		}
 	},
+	"overrides": {
+		"@effect/platform-node-shared": "4.0.6"
+	},
 	"type": "module",
 	"scripts": {
 		"dev": "turbo run dev",
