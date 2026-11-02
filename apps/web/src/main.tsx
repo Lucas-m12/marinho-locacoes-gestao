@@ -5,9 +5,12 @@ import { z } from "zod";
 
 import { ScreenSkeleton } from "./components/page";
 import { queryClient } from "./lib/query-client";
+import { initSentry, reactErrorHandler } from "./lib/sentry";
 import { routeTree } from "./routeTree.gen";
 
 z.config(z.locales.pt());
+
+const sentryEnabled = initSentry();
 
 const router = createRouter({
 	routeTree,
@@ -35,6 +38,15 @@ if (!rootElement) {
 }
 
 if (!rootElement.innerHTML) {
-	const root = ReactDOM.createRoot(rootElement);
+	const root = ReactDOM.createRoot(
+		rootElement,
+		sentryEnabled
+			? {
+					onUncaughtError: reactErrorHandler(),
+					onCaughtError: reactErrorHandler(),
+					onRecoverableError: reactErrorHandler(),
+				}
+			: undefined,
+	);
 	root.render(<RouterProvider router={router} />);
 }

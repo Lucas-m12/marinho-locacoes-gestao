@@ -13,7 +13,7 @@ bun run test           # Vitest: domain, api (unidade) e cenários contra o mock
 bun run test:server    # cenários, uploads e tarefas contra o Postgres real (sobe o postgres-test na 5433)
 bun run jobs           # agendador das tarefas (expirar orçamentos, limpar uploads, apagar documentos, backup)
 bun run job <nome>     # roda uma tarefa uma vez: expire-quotes, cleanup-uploads, purge-customer-documents, backup-database
-bun run build
+VITE_DATA_SOURCE=http VITE_SERVER_URL=https://api.marinholocacoes.com bun run build   # o build de produção do web recusa o mock
 bun run db:generate    # gera enums.prisma a partir do domain e o cliente Prisma
 ```
 
@@ -61,7 +61,7 @@ Regras que valem sempre:
 VITE_DATA_SOURCE=http VITE_SERVER_URL=http://localhost:3000 bun run dev:web
 ```
 
-Nenhuma tela muda. O valor é resolvido em tempo de build (`define` em `vite.config.ts`), então o mock não entra no bundle em modo `http`. Como subir o servidor está na seção "Backend".
+Nenhuma tela muda. O valor é resolvido em tempo de build (`define` em `vite.config.ts`), então o mock não entra no bundle em modo `http`. O `vite build` de produção falha se `VITE_DATA_SOURCE` não for `http`; o `check-types` do web usa `--mode check`, que aceita o mock. Como subir o servidor está na seção "Backend".
 
 ## Adicionar um procedimento
 

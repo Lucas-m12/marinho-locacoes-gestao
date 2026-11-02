@@ -23,6 +23,7 @@
 		"@orpc/openapi": "catalog:",
 		"@orpc/server": "catalog:",
 		"@orpc/zod": "catalog:",
+		"@sentry/bun": "11.7.0",
 		"better-auth": "catalog:",
 		"croner": "10.0.1",
 		"hono": "^4.13.7",

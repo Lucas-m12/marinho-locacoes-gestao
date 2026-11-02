@@ -52,9 +52,14 @@ wait_healthy() {
 }
 
 start_services() {
+	local caddy_before caddy_after
+	caddy_before="$(docker compose ps -q caddy 2>/dev/null || true)"
 	docker compose up -d --remove-orphans
-	docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1 ||
-		log "aviso: o Caddy não recarregou o Caddyfile; confira com docker compose logs caddy"
+	caddy_after="$(docker compose ps -q caddy 2>/dev/null || true)"
+	if [[ -n $caddy_before && $caddy_before == "$caddy_after" ]]; then
+		docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1 ||
+			log "aviso: o Caddy não recarregou o Caddyfile; confira com docker compose logs caddy"
+	fi
 }
 
 prune_old_images() {

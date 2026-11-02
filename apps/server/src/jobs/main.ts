@@ -3,12 +3,17 @@ import { BUSINESS_TIME_ZONE } from "@marinho-gestao/domain";
 import { Cron } from "croner";
 import { ENV } from "../env.server";
 import { log } from "../logger";
+import { flushSentry, initSentry, reportError } from "../sentry";
 import { backupStorage, uploadsStorage } from "../storage";
 import { pgDump } from "./backup";
 import { findJob, JOBS } from "./definitions";
-import { runJob } from "./runner";
+import { type ReportJobError, runJob } from "./runner";
 import type { JobContext } from "./types";
 
+const sentryEnabled = initSentry(ENV, "jobs");
+const reportJobError: ReportJobError | undefined = sentryEnabled
+	? (error, job) => reportError(error, { job: job.name })
+	: undefined;
 const db = createPrismaClient(ENV);
 
 const context: JobContext = {
@@ -31,7 +36,7 @@ async function runOnce(name: string): Promise<number> {
 		});
 		return 2;
 	}
-	const outcome = await runJob(job, context);
+	const outcome = await runJob(job, context, reportJobError);
 	return outcome.ok ? 0 : 1;
 }
 
@@ -50,7 +55,7 @@ function startScheduler(): void {
 						}),
 				},
 				async () => {
-					const run = runJob(job, context);
+					const run = runJob(job, context, reportJobError);
 					running.add(run);
 					await run;
 					running.delete(run);
@@ -69,7 +74,7 @@ function startScheduler(): void {
 		log("info", "scheduler stopping", { signal, running: running.size });
 		for (const cron of crons) cron.stop();
 		await Promise.allSettled(running);
-		await db.$disconnect();
+		await Promise.all([db.$disconnect(), flushSentry()]);
 		process.exit(0);
 	};
 	process.once("SIGTERM", () => void stop("SIGTERM"));
@@ -79,7 +84,7 @@ function startScheduler(): void {
 const requested = process.argv[2];
 if (requested) {
 	const code = await runOnce(requested);
-	await db.$disconnect();
+	await Promise.all([db.$disconnect(), flushSentry()]);
 	process.exit(code);
 } else {
 	startScheduler();
