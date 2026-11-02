@@ -7,7 +7,9 @@
 		"e2e": "playwright test",
 		"e2e:ui": "playwright test --ui",
 		"e2e:mock": "E2E_DATA_SOURCE=mock playwright test tests/fluxos",
-		"check-types": "tsc --noEmit"
+		"check-types": "tsc --noEmit",
+		"e2e:visual": "E2E_VISUAL_CAPTURE=1 playwright test && bun scripts/visual-report.ts",
+		"e2e:visual:report": "bun scripts/visual-report.ts"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "4.14.0",
