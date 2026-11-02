@@ -35,6 +35,8 @@
 		"e2e": "bun run --cwd apps/e2e e2e",
 		"e2e:ui": "bun run --cwd apps/e2e e2e:ui",
 		"e2e:mock": "bun run --cwd apps/e2e e2e:mock",
+		"e2e:visual": "bun run --cwd apps/e2e e2e:visual",
+		"e2e:update": "apps/e2e/scripts/update-snapshots.sh",
 		"dev:web": "turbo run dev:bare -F web --",
 		"dev:server": "turbo run dev -F server --",
 		"jobs": "bun run --cwd apps/server jobs",

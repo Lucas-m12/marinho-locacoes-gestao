@@ -11,6 +11,10 @@ bun run check-types    # tipos de todos os pacotes
 bun run check          # Biome, com correção automática
 bun run test           # Vitest: domain, api (unidade) e cenários contra o mock
 bun run test:server    # cenários, uploads e tarefas contra o Postgres real (sobe o postgres-test na 5433)
+bun run e2e            # Playwright: fluxos, qualidade e regressão visual contra o backend real
+bun run e2e:mock       # só os fluxos, com o mock e sem servidor
+bun run e2e:visual     # captura das 40 telas e relatório lado a lado com o design
+bun run e2e:update     # linhas de base da regressão visual, dentro da imagem do Playwright (Docker)
 bun run jobs           # agendador das tarefas (expirar orçamentos, limpar uploads, apagar documentos, backup)
 bun run job <nome>     # roda uma tarefa uma vez: expire-quotes, cleanup-uploads, purge-customer-documents, backup-database
 VITE_DATA_SOURCE=http VITE_SERVER_URL=https://api.marinholocacoes.com bun run build   # o build de produção do web recusa o mock
@@ -30,6 +34,7 @@ packages/
   api/         implement(contract): routers, services, storage (R2 e memória)
   ui/          primitivos shadcn (Base UI) + tokens da marca
 apps/server/   Hono: /api/auth/*, /rpc, /health, /api-reference (só fora de produção)
+apps/e2e/      Playwright: fluxos, qualidade, captura visual e regressão; scripts do MinIO e do relatório
 apps/web/src/
   data/
     client.ts   escolhe a fonte e exporta `client` e `orpc`
@@ -96,11 +101,12 @@ Nenhuma tela muda. O valor é resolvido em tempo de build (`define` em `vite.con
 bun run db:start                  # Postgres 18 (POSTGRES_PORT=5434 bun run db:start se a 5432 estiver ocupada)
 bun run db:migrate                # aplica as migrations no banco de apps/server/.env
 bun run db:seed:demo              # dados de exemplo do mock, relativos a hoje; usuários com senha marinho123
+bun run storage:start             # MinIO (Silo) na 9000, com os buckets marinho-dev e CORS
 bun run dev:server                # API em http://localhost:3000
 VITE_DATA_SOURCE=http VITE_SERVER_URL=http://localhost:3000 bun run dev:web
 ```
 
-`apps/server/.env` precisa de `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ caracteres), `BETTER_AUTH_URL`, `CORS_ORIGIN` e `R2_*` (veja `docs/operacao/r2.md`). Para produção, `db:seed` carrega o catálogo real, as configurações e os três usuários com as senhas de `SEED_PASSWORD_LUCAS`, `SEED_PASSWORD_ATENDIMENTO` e `SEED_PASSWORD_EQUIPAMENTOS`, passadas no comando. Rodar de novo não duplica nada. `db:seed:demo` apaga os dados e recusa `NODE_ENV=production`.
+`apps/server/.env` precisa de `DATABASE_URL`, `BETTER_AUTH_SECRET` (32+ caracteres), `BETTER_AUTH_URL`, `CORS_ORIGIN` e `R2_*` (veja `docs/operacao/r2.md`). Para usar o MinIO local: `R2_ENDPOINT=http://localhost:9000`, `R2_ACCOUNT_ID=minio`, `R2_ACCESS_KEY_ID=minioadmin`, `R2_SECRET_ACCESS_KEY=minioadmin-secret` e `R2_BUCKET=marinho-dev`. A chave secreta não pode ser igual ao Access Key ID: ele vai em toda URL assinada e o varlock bloquearia a resposta. Para produção, `db:seed` carrega o catálogo real, as configurações e os três usuários com as senhas de `SEED_PASSWORD_LUCAS`, `SEED_PASSWORD_ATENDIMENTO` e `SEED_PASSWORD_EQUIPAMENTOS`, passadas no comando. Rodar de novo não duplica nada. `db:seed:demo` apaga os dados e recusa `NODE_ENV=production`.
 
 ### Camadas
 
@@ -127,6 +133,20 @@ Enums do Prisma vêm de `packages/domain/src/enums.ts`: depois de mudar um enum,
 ### Tarefas agendadas
 
 `apps/server/src/jobs`: processo separado (`dist/jobs.mjs` na imagem) com `croner` no fuso de Maceió. A lógica fica nos services de `packages/api` (`expireStaleQuotes`, `deleteStalePendingUploads`, `purgeExpiredCustomerDocuments`) e a regra de prazo em `packages/domain/src/retention.ts`. Cada tarefa é idempotente, loga início e fim em JSON e grava `Event` (entidade `Job`, ator Sistema) quando muda algo; o backup grava sempre.
+
+## Testes E2E e visuais
+
+`apps/e2e` (Playwright 1.64, `workers: 1`). O `webServer` sobe `postgres-test` e o MinIO no Docker (pule com `E2E_SKIP_DOCKER=1` quando já existirem), cria o bucket `marinho-e2e` com CORS, aplica as migrations, roda o servidor na 3100 com `E2E_TEST_HOOKS=1` e faz build + preview do web na 3101 em `http` (3102 no `e2e:mock`).
+
+- **Ganchos de teste:** com `E2E_TEST_HOOKS=1` o servidor usa um relógio controlável e expõe `POST /__test/reset { now }` (apaga as tabelas de negócio, mantém usuários e sessões, recarrega o seed e grava os arquivos de exemplo no storage) e `POST /__test/clock { now }`. Com `NODE_ENV=production` o servidor não sobe. Nunca use essas rotas fora do E2E.
+- **Instante de referência:** segunda, 02/11/2026, 07:30 (`REFERENCE_NOW`). O navegador fica parado nele com `context.clock.setFixedTime`; o fixture `clock` avança servidor e navegador juntos.
+- **Projetos:** `desktop` 1440×900, `tablet` 834×1194 (toque) e `celular` 390×844 (mobile), todos com `deviceScaleFactor: 1`, `pt-BR` e `America/Maceio`.
+- **Fixtures** (`support/test.ts`): reset antes de cada arquivo; guardas que reprovam o teste com erro no console, `pageerror`, resposta 5xx ou requisição para fora de localhost (4xx esperados de regra de negócio não contam); `as("atendimento")` troca o `storageState`; `openContext` abre outra sessão com relógio e guardas; `needsServer(motivo)` pula no mock.
+- **Seletores:** por papel e texto acessível. Se um elemento não tem nome ou papel, corrija a tela (é acessibilidade), não o teste.
+- **Pastas:** `tests/fluxos` (fluxos por papel), `tests/qualidade` (axe, rolagem horizontal, alvos de 44 px, menu certo e estados vazio, carregando e erro das 14 telas), `tests/visual/captura.spec.ts` (só com `e2e:visual`) e `tests/visual/regressao.spec.ts` (`toHaveScreenshot`, linhas de base em `tests/visual/__screenshots__`).
+- **Telas e estados de referência:** `support/screens.ts` e `support/visual.ts`. A captura e a regressão usam o mesmo estado; 04 cancela a LOC-0033 antes, porque a referência mostra a tela montando essa locação.
+- **Relatório visual:** `bun run e2e:visual` grava `apps/e2e/visual-output/index.html` (Design, App e Diferença, da maior diferença para a menor). Diferenças que ficam vão em `docs/design/diferencas-aceitas.md`, com motivo.
+- **Linhas de base:** dependem do sistema operacional. Gere sempre com `bun run e2e:update`, que roda na imagem `mcr.microsoft.com/playwright:v<versão>-noble`, a mesma do job `e2e` do CI. Fora do Linux, `bun run e2e` pula a regressão (force com `E2E_VISUAL_REGRESSION=1`). Ao subir a versão do Playwright, troque também a imagem no `ci.yml`.
 
 ## Produção
 
