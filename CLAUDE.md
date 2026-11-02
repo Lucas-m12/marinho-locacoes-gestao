@@ -120,6 +120,18 @@ VITE_DATA_SOURCE=http VITE_SERVER_URL=http://localhost:3000 bun run dev:web
 
 ### Testes do servidor
 
-`bun run test:server` sobe o `postgres-test` (porta 5433, `tmpfs`), aplica as migrations e roda `packages/api/src/*.server.test.ts`. A seed de demonstração é recarregada antes de cada teste. Outra URL: `TEST_DATABASE_URL`.
+`bun run test:server` sobe o `postgres-test` (porta 5433, `tmpfs`), aplica as migrations e roda `packages/api/src/*.server.test.ts` e `apps/server/src/**/*.server.test.ts` (tarefas). A seed de demonstração é recarregada antes de cada teste. Outra URL: `TEST_DATABASE_URL`.
 
 Enums do Prisma vêm de `packages/domain/src/enums.ts`: depois de mudar um enum, rode `bun run db:generate` e crie a migration. Um teste acusa se `enums.prisma` sair de sincronia.
+
+### Tarefas agendadas
+
+`apps/server/src/jobs`: processo separado (`dist/jobs.mjs` na imagem) com `croner` no fuso de Maceió. A lógica fica nos services de `packages/api` (`expireStaleQuotes`, `deleteStalePendingUploads`, `purgeExpiredCustomerDocuments`) e a regra de prazo em `packages/domain/src/retention.ts`. Cada tarefa é idempotente, loga início e fim em JSON e grava `Event` (entidade `Job`, ator Sistema) quando muda algo; o backup grava sempre.
+
+## Produção
+
+- `apps/server/Dockerfile`: imagem única para `server`, `jobs` e `migrate` (tem o Prisma CLI e o `pg_dump` 18). Roda como `bun`.
+- `deploy/`: compose de produção, `Caddyfile`, `.env.example`, `deploy.sh` (deploy e rollback na VPS) e `bootstrap-vps.sh`.
+- `.github/workflows`: `ci.yml` em todo push; `deploy.yml` depois do CI verde na `main` (imagem no GHCR, API na VPS, front com Alchemy no stage `prod`).
+- Variáveis do servidor: só segredos ficam sensíveis no `.env.schema`. O varlock bloqueia respostas que contenham valores sensíveis, e as URLs assinadas do R2 levam o Account ID, o bucket e o Access Key ID.
+- Roteiros: `docs/operacao/` (`primeiro-deploy.md`, `rotina.md`, `backup-e-restauracao.md`, `r2.md`).
