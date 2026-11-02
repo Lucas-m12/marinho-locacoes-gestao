@@ -69,6 +69,7 @@
       },
       "devDependencies": {
         "@marinho-gestao/config": "workspace:*",
+        "@marinho-gestao/scenarios": "workspace:*",
         "@tanstack/react-query-devtools": "^5.104.2",
         "@tanstack/react-router-devtools": "^1.167.2",
         "@tanstack/router-plugin": "^1.168.45",
@@ -98,7 +99,9 @@
       },
       "devDependencies": {
         "@marinho-gestao/config": "workspace:*",
+        "@marinho-gestao/scenarios": "workspace:*",
         "@types/bun": "catalog:",
+        "better-auth": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
       },
@@ -185,6 +188,20 @@
         "@marinho-gestao/domain": "workspace:*",
         "@orpc/client": "catalog:",
         "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@marinho-gestao/config": "workspace:*",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/scenarios": {
+      "name": "@marinho-gestao/scenarios",
+      "version": "0.0.0",
+      "dependencies": {
+        "@marinho-gestao/contract": "workspace:*",
+        "@marinho-gestao/domain": "workspace:*",
+        "@orpc/client": "catalog:",
+        "vitest": "catalog:",
       },
       "devDependencies": {
         "@marinho-gestao/config": "workspace:*",
@@ -493,6 +510,8 @@
     "@marinho-gestao/infra": ["@marinho-gestao/infra@workspace:packages/infra"],
 
     "@marinho-gestao/read-model": ["@marinho-gestao/read-model@workspace:packages/read-model"],
+
+    "@marinho-gestao/scenarios": ["@marinho-gestao/scenarios@workspace:packages/scenarios"],
 
     "@marinho-gestao/ui": ["@marinho-gestao/ui@workspace:packages/ui"],
 

@@ -3,6 +3,8 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
+		"./demo": "./src/demo.ts",
+		"./maintenance-tasks": "./src/maintenance-tasks.ts",
 		"./*": "./src/*.ts"
 	},
 	"scripts": {

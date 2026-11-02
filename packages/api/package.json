@@ -23,7 +23,9 @@
 	},
 	"devDependencies": {
 		"@marinho-gestao/config": "workspace:*",
+		"@marinho-gestao/scenarios": "workspace:*",
 		"@types/bun": "catalog:",
+		"better-auth": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	}

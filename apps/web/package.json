@@ -40,6 +40,7 @@
 	},
 	"devDependencies": {
 		"@marinho-gestao/config": "workspace:*",
+		"@marinho-gestao/scenarios": "workspace:*",
 		"@tanstack/react-query-devtools": "^5.104.2",
 		"@tanstack/react-router-devtools": "^1.167.2",
 		"@tanstack/router-plugin": "^1.168.45",
