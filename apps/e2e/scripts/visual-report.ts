@@ -1,4 +1,11 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
@@ -23,7 +30,16 @@ function padTo(image: PNG, width: number, height: number): PNG {
 	for (let index = 0; index < padded.data.length; index += 4) {
 		padded.data.set(FILL, index);
 	}
-	PNG.bitblt(image, padded, 0, 0, Math.min(image.width, width), Math.min(image.height, height), 0, 0);
+	PNG.bitblt(
+		image,
+		padded,
+		0,
+		0,
+		Math.min(image.width, width),
+		Math.min(image.height, height),
+		0,
+		0,
+	);
 	return padded;
 }
 
@@ -32,7 +48,12 @@ function compare(name: string): Row {
 	copyFileSync(join(REFERENCES, name), join(DESIGN, name));
 	const appPath = join(APP, name);
 	if (!existsSync(appPath)) {
-		return { name, percent: null, designHeight: design.height, appHeight: null };
+		return {
+			name,
+			percent: null,
+			designHeight: design.height,
+			appHeight: null,
+		};
 	}
 	const app = PNG.sync.read(readFileSync(appPath));
 	const width = Math.max(design.width, app.width);
@@ -121,7 +142,8 @@ ${cards}
 `;
 }
 
-for (const dir of [OUTPUT, DESIGN, DIFF, APP]) mkdirSync(dir, { recursive: true });
+for (const dir of [OUTPUT, DESIGN, DIFF, APP])
+	mkdirSync(dir, { recursive: true });
 const rows = readdirSync(REFERENCES)
 	.filter((name) => name.endsWith(".png"))
 	.map(compare)
