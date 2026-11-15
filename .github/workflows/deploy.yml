@@ -153,6 +153,10 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # O build do Vite roda num processo filho e lê estas duas do ambiente:
+          # o "env" do alchemy.run.ts vira variável do Worker, não do build.
+          VITE_DATA_SOURCE: http
+          VITE_SERVER_URL: ${{ env.API_URL }}
           VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
           VITE_SENTRY_RELEASE: ${{ env.COMMIT_SHA }}
         run: bun run --cwd packages/infra deploy --stage prod --yes --no-input
