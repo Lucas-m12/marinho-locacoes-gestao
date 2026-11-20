@@ -2,10 +2,13 @@ import type { ObjectStorage } from "@marinho-gestao/api";
 import {
 	type ApiContext,
 	appRouter,
+	findCatalogPhotoKey,
+	listCatalogFeedItems,
 	toContractSession,
 } from "@marinho-gestao/api";
 import type { Auth } from "@marinho-gestao/auth";
 import type { Database } from "@marinho-gestao/db";
+import { catalogFeedCsv } from "@marinho-gestao/domain";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { ORPCError, onError } from "@orpc/server";
@@ -21,6 +24,10 @@ export type AppServices = {
 	auth: Auth;
 	storage: ObjectStorage;
 	corsOrigin: string;
+	/** Endereço público desta API, usado nos links de foto do catálogo. */
+	publicUrl: string;
+	/** Página para onde os itens do catálogo levam. */
+	landingUrl?: string;
 	exposeApiReference: boolean;
 	clock?: () => Date;
 	testRoutes?: Hono;
@@ -28,6 +35,9 @@ export type AppServices = {
 };
 
 type Variables = { userId: string | null };
+
+const DEFAULT_LANDING_URL = "https://marinholocacoes.com";
+const CATALOG_CODE = /^[A-Z]+(-\d+)?$/;
 
 function isUnexpected(error: unknown): boolean {
 	return !(error instanceof ORPCError) || error.status >= 500;
@@ -91,6 +101,44 @@ export function createApp(services: AppServices) {
 			log("error", "health check failed", errorFields(error));
 			return c.json({ ok: false }, 503);
 		}
+	});
+
+	// Catálogo público para a Meta (Gerenciador de Comércio busca este arquivo
+	// de tempos em tempos). Sem sessão: só leva o que já vai para o cliente.
+	app.get("/catalogo/feed.csv", async (c) => {
+		const items = await listCatalogFeedItems(services.db);
+		const csv = catalogFeedCsv(items, {
+			landingUrl: services.landingUrl ?? DEFAULT_LANDING_URL,
+			apiUrl: services.publicUrl,
+		});
+		return c.body(csv, 200, {
+			"Content-Type": "text/csv; charset=utf-8",
+			"Cache-Control": "public, max-age=900",
+		});
+	});
+
+	app.get("/catalogo/fotos/:code", async (c) => {
+		const code = c.req.param("code");
+		if (!CATALOG_CODE.test(code)) return c.json({ error: "NOT_FOUND" }, 404);
+		const fileKey = await findCatalogPhotoKey(services.db, code);
+		if (!fileKey) return c.json({ error: "NOT_FOUND" }, 404);
+		const upstream = await fetch(
+			await services.storage.presignGet(fileKey, 300),
+		);
+		if (!upstream.ok || !upstream.body) {
+			log("error", "catalog photo fetch failed", {
+				code,
+				status: upstream.status,
+			});
+			return c.json({ error: "PHOTO_UNAVAILABLE" }, 502);
+		}
+		return new Response(upstream.body, {
+			headers: {
+				"Content-Type":
+					upstream.headers.get("content-type") ?? "application/octet-stream",
+				"Cache-Control": "public, max-age=86400",
+			},
+		});
 	});
 
 	app.on(["POST", "GET"], "/api/auth/*", (c) =>

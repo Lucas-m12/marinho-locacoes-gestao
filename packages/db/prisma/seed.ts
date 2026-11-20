@@ -83,6 +83,7 @@ async function seedUnits(typeIds: Map<string, string>) {
 				name: unit.name,
 				shortName: unit.shortName,
 				labelApplied: unit.labelApplied,
+				catalogDescription: unit.catalogDescription,
 			},
 		});
 	}

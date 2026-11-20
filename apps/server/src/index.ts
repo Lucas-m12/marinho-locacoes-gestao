@@ -17,6 +17,7 @@ export default createApp({
 	auth,
 	storage,
 	corsOrigin: ENV.CORS_ORIGIN,
+	publicUrl: ENV.BETTER_AUTH_URL,
 	exposeApiReference: ENV.NODE_ENV !== "production",
 	clock: testHooks?.clock.now,
 	testRoutes: testHooks?.routes,

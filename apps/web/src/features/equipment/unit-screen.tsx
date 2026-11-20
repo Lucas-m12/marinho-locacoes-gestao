@@ -50,6 +50,12 @@ import { useCan } from "@/features/auth/use-current-user";
 import { describeError } from "@/lib/errors";
 import { formatDate, formatPeriod, money, relativeDay } from "@/lib/format";
 import { UNIT_PHOTO_SLOT_LABELS, UNIT_STATUS_LABELS } from "@/lib/labels";
+import {
+	CATALOG_INTRO,
+	CatalogEditor,
+	CatalogStatus,
+	catalogMissing,
+} from "./catalog-editor";
 import { locationText } from "./unit-location";
 
 function lowerFirst(text: string): string {
@@ -88,7 +94,10 @@ function PhotosCard({ unit }: { unit: UnitDetail }) {
 		toast.success("Foto salva.");
 	};
 
-	const [main, ...others] = UNIT_PHOTO_SLOTS;
+	const main: UnitPhotoSlot = "MAIN";
+	const others = UNIT_PHOTO_SLOTS.filter(
+		(slot) => slot !== main && slot !== "CATALOG",
+	);
 
 	return (
 		<Card aria-label="Fotos da unidade" className="px-(--card-spacing)">
@@ -128,6 +137,50 @@ function PhotosCard({ unit }: { unit: UnitDetail }) {
 					),
 				)}
 			</div>
+		</Card>
+	);
+}
+
+function CatalogCard({ unit }: { unit: UnitDetail }) {
+	const canManage = useCan("catalog:manage");
+	const addPhoto = useMutation(orpc.equipment.addUnitPhoto.mutationOptions());
+	const update = useMutation(orpc.equipment.updateUnit.mutationOptions());
+	if (!canManage) return null;
+
+	const photo = photoOf(unit, "CATALOG");
+	return (
+		<Card aria-labelledby="catalogo" className="gap-3 px-(--card-spacing)">
+			<h2 id="catalogo" className="type-title text-xl/6">
+				Catálogo
+			</h2>
+			<p className="text-muted-foreground text-[15px]/[22px]">
+				{CATALOG_INTRO}
+			</p>
+			<CatalogStatus
+				missing={catalogMissing({
+					hasPhoto: photo !== null,
+					description: unit.catalogDescription,
+					dailyPriceCents: unit.dailyPriceCents,
+				})}
+			/>
+			<CatalogEditor
+				key={unit.catalogDescription ?? ""}
+				photo={photo}
+				description={unit.catalogDescription}
+				saving={update.isPending}
+				onPhotoUploaded={async (fileKey) => {
+					await addPhoto.mutateAsync({
+						code: unit.code,
+						slot: "CATALOG",
+						fileKey,
+					});
+					toast.success("Foto do catálogo salva.");
+				}}
+				onSaveDescription={async (catalogDescription) => {
+					await update.mutateAsync({ code: unit.code, catalogDescription });
+					toast.success("Texto do catálogo salvo.");
+				}}
+			/>
 		</Card>
 	);
 }
@@ -684,6 +737,7 @@ export function UnitScreen({ code }: { code: string }) {
 					<EarningsSection unit={data} />
 					<RentalsCard unit={data} now={now} />
 					<DamagesCard unit={data} />
+					<CatalogCard unit={data} />
 				</div>
 			</div>
 

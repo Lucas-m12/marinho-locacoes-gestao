@@ -57,6 +57,7 @@ model Unit {
   purchaseCents     Int?               @map("purchase_cents")
   replacementCents  Int?               @map("replacement_cents")
   notes             String?
+  catalogDescription String?           @map("catalog_description")
   returnedAt        DateTime?          @map("returned_at") @db.Timestamptz(3)
   archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(3)
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -111,6 +112,8 @@ model Lot {
   depositCents    Int?            @map("deposit_cents")
   kitComposition  String?         @map("kit_composition")
   assetCode       String?         @map("asset_code")
+  catalogDescription String?       @map("catalog_description")
+  catalogPhotoKey String?         @map("catalog_photo_key")
   turnaroundHours Int             @map("turnaround_hours")
   archivedAt      DateTime?       @map("archived_at") @db.Timestamptz(3)
   createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)

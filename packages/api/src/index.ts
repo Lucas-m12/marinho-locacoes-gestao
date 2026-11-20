@@ -1,5 +1,9 @@
 export type { ApiContext } from "./context";
 export { type AppRouter, appRouter } from "./routers/index";
+export {
+	findCatalogPhotoKey,
+	listCatalogFeedItems,
+} from "./services/catalog-feed";
 export { purgeExpiredCustomerDocuments } from "./services/customers";
 export type { SystemDeps } from "./services/deps";
 export { recordEvent } from "./services/events";

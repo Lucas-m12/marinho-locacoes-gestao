@@ -77,6 +77,7 @@ export type UnitRecord = {
 	purchaseValueCents: number | null;
 	replacementValueCents: number | null;
 	notes: string | null;
+	catalogDescription: string | null;
 	returnedAt: string | null;
 	photos: { slot: UnitPhotoSlot; fileKey: string }[];
 	knownDamages: KnownDamageRecord[];
@@ -95,6 +96,8 @@ export type LotRecord = {
 	depositCents: number | null;
 	kitComposition: string | null;
 	assetCode: string | null;
+	catalogDescription: string | null;
+	catalogPhotoKey: string | null;
 	turnaroundHours: number;
 	checklist: ChecklistTemplateItem[];
 };
