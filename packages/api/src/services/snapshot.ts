@@ -398,6 +398,7 @@ export async function loadSnapshot(
 		purchaseValueCents: row.purchaseCents,
 		replacementValueCents: row.replacementCents,
 		notes: row.notes,
+		catalogDescription: row.catalogDescription,
 		returnedAt: isoOrNull(row.returnedAt),
 		photos: row.photos.map((photo) => ({
 			slot: photo.slot,
@@ -425,6 +426,8 @@ export async function loadSnapshot(
 		depositCents: row.depositCents,
 		kitComposition: row.kitComposition,
 		assetCode: row.assetCode,
+		catalogDescription: row.catalogDescription,
+		catalogPhotoKey: row.catalogPhotoKey,
 		turnaroundHours: row.turnaroundHours,
 		checklist: row.checklist.map((item) => ({
 			id: item.key,

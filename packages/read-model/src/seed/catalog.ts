@@ -159,6 +159,43 @@ export function buildTypes(): TypeRecord[] {
 	];
 }
 
+/** Texto público do catálogo (o mesmo do catálogo do WhatsApp de 20/10/2026). */
+export const CATALOG_DESCRIPTIONS: Readonly<Record<string, string>> = {
+	"MAR-001":
+		"Fura concreto, laje e alvenaria e também quebra no modo rompedor: para passar tubulação, chumbar e tirar revestimento. Encaixe SDS-plus. Vai na maleta, com empunhadura lateral.",
+	"MAR-002":
+		"Para quebrar piso, contrapiso, parede e concreto sem se acabar no braço. Vai na maleta.",
+	"MAR-003":
+		"Fura madeira, metal, tijolo e concreto (no modo impacto, com broca de vídea). Mandril com chave.",
+	"MAR-004":
+		"Fura madeira, metal, tijolo e concreto (no modo impacto, com broca de vídea). Mandril com chave e empunhadura lateral para mais firmeza.",
+	"MAR-005":
+		"Aparafusa e fura sem fio: montagem de móveis, drywall, forro, madeira e metal. Torque ajustável. Bateria de 21 V e 2.000 mAh.",
+	"MAR-006":
+		'Corta e desbasta metal, cerâmica e pedra, de acordo com o disco. Disco de 115 mm (4½"), com empunhadura lateral. 220 V.',
+	"MAR-007":
+		"Corta e desbasta metal, cerâmica e pedra, de acordo com o disco. Com empunhadura lateral.",
+	"MAR-008":
+		"Corta porcelanato, cerâmica, granito, mármore e concreto. Disco de 110 mm, 1.300 W. 220 V.",
+	"MAR-009":
+		'Corte reto em madeira, compensado, MDF e caibro. Disco de 185 mm (7¼"), com ajuste de profundidade e de ângulo.',
+	"MAR-010": "Corte reto em madeira, compensado, MDF e caibro. 1.100 W. 220 V.",
+	"MAR-011":
+		"Corte reto ou em curva em madeira, MDF, compensado e chapa fina, com a lâmina certa para cada material.",
+	"MAR-012":
+		"Desbasta e acerta madeira: porta que está pegando, batente, caibro e tábua. Lâmina de 82 mm. 220 V.",
+	"MAR-013":
+		'Acabamento de bordas, frisos e rebaixos em madeira e MDF. Pinça de ¼" (6,35 mm), 800 W. 220 V.',
+	"MAR-014":
+		"Lixa madeira, massa e pintura com acabamento liso. Com saco coletor de pó.",
+	"MAR-015":
+		"Pinta portão, grade, muro, madeira e móveis sem compressor e sem fio. Com bateria.",
+	"MAR-016":
+		"Inversora para solda com eletrodo (MMA) e TIG Lift. Vai com máscara de solda Tork. Bivolt automático.",
+	"MAR-017":
+		"Aspira pó, sujeira fina de obra e água. Tanque inox, mangueira e rodinhas.",
+};
+
 const unit = (
 	code: string,
 	typeId: string,
@@ -181,6 +218,7 @@ const unit = (
 	purchaseValueCents: null,
 	replacementValueCents: null,
 	notes: null,
+	catalogDescription: CATALOG_DESCRIPTIONS[code] ?? null,
 	returnedAt: null,
 	photos: [],
 	knownDamages: [],
@@ -338,6 +376,8 @@ export function buildLots(): LotRecord[] {
 			depositCents: null,
 			kitComposition: null,
 			assetCode: null,
+			catalogDescription: null,
+			catalogPhotoKey: null,
 			turnaroundHours: 12,
 			checklist: PIECE_CHECKS,
 		},
@@ -354,6 +394,8 @@ export function buildLots(): LotRecord[] {
 			depositCents: null,
 			kitComposition: null,
 			assetCode: null,
+			catalogDescription: null,
+			catalogPhotoKey: null,
 			turnaroundHours: 12,
 			checklist: TRAILER_CHECKS,
 		},

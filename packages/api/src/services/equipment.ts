@@ -384,6 +384,11 @@ export async function updateLot(
 	return inTransaction(deps.db, async (tx) => {
 		const before = await tx.lot.findUnique({ where: { id } });
 		if (!before) throw notFound("lot", id);
+		if (changes.catalogPhotoKey) {
+			await requireUsableFile(tx, deps.actor.id, changes.catalogPhotoKey, [
+				"UNIT_PHOTO",
+			]);
+		}
 		await tx.lot.update({ where: { id }, data: defined(changes) });
 		await recordEvent(tx, {
 			actor: deps.actor,

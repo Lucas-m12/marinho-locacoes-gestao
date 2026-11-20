@@ -6,12 +6,20 @@ import {
 import { UNIT_STATUSES, type UnitStatus } from "@marinho-gestao/domain";
 import { Button } from "@marinho-gestao/ui/components/button";
 import { Card } from "@marinho-gestao/ui/components/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@marinho-gestao/ui/components/dialog";
 import { Skeleton } from "@marinho-gestao/ui/components/skeleton";
 import { cn } from "@marinho-gestao/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { PackageSearch, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { FilterChip } from "@/components/filter-chip";
 import { Money } from "@/components/money";
@@ -29,6 +37,12 @@ import { useCan } from "@/features/auth/use-current-user";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatDate, money } from "@/lib/format";
 import { RENTAL_STATUS_LABELS, UNIT_STATUS_LABELS } from "@/lib/labels";
+import {
+	CATALOG_INTRO,
+	CatalogEditor,
+	CatalogStatus,
+	catalogMissing,
+} from "./catalog-editor";
 import { NewEquipmentSheet } from "./new-equipment-sheet";
 import { isLocationAlert, locationText } from "./unit-location";
 
@@ -132,6 +146,51 @@ function UnitCards({ units, now }: { units: UnitListItem[]; now: Date }) {
 	);
 }
 
+function LotCatalog({ lot }: { lot: Lot }) {
+	const canManage = useCan("catalog:manage");
+	const [open, setOpen] = useState(false);
+	const update = useMutation(orpc.equipment.updateLot.mutationOptions());
+	if (!canManage) return null;
+
+	const missing = catalogMissing({
+		hasPhoto: lot.catalogPhoto !== null,
+		description: lot.catalogDescription,
+		dailyPriceCents: lot.dailyPriceCents,
+	});
+	return (
+		<>
+			<span className="flex flex-wrap items-center justify-between gap-2">
+				<CatalogStatus missing={missing} />
+				<Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+					Catálogo
+				</Button>
+			</span>
+			<Dialog open={open} onOpenChange={setOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Catálogo · {lot.name}</DialogTitle>
+						<DialogDescription>{CATALOG_INTRO}</DialogDescription>
+					</DialogHeader>
+					<CatalogEditor
+						key={lot.catalogDescription ?? ""}
+						photo={lot.catalogPhoto}
+						description={lot.catalogDescription}
+						saving={update.isPending}
+						onPhotoUploaded={async (catalogPhotoKey) => {
+							await update.mutateAsync({ id: lot.id, catalogPhotoKey });
+							toast.success("Foto do catálogo salva.");
+						}}
+						onSaveDescription={async (catalogDescription) => {
+							await update.mutateAsync({ id: lot.id, catalogDescription });
+							toast.success("Texto do catálogo salvo.");
+						}}
+					/>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
+}
+
 function ScaffoldCard({ lot }: { lot: Lot }) {
 	const usable = lot.total - lot.inMaintenance - lot.retired;
 	const freePercent = usable === 0 ? 0 : (lot.freeToday / usable) * 100;
@@ -163,6 +222,7 @@ function ScaffoldCard({ lot }: { lot: Lot }) {
 			<span className="text-muted-foreground text-[13px]">
 				Kit e acessórios: {lot.kitComposition ?? <ToDefine />}
 			</span>
+			<LotCatalog lot={lot} />
 		</Card>
 	);
 }
@@ -186,6 +246,7 @@ function TrailerCard({ lot }: { lot: Lot }) {
 					: "Sem reservas à frente"}{" "}
 				· código {lot.assetCode ?? <ToDefine />}
 			</span>
+			<LotCatalog lot={lot} />
 		</Card>
 	);
 }

@@ -55,6 +55,7 @@ export function unitView(db: Snapshot, unit: UnitRecord): Unit {
 		replacementValueCents: unit.replacementValueCents,
 		notes: unit.notes,
 		nicknames: type.nicknames,
+		catalogDescription: unit.catalogDescription,
 	};
 }
 

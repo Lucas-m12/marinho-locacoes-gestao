@@ -226,6 +226,10 @@ export function lotView(db: Snapshot, lot: LotRecord, now: Date): Lot {
 		assetCode: lot.assetCode,
 		turnaroundHours: lot.turnaroundHours,
 		checklist: lot.checklist,
+		catalogDescription: lot.catalogDescription,
+		catalogPhoto: lot.catalogPhotoKey
+			? fileRefOf(db, lot.catalogPhotoKey)
+			: null,
 		freeToday,
 		reservedToday: usable - freeToday,
 		nextBooking: next
