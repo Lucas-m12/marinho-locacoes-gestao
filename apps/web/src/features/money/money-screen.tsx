@@ -447,7 +447,7 @@ function ReceivableRow({ item }: { item: Receivable }) {
 			<span className="flex items-center gap-2">
 				{item.provisional && (
 					<span className="text-muted-foreground text-[13px]">
-						regra provisória
+						valor sugerido
 					</span>
 				)}
 				<b className={item.provisional ? "text-alert-foreground" : undefined}>
@@ -628,8 +628,8 @@ export function MoneyScreen({
 					<ReceivablesCard />
 					<p className="text-muted-foreground flex items-start gap-2 text-sm/5">
 						<HandCoins aria-hidden className="mt-0.5 size-4 flex-none" />O saldo
-						a receber aparece no cliente até ser pago. O atraso segue a regra
-						provisória: dias a mais × diárias da locação.
+						a receber aparece no cliente até ser pago. O atraso é sugerido:
+						passou da tolerância de 2 horas, mais uma diária cheia.
 					</p>
 				</TabsContent>
 			</Tabs>

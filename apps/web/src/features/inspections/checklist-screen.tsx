@@ -645,7 +645,7 @@ function ReturnPanel({
 					</b>
 					<MoneyField
 						label="Valor do atraso"
-						hint="Regra provisória: dias a mais × diárias da locação"
+						hint="Uma diária cheia a cada 24 horas depois da tolerância de 2 horas"
 						field={plainField(lateAmount, setLateAmount)}
 					/>
 					<DecisionPicker

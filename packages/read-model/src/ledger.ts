@@ -157,6 +157,7 @@ function receivablesOf(db: Snapshot, now: Date): Receivable[] {
 				...base,
 				kind: "LATE",
 				amountCents: suggestLateFee({
+					startAt: rental.startAt,
 					dueAt: rental.endAt,
 					returnedAt: now,
 					dailyTotalCents,
