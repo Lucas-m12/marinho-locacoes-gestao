@@ -729,7 +729,25 @@ export function defineScenarios(harness: ScenarioHarness): void {
 			expect(unit.status).toBe("IN_INSPECTION");
 		});
 
-		it("registra o atraso com a regra provisória", async () => {
+		// LOC-0028: saída há 4 dias às 08:00 e volta combinada ontem às 17:00
+		// (4 diárias, pagas). A 4ª diária cobre até hoje às 08:00, mais 2 horas
+		// de tolerância.
+		it("dentro da tolerância não sugere atraso", async () => {
+			const client = clientAs("EQUIPMENT");
+			const inspection = await answerAll(
+				client,
+				"LOC-0028",
+				"MAR-008",
+				"RETURN",
+			);
+			expect(inspection.lateFee).toEqual({
+				extraDailies: 0,
+				suggestedCents: 0,
+			});
+		});
+
+		it("registra o atraso depois da tolerância", async () => {
+			harness.setNow(new Date(NOW.getTime() + 3 * 3_600_000));
 			const client = clientAs("EQUIPMENT");
 			const inspection = await answerAll(
 				client,

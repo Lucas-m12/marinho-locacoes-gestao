@@ -55,23 +55,44 @@ describe("rentalBalanceCents", () => {
 });
 
 describe("suggestLateFee", () => {
-	it("cobra diárias extras pelos dias depois do combinado", () => {
+	// Saída segunda 08:00 (11:00Z), devolução combinada terça 08:00 (1 diária).
+	const base = {
+		startAt: "2026-11-09T11:00:00Z",
+		dueAt: "2026-11-10T11:00:00Z",
+		dailyTotalCents: 4000,
+	};
+
+	it("dentro da tolerância de 2 horas não sugere nada", () => {
+		expect(
+			suggestLateFee({ ...base, returnedAt: "2026-11-10T13:00:00Z" }),
+		).toEqual({ extraDailies: 0, amountCents: 0, provisional: true });
+	});
+
+	it("passou da tolerância cobra uma diária a mais", () => {
+		expect(
+			suggestLateFee({ ...base, returnedAt: "2026-11-10T13:01:00Z" }),
+		).toEqual({ extraDailies: 1, amountCents: 4000, provisional: true });
+	});
+
+	it("dois dias depois cobra as diárias extras", () => {
+		expect(
+			suggestLateFee({ ...base, returnedAt: "2026-11-12T12:00:00Z" }),
+		).toEqual({ extraDailies: 2, amountCents: 8000, provisional: true });
+	});
+
+	it("devolução combinada no mesmo dia não cobra antes de fechar 24 horas", () => {
 		expect(
 			suggestLateFee({
-				dueAt: "2026-11-01T20:00:00Z",
-				returnedAt: "2026-11-03T13:00:00Z",
-				dailyTotalCents: 4000,
+				...base,
+				dueAt: "2026-11-09T20:00:00Z",
+				returnedAt: "2026-11-09T23:00:00Z",
 			}),
-		).toEqual({ extraDailies: 2, amountCents: 8000, provisional: true });
+		).toEqual({ extraDailies: 0, amountCents: 0, provisional: true });
 	});
 
 	it("no prazo não sugere nada", () => {
 		expect(
-			suggestLateFee({
-				dueAt: "2026-11-01T20:00:00Z",
-				returnedAt: "2026-11-01T19:00:00Z",
-				dailyTotalCents: 4000,
-			}),
+			suggestLateFee({ ...base, returnedAt: "2026-11-10T10:00:00Z" }),
 		).toEqual({ extraDailies: 0, amountCents: 0, provisional: true });
 	});
 });

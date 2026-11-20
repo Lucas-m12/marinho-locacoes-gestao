@@ -113,6 +113,7 @@ export function inspectionView(
 		),
 	);
 	const late = suggestLateFee({
+		startAt: rental.startAt,
 		dueAt: rental.endAt,
 		returnedAt: now,
 		dailyTotalCents,

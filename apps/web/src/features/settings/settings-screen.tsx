@@ -369,10 +369,10 @@ function RulesPanel({ settings }: { settings: Settings }) {
 			</Card>
 
 			<Card className="gap-2.5 px-(--card-spacing)">
-				<h2 className="type-title text-xl/6">Regras provisórias</h2>
-				<Alert variant="destructive">
+				<h2 className="type-title text-xl/6">Diárias e atraso</h2>
+				<Alert>
 					<AlertDescription>
-						Estas regras ainda vão ser decididas pelo negócio e não podem ser
+						Regras definidas em 20/11/2026. Ficam no código e não podem ser
 						editadas aqui.
 					</AlertDescription>
 				</Alert>
