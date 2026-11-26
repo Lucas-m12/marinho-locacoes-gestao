@@ -23,6 +23,9 @@ services:
     environment:
       API_DOMAIN: ${API_DOMAIN:?defina API_DOMAIN no .env}
       ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL no .env}
+      # Únicos IPs que chegam ao /mcp (saída da Anthropic, usada pelo conector do Claude).
+      MCP_ALLOWED_IPS: ${MCP_ALLOWED_IPS:-160.79.104.0/21 153.61.208.0/20}
+    networks: [default, mcp]
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -33,6 +36,7 @@ services:
 
   server:
     <<: *app
+    networks: [default, mcp]
 
   jobs:
     <<: *app
@@ -50,6 +54,40 @@ services:
     healthcheck:
       disable: true
 
+  # MCP do Claude (conector no claude.ai e no app do celular). Só sobe com
+  # COMPOSE_PROFILES=mcp no .env. Isolado: fica só na rede mcp (sem internet
+  # e sem o Postgres), não lê o .env (sem senha do banco, R2 nem segredo do
+  # login) e fala com a API como o usuário "claude". Veja apps/mcp/README.md.
+  mcp:
+    image: ${SERVER_IMAGE:?defina SERVER_IMAGE no .env}:${IMAGE_TAG:?defina IMAGE_TAG no .env}
+    profiles: ["mcp"]
+    init: true
+    restart: unless-stopped
+    command: ["bun", "/app/apps/mcp/dist/mcp.js"]
+    env_file:
+      - path: mcp.env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      MARINHO_API_URL: http://server:3000
+      MARINHO_ORIGIN: ${CORS_ORIGIN:-https://sistema.marinholocacoes.com}
+      # Hosts aceitos: o domínio público (via Caddy) e o nome interno, para testar de dentro da VPS.
+      MCP_PUBLIC_HOST: ${API_DOMAIN:?defina API_DOMAIN no .env},mcp
+      BUN_RUNTIME_TRANSPILER_CACHE_PATH: "0"
+    networks: [mcp]
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    pids_limit: 64
+    depends_on:
+      server:
+        condition: service_healthy
+
   postgres:
     image: postgres:18
     restart: unless-stopped
@@ -65,6 +103,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+
+networks:
+  default:
+  # Rede só entre Caddy, API e MCP, sem saída para a internet.
+  mcp:
+    internal: true
 
 volumes:
   postgres_data:

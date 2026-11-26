@@ -1,0 +1,27 @@
+{
+	"name": "@marinho-gestao/mcp",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"start": "bun src/stdio.ts",
+		"start:http": "bun src/http-main.ts",
+		"build": "bun build src/http-main.ts --target bun --sourcemap=linked --outdir dist --entry-naming mcp.js",
+		"check-types": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@marinho-gestao/contract": "workspace:*",
+		"@modelcontextprotocol/server": "2.4.0",
+		"@orpc/client": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@marinho-gestao/config": "workspace:*",
+		"@modelcontextprotocol/client": "2.4.0",
+		"@orpc/server": "catalog:",
+		"@types/bun": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	}
+}

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Publica uma versão da API na VPS, ou volta para a anterior.
 #
-#   ./deploy.sh sha-<commit>   baixa a imagem, roda as migrations, sobe server e jobs
+#   ./deploy.sh sha-<commit>   baixa a imagem, confere o Caddyfile, roda as migrations,
+#                              sobe os serviços (o mcp só com COMPOSE_PROFILES=mcp)
 #                              e espera o /health; se falhar, volta sozinho.
 #   ./deploy.sh rollback       volta para a versão anterior ao último deploy,
 #                              sem rodar migrations.
@@ -73,6 +74,17 @@ prune_old_images() {
 
 has_image() { docker image inspect "$(env_value SERVER_IMAGE):$1" >/dev/null 2>&1; }
 
+# Um Caddyfile com erro derruba o site quando o Caddy é recriado, e o /health
+# (que é interno) não percebe. Por isso ele é conferido antes de trocar algo.
+caddy_valid() {
+	local output
+	if output="$(docker compose run --rm --no-deps -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile 2>&1)"; then
+		return 0
+	fi
+	printf '%s\n' "$output" | tail -n 20
+	return 1
+}
+
 deploy() {
 	local target="$1" original previous=""
 	original="$(env_value IMAGE_TAG)"
@@ -87,13 +99,19 @@ deploy() {
 		fail "não consegui baixar a imagem $target"
 	fi
 
+	log "conferindo o Caddyfile"
+	if ! caddy_valid; then
+		set_tag "$original"
+		fail "o Caddyfile tem erro; nada foi trocado"
+	fi
+
 	log "aplicando migrations"
 	if ! docker compose run --rm migrate; then
 		set_tag "$original"
 		fail "as migrations falharam; nada foi trocado"
 	fi
 
-	log "subindo server e jobs"
+	log "subindo os serviços"
 	start_services
 	if wait_healthy; then
 		[[ -z $previous ]] || printf '%s\n' "$previous" >"$PREVIOUS_FILE"
