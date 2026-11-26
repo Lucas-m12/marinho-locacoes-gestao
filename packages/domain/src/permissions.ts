@@ -14,6 +14,7 @@ export const PERMISSIONS = {
 	"rentals:sell": ["MANAGER", "ATTENDANT"],
 	"rentals:separate": ["MANAGER", "EQUIPMENT"],
 	"rentals:close": ["MANAGER", "ATTENDANT"],
+	"rentals:record-completed": ["MANAGER", "ATTENDANT"],
 	"lostDemand:write": ["MANAGER", "ATTENDANT"],
 	"inspections:run": ALL,
 	"units:read": ALL,

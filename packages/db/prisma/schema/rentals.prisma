@@ -19,6 +19,7 @@ model Rental {
   priceFrozenAt     DateTime?     @map("price_frozen_at") @db.Timestamptz(3)
   cancelReason      String?       @map("cancel_reason")
   lateNoticeGiven   Boolean       @default(false) @map("late_notice_given")
+  registeredAfter   Boolean       @default(false) @map("registered_after")
   sentAt            DateTime?     @map("sent_at") @db.Timestamptz(3)
   confirmedAt       DateTime?     @map("confirmed_at") @db.Timestamptz(3)
   separatedAt       DateTime?     @map("separated_at") @db.Timestamptz(3)

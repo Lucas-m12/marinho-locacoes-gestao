@@ -209,6 +209,8 @@ export type RentalRecord = {
 	priceFrozenAt: string | null;
 	cancelReason: string | null;
 	lateNoticeGiven: boolean;
+	/** Registrada depois que aconteceu, sem vistoria nem caução. */
+	registeredAfter: boolean;
 	createdAt: string;
 	sentAt: string | null;
 	confirmedAt: string | null;

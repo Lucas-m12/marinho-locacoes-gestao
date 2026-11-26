@@ -118,6 +118,8 @@ export const RentalListItem = z.object({
 	startAt: IsoDateTime,
 	endAt: IsoDateTime,
 	totalCents: Cents,
+	/** Registrada depois que aconteceu, sem vistoria nem caução. */
+	registeredAfter: z.boolean(),
 });
 export type RentalListItem = z.infer<typeof RentalListItem>;
 
@@ -197,6 +199,37 @@ export const CreateQuoteInput = z
 	});
 export type CreateQuoteInput = z.input<typeof CreateQuoteInput>;
 
+export const CompletedPaymentInput = z.object({
+	amountCents: PositiveCents,
+	method: PaymentMethod,
+	paidAt: IsoDateTime,
+});
+
+/**
+ * Locação que já aconteceu e cujo equipamento já voltou. Período no passado,
+ * sem caução e sem vistorias. `agreedTotalCents` null = vale o total da
+ * tabela; abaixo dele, a diferença vira desconto.
+ */
+export const RecordCompletedInput = z
+	.object({
+		customerId: Id,
+		items: z.array(QuoteItemInput).min(1, "Adicione pelo menos um equipamento"),
+		startAt: IsoDateTime,
+		endAt: IsoDateTime,
+		deliveryMode: DeliveryMode,
+		siteCity: z.string().trim().nullable(),
+		deliveryFeeCents: NonNegativeCents.nullable(),
+		agreedTotalCents: NonNegativeCents.nullable(),
+		payment: CompletedPaymentInput.nullable(),
+		notes: z.string().trim().nullable(),
+		idempotencyKey: IdempotencyKey,
+	})
+	.refine((input) => Date.parse(input.startAt) < Date.parse(input.endAt), {
+		message: "A devolução precisa ser depois da saída",
+		path: ["endAt"],
+	});
+export type RecordCompletedInput = z.input<typeof RecordCompletedInput>;
+
 const RentalRef = z.object({ number: RentalNumber });
 
 export const RecordPaymentInput = RentalRef.extend({
@@ -260,6 +293,7 @@ export const rentals = {
 		.output(ListRentalsOutput),
 	get: base.input(RentalRef).output(Rental),
 	createQuote: base.input(CreateQuoteInput).output(Rental),
+	recordCompleted: base.input(RecordCompletedInput).output(Rental),
 	sendQuote: base.input(RentalRef).output(Rental),
 	recordPayment: base.input(RecordPaymentInput).output(Rental),
 	confirm: base.input(RentalRef).output(Rental),

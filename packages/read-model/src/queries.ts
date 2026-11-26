@@ -6,6 +6,8 @@ import {
 	firstFreeFrom,
 	holdsBooking,
 	isUnitAvailable,
+	OCCUPYING_RENTAL_STATUSES,
+	occupiedUntil,
 	startOfZonedDay,
 	toMs,
 } from "@marinho-gestao/domain";
@@ -75,6 +77,58 @@ export function bookingsFor(
 			},
 		];
 	});
+}
+
+/**
+ * Uso real do item em toda locação que tirou (ou vai tirar) o equipamento da
+ * base, inclusive as já devolvidas e encerradas. O fim é a volta registrada
+ * (`occupiedUntil`). Serve para conferir períodos passados.
+ */
+export function usageFor(
+	db: Snapshot,
+	code: string,
+	now: Date,
+	excludeRental?: string,
+): Booking[] {
+	return db.rentals.flatMap((rental) => {
+		if (
+			!OCCUPYING_RENTAL_STATUSES.includes(rental.status) ||
+			rental.number === excludeRental
+		) {
+			return [];
+		}
+		return rental.items
+			.filter((item) => item.code === code)
+			.map((item) => ({
+				start: rental.startAt,
+				end: occupiedUntil(
+					{
+						status: rental.status,
+						endAt: rental.endAt,
+						returnedAt: rental.returnedAt,
+						itemReturnedAt: item.returnDoneAt,
+					},
+					now,
+				).toISOString(),
+				quantity: item.quantity,
+				rental,
+			}));
+	});
+}
+
+/** O que já voltou: o uso que `bookingsFor` não mostra mais. */
+export function finishedUsageFor(
+	db: Snapshot,
+	code: string,
+	now: Date,
+): Booking[] {
+	return usageFor(db, code, now).filter(
+		(booking) =>
+			!holdsBooking(booking.rental.status) ||
+			booking.rental.items.some(
+				(item) => item.code === code && item.returnDoneAt !== null,
+			),
+	);
 }
 
 export function openOrderFor(
@@ -183,6 +237,64 @@ export function findConflicts(
 				? unitConflict(db, item, start, end, now, excludeRental)
 				: lotConflict(db, item, start, end, now, excludeRental);
 		return found ? [found] : [];
+	});
+}
+
+/**
+ * Conflito de uma locação registrada depois: o item estava em outra locação
+ * no mesmo período. Conta o uso real (sem folga entre locações) e, no lote,
+ * todas as peças, porque o que está em manutenção hoje podia estar na rua.
+ */
+export function findCompletedConflicts(
+	db: Snapshot,
+	items: readonly RequestedItem[],
+	start: string,
+	end: string,
+	now: Date,
+): ConflictingItem[] {
+	return items.flatMap((item): ConflictingItem[] => {
+		const bookings = usageFor(db, item.code, now);
+		const overlapping = findBookingConflicts({
+			start,
+			end,
+			bookings,
+			turnaroundHours: 0,
+		});
+		if (item.kind === "UNIT") {
+			const unit = requireUnit(db, item.code);
+			const first = overlapping[0];
+			if (!first) return [];
+			return [
+				{
+					code: unit.code,
+					name: unit.name,
+					rentalNumber: first.rental.number,
+					freeFrom: null,
+					requestedQuantity: null,
+					freeQuantity: null,
+				},
+			];
+		}
+		const lot = requireLot(db, item.code);
+		const free = availableLotQuantity({
+			total: lot.total,
+			inMaintenance: 0,
+			retired: 0,
+			bookings,
+			start,
+			end,
+		});
+		if (free >= item.quantity) return [];
+		return [
+			{
+				code: lot.code,
+				name: lot.name,
+				rentalNumber: overlapping[0]?.rental.number ?? null,
+				freeFrom: null,
+				requestedQuantity: item.quantity,
+				freeQuantity: free,
+			},
+		];
 	});
 }
 

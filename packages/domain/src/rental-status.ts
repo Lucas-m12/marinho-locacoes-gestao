@@ -41,6 +41,37 @@ export const BOOKING_RENTAL_STATUSES: readonly RentalStatus[] = [
 	"ON_SITE",
 ];
 
+/**
+ * Locações que tiraram (ou vão tirar) o equipamento da base: tudo menos
+ * rascunho, cancelada e vencida. É o que conta para dizer se o equipamento
+ * estava ocupado num período passado.
+ */
+export const OCCUPYING_RENTAL_STATUSES: readonly RentalStatus[] = [
+	...BOOKING_RENTAL_STATUSES,
+	"RETURNED",
+	"CLOSED",
+];
+
+/**
+ * Até quando um item ficou (ou fica) fora da base: a volta registrada do
+ * item ou da locação; sem volta, a devolução prevista, ou agora se a locação
+ * na obra está atrasada.
+ */
+export function occupiedUntil(
+	input: {
+		status: RentalStatus;
+		endAt: DateInput;
+		returnedAt: DateInput | null;
+		itemReturnedAt: DateInput | null;
+	},
+	now: DateInput,
+): Date {
+	const returned = input.itemReturnedAt ?? input.returnedAt;
+	if (returned !== null) return new Date(toMs(returned));
+	if (isRentalOverdue(input, now)) return new Date(toMs(now));
+	return new Date(toMs(input.endAt));
+}
+
 export const COUNTED_RENTAL_STATUSES: readonly RentalStatus[] = [
 	"CONFIRMED",
 	"SEPARATED",

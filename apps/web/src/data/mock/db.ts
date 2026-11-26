@@ -23,9 +23,9 @@ export type {
 	UserRecord,
 } from "@marinho-gestao/read-model";
 
-export const MOCK_DB_VERSION = 3;
+export const MOCK_DB_VERSION = 4;
 export const MOCK_DB_KEY = `marinho:mock:v${MOCK_DB_VERSION}`;
-const OLD_DB_KEYS = ["marinho:mock:v1", "marinho:mock:v2"];
+const OLD_DB_KEYS = ["marinho:mock:v1", "marinho:mock:v2", "marinho:mock:v3"];
 
 export type FileOwner = {
 	purpose: PendingUploadPurpose;

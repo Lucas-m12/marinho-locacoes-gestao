@@ -182,6 +182,9 @@ export const PRECONDITION_MESSAGES: Record<PreconditionReason, string> = {
 	UPLOAD_INVALID: "Esse tipo ou tamanho de arquivo não é aceito.",
 	ALREADY_REVERSED: "Este lançamento já foi estornado.",
 	IS_REVERSAL: "Um estorno não pode ser estornado.",
+	FUTURE_RENTAL: "Para locação futura, use o orçamento.",
+	AGREED_ABOVE_TOTAL: "O valor combinado é maior que o total pela tabela.",
+	PAYMENT_ABOVE_TOTAL: "O pagamento é maior que o valor da locação.",
 };
 
 export function taxIdLabel(kind: CustomerKind): string {

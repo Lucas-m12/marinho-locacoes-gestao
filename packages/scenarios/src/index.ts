@@ -1685,6 +1685,223 @@ export function defineScenarios(harness: ScenarioHarness): void {
 		});
 	});
 
+	describe("locação registrada depois", () => {
+		const completed = () => ({
+			customerId: quote.customerId,
+			items: [{ kind: "LOT" as const, code: "CARROCINHA", quantity: 1 }],
+			startAt: day(-6, "08:00"),
+			endAt: day(-6, "13:00"),
+			deliveryMode: "PICKUP" as const,
+			siteCity: "Capela",
+			deliveryFeeCents: null,
+			agreedTotalCents: 4000,
+			payment: {
+				amountCents: 4000,
+				method: "CASH" as const,
+				paidAt: day(-6, "13:00"),
+			},
+			notes: "Meia diária",
+			idempotencyKey: newKey(),
+		});
+
+		async function cashOf(rentalNumber: string) {
+			const { entries } = await clientAs("MANAGER").ledger.list({
+				...range,
+				account: "CASH",
+			});
+			return entries.filter((entry) => entry.rentalNumber === rentalNumber);
+		}
+
+		it("com valor combinado e pagamento em dinheiro, encerra com saldo zero", async () => {
+			const manager = clientAs("MANAGER");
+			const before = await manager.customers.get({ id: quote.customerId });
+			const input = completed();
+			const rental = await clientAs("ATTENDANT").rentals.recordCompleted(input);
+
+			expect(rental).toMatchObject({
+				status: "CLOSED",
+				registeredAfter: true,
+				dailies: 1,
+				subtotalCents: 8000,
+				discountCents: 4000,
+				totalCents: 4000,
+				paidCents: 4000,
+				balanceCents: 0,
+				pendingCheckouts: [],
+				pendingReturns: [],
+			});
+			expect(rental.deposit).toMatchObject({
+				expectedCents: 0,
+				receivedCents: 0,
+			});
+			expect(rental.history).toContainEqual(
+				expect.objectContaining({
+					message: "Registrada depois, sem vistoria",
+					actorRole: "ATTENDANT",
+				}),
+			);
+
+			const cash = await cashOf(rental.number);
+			expect(cash).toHaveLength(1);
+			expect(cash[0]).toMatchObject({
+				direction: "IN",
+				category: "RENTAL",
+				amountCents: 4000,
+				method: "CASH",
+				occurredAt: expect.any(String),
+			});
+			expect(cash[0]?.description).toContain(rental.number);
+
+			const again = await clientAs("ATTENDANT").rentals.recordCompleted(input);
+			expect(again.number).toBe(rental.number);
+			expect(await cashOf(rental.number)).toHaveLength(1);
+
+			const customer = await manager.customers.get({ id: quote.customerId });
+			expect(customer.stats.rentalCount).toBe(before.stats.rentalCount + 1);
+			expect(customer.rentals.map((entry) => entry.number)).toContain(
+				rental.number,
+			);
+			expect(
+				(await manager.ledger.receivables()).items.some(
+					(item) => item.rentalNumber === rental.number,
+				),
+			).toBe(false);
+
+			const { rows } = await manager.availability.calendar({
+				start: addCalendarDays(TODAY, -7),
+				days: 3,
+			});
+			const trailer = rows.find((row) => row.code === "CARROCINHA");
+			expect(trailer?.cells[1]).toMatchObject({
+				state: "RENTED",
+				rentalNumber: rental.number,
+			});
+			expect(trailer?.cells[0]?.state).toBe("FREE");
+		});
+
+		it("sem pagamento, fica devolvida e o saldo aparece no que falta receber", async () => {
+			const manager = clientAs("MANAGER");
+			const unitBefore = await manager.equipment.getUnit({ code: "MAR-003" });
+			const rental = await manager.rentals.recordCompleted({
+				...completed(),
+				items: [{ kind: "UNIT", code: "MAR-003", quantity: 1 }],
+				startAt: day(-5, "08:00"),
+				endAt: day(-4, "09:00"),
+				agreedTotalCents: null,
+				payment: null,
+			});
+
+			expect(rental.status).toBe("RETURNED");
+			expect(rental.discountCents).toBe(0);
+			expect(rental.balanceCents).toBe(rental.totalCents);
+			expect(rental.totalCents).toBeGreaterThan(0);
+			expect(await cashOf(rental.number)).toEqual([]);
+
+			const { items } = await manager.ledger.receivables();
+			expect(items).toContainEqual(
+				expect.objectContaining({
+					rentalNumber: rental.number,
+					kind: "BALANCE",
+					amountCents: rental.totalCents,
+				}),
+			);
+
+			const unit = await manager.equipment.getUnit({ code: "MAR-003" });
+			expect(unit.status).toBe(unitBefore.status);
+			expect(unit.rentals.map((entry) => entry.number)).toContain(
+				rental.number,
+			);
+
+			await manager.rentals.recordPayment({
+				number: rental.number,
+				kind: "BALANCE",
+				amountCents: rental.totalCents,
+				method: "PIX",
+				idempotencyKey: newKey(),
+			});
+			const closed = await manager.rentals.close({ number: rental.number });
+			expect(closed).toMatchObject({ status: "CLOSED", balanceCents: 0 });
+		});
+
+		it("período que cruza outra locação volta CONFLICT com o item e a locação", async () => {
+			const client = clientAs("ATTENDANT");
+			const unit = await errorOf(
+				client.rentals.recordCompleted({
+					...completed(),
+					items: [{ kind: "UNIT", code: "MAR-002", quantity: 1 }],
+					startAt: day(-11, "10:00"),
+					endAt: day(-11, "15:00"),
+					payment: null,
+				}),
+			);
+			expect(unit.code).toBe("CONFLICT");
+			expect(unit.data).toMatchObject({
+				conflicts: [{ code: "MAR-002", rentalNumber: "LOC-0015" }],
+			});
+
+			const lot = await errorOf(
+				client.rentals.recordCompleted({
+					...completed(),
+					items: [{ kind: "LOT", code: "ANDAIME", quantity: 15 }],
+					startAt: day(-8, "08:00"),
+					endAt: day(-7, "08:00"),
+					agreedTotalCents: null,
+					payment: null,
+				}),
+			);
+			expect(lot.code).toBe("CONFLICT");
+			expect(lot.data).toMatchObject({
+				conflicts: [
+					{
+						code: "ANDAIME",
+						rentalNumber: "LOC-0018",
+						requestedQuantity: 15,
+						freeQuantity: 10,
+					},
+				],
+			});
+		});
+
+		it("recusa devolução no futuro: locação futura vai pelo orçamento", async () => {
+			const error = await errorOf(
+				clientAs("ATTENDANT").rentals.recordCompleted({
+					...completed(),
+					startAt: day(0, "08:00"),
+					endAt: day(0, "17:00"),
+					payment: null,
+				}),
+			);
+			expect(error.code).toBe("PRECONDITION_FAILED");
+			expect(error.data).toMatchObject({ reason: "FUTURE_RENTAL" });
+			expect(error.message).toBe("Para locação futura, use o orçamento.");
+		});
+
+		it("recusa valor combinado acima do total e pagamento acima do valor", async () => {
+			const client = clientAs("ATTENDANT");
+			const above = await errorOf(
+				client.rentals.recordCompleted({
+					...completed(),
+					agreedTotalCents: 8001,
+					payment: null,
+				}),
+			);
+			expect(above.code).toBe("PRECONDITION_FAILED");
+			expect(above.data).toMatchObject({ reason: "AGREED_ABOVE_TOTAL" });
+
+			const overpaid = await errorOf(
+				client.rentals.recordCompleted({
+					...completed(),
+					payment: {
+						amountCents: 4001,
+						method: "CASH",
+						paidAt: day(-6, "13:00"),
+					},
+				}),
+			);
+			expect(overpaid.data).toMatchObject({ reason: "PAYMENT_ABOVE_TOTAL" });
+		});
+	});
+
 	type RestrictedCall = {
 		procedure: string;
 		permission: Permission;
@@ -1891,6 +2108,20 @@ export function defineScenarios(harness: ScenarioHarness): void {
 						endAt: day(21),
 						items: [{ kind: "UNIT", code: "MAR-003", quantity: 1 }],
 						send: false,
+					}),
+			],
+			[
+				"rentals.recordCompleted",
+				"rentals:record-completed",
+				(c) =>
+					c.rentals.recordCompleted({
+						...quote,
+						items: [{ kind: "UNIT", code: "MAR-003", quantity: 1 }],
+						startAt: day(-5),
+						endAt: day(-4),
+						agreedTotalCents: null,
+						payment: null,
+						idempotencyKey: newKey(),
 					}),
 			],
 			[

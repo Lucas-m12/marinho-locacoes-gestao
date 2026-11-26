@@ -1,6 +1,7 @@
 export * from "./availability";
 export * from "./catalog-feed";
 export * from "./codes";
+export * from "./completed-rental";
 export * from "./customer-tier";
 export * from "./dailies";
 export * from "./dates";

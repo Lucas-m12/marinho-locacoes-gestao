@@ -14,6 +14,7 @@ import {
 	listRentals,
 	moveUnit,
 	precondition,
+	prepareCompletedRental,
 	previewExtension,
 	quoteText,
 	RENTAL_EVENTS,
@@ -129,6 +130,7 @@ export const rentals = {
 			priceFrozenAt: null,
 			cancelReason: null,
 			lateNoticeGiven: false,
+			registeredAfter: false,
 			createdAt: at,
 			sentAt: null,
 			confirmedAt: null,
@@ -148,6 +150,94 @@ export const rentals = {
 		}
 		db.rentals.push(rental);
 		return rentalView(db, rental, now);
+	}),
+
+	recordCompleted: api.rentals.recordCompleted.handler(({ context, input }) => {
+		const user = requirePermission(context, "rentals:record-completed");
+		const db = getDb();
+		const now = mockNow();
+		return once(
+			db,
+			user,
+			"rentals.recordCompleted",
+			input.idempotencyKey,
+			() => {
+				const at = now.toISOString();
+				const customer = requireCustomer(db, input.customerId);
+				const { plan, deliveryFeeCents, dailyPrices } = prepareCompletedRental(
+					db,
+					input,
+					now,
+				);
+				const rental: RentalRecord = {
+					id: nextId(db, "r"),
+					number: nextCode(
+						"LOC",
+						db.rentals.map((entry) => entry.number),
+					),
+					status: plan.status,
+					customerId: customer.id,
+					startAt: input.startAt,
+					endAt: input.endAt,
+					items: input.items.map((item, index) => ({
+						id: nextId(db, "item"),
+						kind: item.kind,
+						code: item.code,
+						quantity: item.quantity,
+						frozenDailyPriceCents: dailyPrices[index] ?? null,
+						frozenDepositCents: 0,
+						checkoutDoneAt: input.startAt,
+						returnDoneAt: input.endAt,
+					})),
+					deliveryMode: input.deliveryMode,
+					siteAddress: null,
+					siteCity: input.siteCity,
+					sitePinUrl: null,
+					receiverName: customer.name,
+					termSigned: false,
+					notes: input.notes,
+					deliveryFeeCents,
+					discountCents: plan.discountCents,
+					payments: [],
+					deposit: {
+						receivedCents: 0,
+						receivedAt: null,
+						receivedMethod: null,
+						refundedCents: 0,
+						refundedAt: null,
+						refundedMethod: null,
+						retainedCents: 0,
+						retentionReason: null,
+						retainedAt: null,
+					},
+					occurrences: [],
+					history: [],
+					signalDueAt: null,
+					priceFrozenAt: at,
+					cancelReason: null,
+					lateNoticeGiven: false,
+					registeredAfter: true,
+					createdAt: at,
+					sentAt: null,
+					confirmedAt: null,
+					separatedAt: null,
+					deliveredAt: input.startAt,
+					returnedAt: input.endAt,
+					closedAt: plan.status === "CLOSED" ? at : null,
+				};
+				db.rentals.push(rental);
+				addEvent(db, rental, user, RENTAL_EVENTS.registeredAfter, at);
+				if (input.payment) {
+					recordPayment(db, rental, user, {
+						kind: "BALANCE",
+						amountCents: input.payment.amountCents,
+						method: input.payment.method,
+						paidAt: input.payment.paidAt,
+					});
+				}
+				return rentalView(db, rental, now);
+			},
+		);
 	}),
 
 	sendQuote: api.rentals.sendQuote.handler(({ context, input }) => {

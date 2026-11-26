@@ -186,7 +186,7 @@ describe("protocolo", () => {
 		await client.connect(transport);
 		clients.push(client);
 		const tools = await client.listTools();
-		expect(tools.tools).toHaveLength(25);
+		expect(tools.tools).toHaveLength(26);
 		const result = await client.callTool({
 			name: "buscar_clientes",
 			arguments: { q: "joão" },

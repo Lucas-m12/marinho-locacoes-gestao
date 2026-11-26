@@ -3,6 +3,7 @@ import type {
 	CreateQuoteInput,
 	ExtendPreview,
 	LostDemandRecord,
+	RecordCompletedInput,
 	RecordLostDemandInput,
 	RecordPaymentInput,
 	Rental,
@@ -28,6 +29,7 @@ import {
 	LEDGER_DESCRIPTIONS,
 	listLostDemand as listLostDemandView,
 	listRentals as listRentalsView,
+	prepareCompletedRental,
 	previewExtension,
 	quoteText,
 	RENTAL_EVENTS,
@@ -54,8 +56,8 @@ import { recordEvent } from "./events";
 import { expireStaleQuotes } from "./expire";
 import { requireUsableFile } from "./files";
 import { once } from "./idempotency";
-import { lockLots, lockRental, requireUuid } from "./lookups";
-import { HOLDING_RENTALS } from "./scopes";
+import { lockLots, lockRental, lockUnit, requireUuid } from "./lookups";
+import { HOLDING_RENTALS, OCCUPYING_RENTALS } from "./scopes";
 import { loadSnapshot } from "./snapshot";
 
 type RequestedItem = { kind: "UNIT" | "LOT"; code: string; quantity: number };
@@ -93,6 +95,14 @@ function turnaroundOf(snapshot: Snapshot, item: RequestedItem): number {
 
 function lotCodes(items: readonly RequestedItem[]): string[] {
 	return items.filter((item) => item.kind === "LOT").map((item) => item.code);
+}
+
+/** Em ordem, para duas transações não se travarem ao contrário. */
+function unitCodes(items: readonly RequestedItem[]): string[] {
+	return items
+		.filter((item) => item.kind === "UNIT")
+		.map((item) => item.code)
+		.sort();
 }
 
 async function conflictAfterRace(
@@ -313,6 +323,119 @@ export async function createQuote(
 			input.send
 				? { items: input.items, start: input.startAt, end: input.endAt, now }
 				: null,
+	);
+}
+
+/**
+ * Locação que já aconteceu e cujo equipamento já voltou: entra devolvida
+ * (ou encerrada, se pago tudo), sem caução e sem vistorias, com o valor
+ * combinado e o pagamento, tudo numa transação só e com idempotência. Os
+ * itens não seguram a agenda e o status atual das unidades não muda.
+ */
+export async function recordCompleted(
+	deps: ServiceDeps,
+	input: z.output<typeof RecordCompletedInput>,
+): Promise<Rental> {
+	requireUuid("customer", input.customerId);
+	const now = deps.clock();
+	const codes = input.items.map((item) => item.code);
+	return once(
+		deps.db,
+		deps.actor,
+		"rentals.recordCompleted",
+		input.idempotencyKey,
+		async (tx) => {
+			await lockLots(tx, lotCodes(input.items));
+			for (const code of unitCodes(input.items)) await lockUnit(tx, code);
+			const snapshot = await loadSnapshot(tx, {
+				rentals: {
+					...OCCUPYING_RENTALS,
+					startsAt: { lt: input.endAt },
+					items: {
+						some: {
+							OR: [
+								{ unit: { code: { in: codes } } },
+								{ lot: { code: { in: codes } } },
+							],
+						},
+					},
+				},
+				customers: { id: input.customerId },
+			});
+			const customer = requireCustomer(snapshot, input.customerId);
+			const { plan, deliveryFeeCents, dailyPrices } = prepareCompletedRental(
+				snapshot,
+				input,
+				now,
+			);
+
+			const code = await nextCodeFromCounter(tx, "LOC");
+			const rental = await tx.rental.create({
+				data: {
+					code,
+					customerId: customer.id,
+					status: plan.status,
+					registeredAfter: true,
+					deliveryMode: input.deliveryMode,
+					siteCity: input.siteCity,
+					receiverName: customer.name,
+					notes: input.notes,
+					startsAt: input.startAt,
+					endsAt: input.endAt,
+					deliveryFeeCents,
+					discountCents: plan.discountCents,
+					discountReason:
+						plan.discountCents > 0 ? "Valor combinado com o cliente" : null,
+					priceFrozenAt: now,
+					deliveredAt: input.startAt,
+					returnedAt: input.endAt,
+					closedAt: plan.status === "CLOSED" ? now : null,
+					createdAt: now,
+					items: {
+						create: input.items.map((item, position) => ({
+							position,
+							unitId:
+								item.kind === "UNIT"
+									? requireUnit(snapshot, item.code).id
+									: null,
+							lotId:
+								item.kind === "LOT" ? requireLot(snapshot, item.code).id : null,
+							quantity: item.quantity,
+							dailyPriceCents: dailyPrices[position] ?? null,
+							depositCents: 0,
+							startsAt: input.startAt,
+							blockedUntil: input.endAt,
+							holdsCalendar: false,
+							checkoutDoneAt: input.startAt,
+							returnDoneAt: input.endAt,
+						})),
+					},
+				},
+			});
+			await rentalEvent(
+				tx,
+				deps,
+				rental,
+				"registeredAfter",
+				RENTAL_EVENTS.registeredAfter,
+				now,
+				{
+					agreedTotalCents: input.agreedTotalCents,
+					discountCents: plan.discountCents,
+				},
+			);
+			if (input.payment) {
+				const created = await loadSnapshot(tx, { rentals: { code } });
+				await postPayment(tx, deps, created, requireRental(created, code), {
+					kind: "BALANCE",
+					amountCents: input.payment.amountCents,
+					method: input.payment.method,
+					paidAt: new Date(input.payment.paidAt),
+					receiptFileKey: null,
+				});
+			}
+			return viewOfRental(tx, code, now);
+		},
 	);
 }
 

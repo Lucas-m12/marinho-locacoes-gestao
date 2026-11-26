@@ -32,6 +32,7 @@ import { useCan } from "@/features/auth/use-current-user";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatDate, formatMonthName, formatPeriod, money } from "@/lib/format";
 import { LostDemandDialog } from "./lost-demand-dialog";
+import { RegisteredAfterChip } from "./registered-after-chip";
 
 export const RentalsSearch = z.object({
 	aba: z.enum(["abertas", "encerradas", "perdidas"]).optional(),
@@ -88,8 +89,15 @@ function RentalTable({ rentals }: { rentals: RentalListItem[] }) {
 						</span>
 					</span>
 					<b className="text-right">{money(rental.totalCents)}</b>
-					<span>
+					<span
+						className={
+							rental.registeredAfter
+								? "flex flex-col items-start gap-1"
+								: undefined
+						}
+					>
 						<StatusChip kind="rental" status={rental.displayStatus} />
+						{rental.registeredAfter && <RegisteredAfterChip />}
 					</span>
 				</Link>
 			))}
@@ -109,11 +117,22 @@ function RentalCards({ rentals }: { rentals: RentalListItem[] }) {
 					>
 						<span className="flex items-center justify-between gap-2.5">
 							<b className="text-sm">{rental.number}</b>
-							<StatusChip
-								kind="rental"
-								status={rental.displayStatus}
-								size="sm"
-							/>
+							{rental.registeredAfter ? (
+								<span className="flex flex-wrap justify-end gap-1.5">
+									<RegisteredAfterChip size="sm" />
+									<StatusChip
+										kind="rental"
+										status={rental.displayStatus}
+										size="sm"
+									/>
+								</span>
+							) : (
+								<StatusChip
+									kind="rental"
+									status={rental.displayStatus}
+									size="sm"
+								/>
+							)}
 						</span>
 						<b className="text-base/[22px]">{rental.equipmentSummary}</b>
 						<span className="text-muted-foreground text-sm">

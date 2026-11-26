@@ -20,6 +20,11 @@ export const rentals = {
 		.handler(({ context, input }) =>
 			service.createQuote(depsOf(context), input),
 		),
+	recordCompleted: api.rentals.recordCompleted
+		.use(requirePermission("rentals:record-completed"))
+		.handler(({ context, input }) =>
+			service.recordCompleted(depsOf(context), input),
+		),
 	sendQuote: api.rentals.sendQuote
 		.use(sell)
 		.handler(({ context, input }) =>

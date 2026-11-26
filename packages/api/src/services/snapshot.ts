@@ -209,6 +209,7 @@ export function rentalRecord(
 		priceFrozenAt: isoOrNull(row.priceFrozenAt),
 		cancelReason: row.cancelReason,
 		lateNoticeGiven: row.lateNoticeGiven,
+		registeredAfter: row.registeredAfter,
 		createdAt: iso(row.createdAt),
 		sentAt: isoOrNull(row.sentAt),
 		confirmedAt: isoOrNull(row.confirmedAt),

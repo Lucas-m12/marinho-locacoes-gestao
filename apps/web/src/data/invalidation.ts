@@ -40,6 +40,7 @@ const AFFECTED: Record<string, Module[]> = {
 	"customers.update": ["customers", "rentals"],
 	"customers.addDocument": ["customers"],
 	"rentals.createQuote": RENTAL_FLOW,
+	"rentals.recordCompleted": MONEY_FLOW,
 	"rentals.sendQuote": RENTAL_FLOW,
 	"rentals.recordPayment": MONEY_FLOW,
 	"rentals.confirm": RENTAL_FLOW,

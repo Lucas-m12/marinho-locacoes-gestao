@@ -132,6 +132,9 @@ export const PreconditionReason = z.enum([
 	"UPLOAD_INVALID",
 	"ALREADY_REVERSED",
 	"IS_REVERSAL",
+	"FUTURE_RENTAL",
+	"AGREED_ABOVE_TOTAL",
+	"PAYMENT_ABOVE_TOTAL",
 ]);
 export type PreconditionReason = z.infer<typeof PreconditionReason>;
 

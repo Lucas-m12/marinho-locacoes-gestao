@@ -24,6 +24,7 @@ import type { z } from "zod";
 import {
 	type Booking,
 	bookingsFor,
+	finishedUsageFor,
 	openOrderFor,
 	requireType,
 } from "./queries";
@@ -182,12 +183,18 @@ function coveringBooking(bookings: Booking[], day: string): Booking | null {
 function unitCell(
 	unit: UnitRecord,
 	bookings: Booking[],
+	finished: Booking[],
 	expectedBackDay: string | null,
 	day: string,
 	today: string,
 ): CalendarCell {
 	const empty = { date: day, rentalNumber: null, freeQuantity: null };
 
+	// Dia que já passou: o que foi alugado e voltou vale mais que o status de hoje.
+	const past = day < today ? coveringBooking(finished, day) : null;
+	if (past) {
+		return { ...empty, rentalNumber: past.rental.number, state: "RENTED" };
+	}
 	if (!isBookable(unit.status)) {
 		return { ...empty, state: "BLOCKED" };
 	}
@@ -220,11 +227,14 @@ function unitCell(
 
 function lotCell(
 	lot: LotRecord,
-	bookings: Booking[],
+	current: Booking[],
+	finished: Booking[],
 	day: string,
+	today: string,
 ): CalendarCell {
 	const start = zonedTimeToIso(day, "00:00");
 	const end = zonedTimeToIso(addCalendarDays(day, 1), "00:00");
+	const bookings = day < today ? [...current, ...finished] : current;
 	const free = availableLotQuantity({
 		total: lot.total,
 		inMaintenance: lot.inMaintenance,
@@ -248,10 +258,11 @@ function lotCell(
 	const awaiting = covering.some(
 		(booking) => booking.rental.status === "AWAITING_DEPOSIT",
 	);
+	const returned = covering.some((booking) => finished.includes(booking));
 	return {
 		...cell,
 		rentalNumber: last?.rental.number ?? null,
-		state: awaiting ? "AWAITING_DEPOSIT" : "RESERVED",
+		state: awaiting ? "AWAITING_DEPOSIT" : returned ? "RENTED" : "RESERVED",
 	};
 }
 
@@ -301,6 +312,7 @@ export function availabilityCalendar(
 		.filter((unit) => unit.status !== "RETIRED")
 		.map((unit) => {
 			const bookings = bookingsFor(db, unit.code, now);
+			const finished = finishedUsageFor(db, unit.code, now);
 			const order = openOrderFor(db, unit.code);
 			const expectedBackDay = order?.expectedBackAt
 				? calendarDay(order.expectedBackAt)
@@ -313,13 +325,14 @@ export function availabilityCalendar(
 				perPiece: false,
 				totalQuantity: null,
 				cells: days.map((day) =>
-					unitCell(unit, bookings, expectedBackDay, day, today),
+					unitCell(unit, bookings, finished, expectedBackDay, day, today),
 				),
 			};
 		});
 
 	const lotRows: CalendarRow[] = db.lots.map((lot) => {
 		const bookings = bookingsFor(db, lot.code, now);
+		const finished = finishedUsageFor(db, lot.code, now);
 		const perPiece = lot.pricing === "PER_PIECE";
 		return {
 			kind: "LOT",
@@ -328,7 +341,7 @@ export function availabilityCalendar(
 			name: perPiece ? `${lot.total} peças` : "reboque",
 			perPiece,
 			totalQuantity: lot.total,
-			cells: days.map((day) => lotCell(lot, bookings, day)),
+			cells: days.map((day) => lotCell(lot, bookings, finished, day, today)),
 		};
 	});
 
