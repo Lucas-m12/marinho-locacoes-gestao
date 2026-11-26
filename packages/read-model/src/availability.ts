@@ -1,5 +1,6 @@
 import type {
 	AvailabilityBlock,
+	AvailabilityRental,
 	AvailabilityResult,
 	AvailabilitySearchInput,
 	CalendarCell,
@@ -10,13 +11,16 @@ import type {
 import {
 	addCalendarDays,
 	availableLotQuantity,
+	blockingBooking,
 	calendarDay,
 	countDailies,
-	findBookingConflicts,
-	firstFreeFrom,
+	freeFrom,
+	freeUntil,
 	isBookable,
 	isUnitAvailable,
+	isUnitOffSchedule,
 	matchesSearch,
+	nextBooking,
 	toMs,
 	zonedTimeToIso,
 } from "@marinho-gestao/domain";
@@ -49,8 +53,25 @@ function blockOf(booking: Booking, now: Date): AvailabilityBlock {
 	return toMs(booking.rental.endAt) < now.getTime() ? "OVERDUE" : "RENTED";
 }
 
-function customerName(db: Snapshot, id: string): string {
-	return db.customers.find((entry) => entry.id === id)?.name ?? "Cliente";
+function rentalSummary(
+	db: Snapshot,
+	booking: Booking | null,
+): AvailabilityRental | null {
+	if (!booking) return null;
+	const { rental } = booking;
+	const customer = db.customers.find((entry) => entry.id === rental.customerId);
+	return {
+		number: rental.number,
+		customerName: customer?.name ?? "Cliente",
+		customerCity: customer?.city ?? null,
+		startAt: rental.startAt,
+		endAt: rental.endAt,
+		status: rental.status,
+	};
+}
+
+function isoOrNull(value: Date | null): string | null {
+	return value?.toISOString() ?? null;
 }
 
 function unitResult(
@@ -64,20 +85,19 @@ function unitResult(
 	const type = requireType(db, unit.typeId);
 	const bookings = bookingsFor(db, unit.code, now);
 	const order = openOrderFor(db, unit.code);
+	const maintenance = order ? { expectedBackAt: order.expectedBackAt } : null;
+	const { turnaroundHours } = type;
 	const available = isUnitAvailable({
 		unit,
 		start,
 		end,
 		bookings,
-		maintenance: order ? { expectedBackAt: order.expectedBackAt } : null,
-		turnaroundHours: type.turnaroundHours,
+		maintenance,
+		turnaroundHours,
 	});
-	const conflict = findBookingConflicts({
-		start,
-		end,
-		bookings,
-		turnaroundHours: type.turnaroundHours,
-	})[0];
+	const request = { start, end, bookings, turnaroundHours };
+	const conflict = available ? null : blockingBooking(request);
+	const offSchedule = isUnitOffSchedule({ unit, start, maintenance });
 
 	const statusBlock = (): AvailabilityBlock | null => {
 		if (unit.status === "IN_MAINTENANCE") return "MAINTENANCE";
@@ -102,24 +122,15 @@ function unitResult(
 		totalQuantity: null,
 		freeQuantity: null,
 		block: available ? null : conflict ? blockOf(conflict, now) : statusBlock(),
-		blockingRental:
-			!available && conflict
-				? {
-						number: conflict.rental.number,
-						customerName: customerName(db, conflict.rental.customerId),
-						endAt: conflict.rental.endAt,
-						status: conflict.rental.status,
-					}
-				: null,
+		blockingRental: rentalSummary(db, conflict),
+		freeUntil: offSchedule ? null : isoOrNull(freeUntil(request)),
 		freeFrom: available
 			? null
 			: conflict
-				? firstFreeFrom({
-						bookings,
-						after: conflict.start,
-						turnaroundHours: type.turnaroundHours,
-					}).toISOString()
+				? isoOrNull(freeFrom(request))
 				: (order?.expectedBackAt ?? null),
+		nextBooking: rentalSummary(db, nextBooking(bookings, start)),
+		turnaroundHours,
 	};
 }
 
@@ -129,6 +140,7 @@ function lotResult(
 	start: string,
 	end: string,
 	dailies: number,
+	quantity: number,
 	now: Date,
 ): AvailabilityResult {
 	const bookings = bookingsFor(db, lot.code, now);
@@ -141,8 +153,15 @@ function lotResult(
 		end,
 		turnaroundHours: lot.turnaroundHours,
 	});
-	const available = free > 0;
-	const blocking = bookings[0];
+	const available = free >= quantity;
+	const request = {
+		start,
+		end,
+		bookings,
+		turnaroundHours: lot.turnaroundHours,
+		usable: lot.total - lot.inMaintenance - lot.retired,
+		quantity,
+	};
 	return {
 		kind: "LOT",
 		code: lot.code,
@@ -154,20 +173,19 @@ function lotResult(
 		depositCents: lot.depositCents,
 		perPiece: lot.pricing === "PER_PIECE",
 		periodTotalCents:
-			lot.dailyPriceCents === null ? null : lot.dailyPriceCents * dailies,
+			lot.dailyPriceCents === null
+				? null
+				: lot.dailyPriceCents * quantity * dailies,
 		totalQuantity: lot.total,
 		freeQuantity: free,
 		block: available ? null : "NO_PIECES",
-		blockingRental:
-			!available && blocking
-				? {
-						number: blocking.rental.number,
-						customerName: customerName(db, blocking.rental.customerId),
-						endAt: blocking.rental.endAt,
-						status: blocking.rental.status,
-					}
-				: null,
-		freeFrom: null,
+		blockingRental: available
+			? null
+			: rentalSummary(db, blockingBooking(request)),
+		freeUntil: isoOrNull(freeUntil(request)),
+		freeFrom: available ? null : isoOrNull(freeFrom(request)),
+		nextBooking: rentalSummary(db, nextBooking(bookings, start)),
+		turnaroundHours: lot.turnaroundHours,
 	};
 }
 
@@ -272,6 +290,7 @@ export function searchAvailability(
 	now: Date,
 ) {
 	const { start, end } = input;
+	const quantity = input.quantity ?? 1;
 	const dailies = countDailies(start, end);
 	const terms = splitQuery(input.query);
 
@@ -293,7 +312,7 @@ export function searchAvailability(
 	const lots = db.lots
 		.filter(() => !input.typeId)
 		.filter((lot) => matchesAny(terms, [lot.code, lot.name, ...lot.nicknames]))
-		.map((lot) => lotResult(db, lot, start, end, dailies, now));
+		.map((lot) => lotResult(db, lot, start, end, dailies, quantity, now));
 
 	return { start, end, dailies, results: [...units, ...lots] };
 }

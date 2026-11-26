@@ -146,6 +146,53 @@ describe("dados", () => {
 		});
 	});
 
+	it("repassa a quantidade de peças pedida", async () => {
+		const { call } = await connect("leitura");
+		const result = await call("verificar_disponibilidade", {
+			start: "2026-12-01T08:00:00-03:00",
+			end: "2026-12-03T08:00:00-03:00",
+			query: "andaime",
+			quantity: 12,
+		});
+		expect(result.body.echo).toMatchObject({ query: "andaime", quantity: 12 });
+	});
+
+	it("recusa quantidade zero antes de chamar a API", async () => {
+		const { api, client } = await connect("leitura");
+		const result = await client.callTool({
+			name: "verificar_disponibilidade",
+			arguments: {
+				start: "2026-12-01T08:00:00-03:00",
+				end: "2026-12-03T08:00:00-03:00",
+				quantity: 0,
+			},
+		});
+		expect(result.isError).toBe(true);
+		expect(api.state.signIns).toBe(0);
+	});
+
+	it("a descrição explica freeUntil, freeFrom, nextBooking e quantity", async () => {
+		const { client } = await connect("leitura");
+		const { tools } = await client.listTools();
+		const tool = tools.find(
+			(entry) => entry.name === "verificar_disponibilidade",
+		);
+		for (const word of ["freeUntil", "freeFrom", "nextBooking", "quantity"]) {
+			expect(tool?.description).toContain(word);
+		}
+		expect(tool?.inputSchema.properties).toHaveProperty("quantity");
+	});
+
+	it("a tabela de preços mostra a folga dos lotes", async () => {
+		const { call } = await connect("leitura");
+		const result = await call("tabela_de_precos");
+		expect(result.body.tipos[0]).toMatchObject({ turnaroundHours: 12 });
+		expect(result.body.lotes[0]).toMatchObject({
+			code: "ANDAIME",
+			turnaroundHours: 12,
+		});
+	});
+
 	it("recusa data sem fuso antes de chamar a API", async () => {
 		const { api, client } = await connect("leitura");
 		const result = await client.callTool({

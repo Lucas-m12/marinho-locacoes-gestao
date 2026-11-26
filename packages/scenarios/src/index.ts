@@ -282,6 +282,160 @@ export function defineScenarios(harness: ScenarioHarness): void {
 		});
 	});
 
+	describe("janelas da agenda", () => {
+		// O caso da LOC-A em dias relativos: ela sai no dia 22 às 08:00 e volta
+		// no dia 24 às 08:00; a folga é de 12 h em todos os tipos do seed.
+		const ms = (value: string | null | undefined) =>
+			value ? Date.parse(value) : null;
+
+		async function book(
+			item: { kind: "UNIT" | "LOT"; code: string; quantity?: number },
+			startAt: string,
+			endAt: string,
+		): Promise<string> {
+			const rental = await clientAs("ATTENDANT").rentals.createQuote({
+				...quote,
+				startAt,
+				endAt,
+				items: [{ quantity: 1, ...item }],
+				send: true,
+			});
+			return rental.number;
+		}
+
+		async function find(
+			code: string,
+			query: string,
+			start: string,
+			end: string,
+			quantity?: number,
+		) {
+			const { results } = await clientAs("ATTENDANT").availability.search({
+				query,
+				start,
+				end,
+				quantity,
+			});
+			const result = results.find((entry) => entry.code === code);
+			if (!result) throw new Error(`sem ${code} na busca`);
+			return result;
+		}
+
+		it("locação começa no meio do período: mostra a saída dela, até quando e a partir de quando", async () => {
+			const number = await book(
+				{ kind: "UNIT", code: "MAR-003" },
+				day(22),
+				day(24),
+			);
+			const unit = await find("MAR-003", "MAR-003", day(20), day(23));
+			expect(unit.available).toBe(false);
+			expect(unit.blockingRental).toMatchObject({
+				number,
+				customerName: "Maria do Carmo",
+				customerCity: "Viçosa",
+				status: "AWAITING_DEPOSIT",
+			});
+			expect(ms(unit.blockingRental?.startAt)).toBe(ms(day(22)));
+			expect(ms(unit.blockingRental?.endAt)).toBe(ms(day(24)));
+			expect(ms(unit.freeUntil)).toBe(ms(day(21, "20:00")));
+			expect(ms(unit.freeFrom)).toBe(ms(day(24, "20:00")));
+			expect(unit.nextBooking?.number).toBe(number);
+			expect(unit.turnaroundHours).toBe(12);
+		});
+
+		it("livre no período: até quando dá para ficar e a próxima locação", async () => {
+			const number = await book(
+				{ kind: "UNIT", code: "MAR-003" },
+				day(22),
+				day(24),
+			);
+			const unit = await find("MAR-003", "MAR-003", day(20), day(21));
+			expect(unit.available).toBe(true);
+			expect(unit.blockingRental).toBeNull();
+			expect(unit.freeFrom).toBeNull();
+			expect(ms(unit.freeUntil)).toBe(ms(day(21, "20:00")));
+			expect(unit.nextBooking).toMatchObject({
+				number,
+				customerCity: "Viçosa",
+			});
+			expect(ms(unit.nextBooking?.startAt)).toBe(ms(day(22)));
+		});
+
+		it("sem nada marcado depois: sem limite e sem próxima", async () => {
+			await book({ kind: "UNIT", code: "MAR-003" }, day(22), day(24));
+			const unit = await find("MAR-003", "MAR-003", day(26), day(27));
+			expect(unit.available).toBe(true);
+			expect(unit.freeUntil).toBeNull();
+			expect(unit.nextBooking).toBeNull();
+		});
+
+		it("locação atrasada que atrapalha: sem data de volta", async () => {
+			const unit = await find("MAR-008", "MAR-008", day(0, "10:00"), day(1));
+			expect(unit.available).toBe(false);
+			expect(unit.block).toBe("OVERDUE");
+			expect(unit.blockingRental?.number).toBe("LOC-0028");
+			expect(unit.freeFrom).toBeNull();
+			expect(unit.freeUntil).toBeNull();
+		});
+
+		it("carrocinha aponta a locação que cruza o período e dá o mesmo que uma unidade", async () => {
+			const number = await book(
+				{ kind: "LOT", code: "CARROCINHA" },
+				day(22),
+				day(24),
+			);
+			await book({ kind: "UNIT", code: "MAR-003" }, day(22), day(24));
+			const trailer = await find("CARROCINHA", "carrocinha", day(20), day(23));
+			const unit = await find("MAR-003", "MAR-003", day(20), day(23));
+			expect(trailer.available).toBe(false);
+			// A LOC-0031 (dia 1) vem antes na lista, mas não cruza o período.
+			expect(trailer.blockingRental?.number).toBe(number);
+			expect(trailer.nextBooking?.number).toBe(number);
+			expect(ms(trailer.blockingRental?.startAt)).toBe(
+				ms(unit.blockingRental?.startAt),
+			);
+			expect(ms(trailer.freeUntil)).toBe(ms(unit.freeUntil));
+			expect(ms(trailer.freeFrom)).toBe(ms(unit.freeFrom));
+
+			const error = await errorOf(
+				clientAs("ATTENDANT").rentals.createQuote({
+					...quote,
+					startAt: day(20),
+					endAt: day(23),
+					items: [{ kind: "LOT", code: "CARROCINHA", quantity: 1 }],
+					send: true,
+				}),
+			);
+			expect(error.data).toMatchObject({
+				conflicts: [{ code: "CARROCINHA", rentalNumber: number }],
+			});
+		});
+
+		it("andaime responde pela quantidade pedida", async () => {
+			// 20 peças: a LOC-0030 segura 8 de hoje ao dia 14; a LOC-0033, 12 do dia 5 ao 8.
+			const twelve = await find("ANDAIME", "andaime", day(1), day(3), 12);
+			expect(twelve.available).toBe(true);
+			expect(twelve.freeQuantity).toBe(12);
+			expect(ms(twelve.freeUntil)).toBe(ms(day(4, "20:00")));
+			expect(twelve.nextBooking?.number).toBe("LOC-0033");
+			const one = await find("ANDAIME", "andaime", day(1), day(3));
+			expect(twelve.periodTotalCents).toBe((one.periodTotalCents ?? 0) * 12);
+
+			const thirteen = await find("ANDAIME", "andaime", day(1), day(3), 13);
+			expect(thirteen.available).toBe(false);
+			expect(thirteen.block).toBe("NO_PIECES");
+			expect(thirteen.blockingRental?.number).toBe("LOC-0030");
+			expect(thirteen.freeUntil).toBeNull();
+			expect(ms(thirteen.freeFrom)).toBe(ms(day(15, "05:00")));
+
+			const busy = await find("ANDAIME", "andaime", day(6), day(7));
+			expect(busy.available).toBe(false);
+			expect(busy.blockingRental?.number).toBe("LOC-0030");
+			expect(ms(busy.freeFrom)).toBe(ms(day(9, "05:00")));
+			expect(busy.turnaroundHours).toBe(12);
+		});
+	});
+
 	describe("reserva dupla", () => {
 		it("recusa enviar orçamento para unidade ocupada", async () => {
 			const client = clientAs("ATTENDANT");
