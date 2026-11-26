@@ -14,6 +14,7 @@ export const RENTAL_EVENTS = {
 	confirmed: "Reserva confirmada",
 	separated: "Separado e conferido",
 	closed: "Locação encerrada",
+	registeredAfter: "Registrada depois, sem vistoria",
 	paymentReceived: (kind: PaymentKind, cents: number, method: PaymentMethod) =>
 		`${PAYMENT_KIND_LABELS[kind]} de ${formatBRLShort(cents)} recebido por ${PAYMENT_METHOD_LABELS[method]}`,
 	depositReceived: (cents: number, method: PaymentMethod) =>

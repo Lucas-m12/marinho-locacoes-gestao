@@ -27,9 +27,11 @@ export function invalidTransition(
 export function precondition(
 	reason: PreconditionReason,
 	codes: string[] = [],
+	message?: string,
 ): ORPCError<"PRECONDITION_FAILED", unknown> {
 	return new ORPCError("PRECONDITION_FAILED", {
 		status: 412,
 		data: { reason, codes },
+		...(message ? { message } : {}),
 	});
 }

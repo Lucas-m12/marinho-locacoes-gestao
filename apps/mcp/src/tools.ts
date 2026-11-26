@@ -466,6 +466,77 @@ export function registerTools(server: McpServer, deps: ToolDeps): string[] {
 	});
 
 	add({
+		name: "registrar_locacao_feita",
+		title: "Registrar locação que já aconteceu",
+		description:
+			"Registra uma locação que já aconteceu e cujo equipamento já voltou: período no passado, valor combinado (por exemplo, meia diária) e o pagamento recebido. Não passa por vistoria nem caução. Use só quando a pessoa disser que o equipamento já foi devolvido. Para locação futura, use criar_orcamento.",
+		input: z.object({
+			customerId: Id.describe("Id do cliente, vindo de buscar_clientes"),
+			items: z
+				.array(
+					z.object({
+						kind: ItemKind,
+						code: ItemCode,
+						quantity: z.number().int().positive().default(1),
+					}),
+				)
+				.min(1)
+				.describe(
+					"Unidade (MAR-xxx): kind UNIT. Andaime (ANDAIME) e carrocinha (CARROCINHA): kind LOT, com a quantidade de peças",
+				),
+			startAt: dateTime("Saída"),
+			endAt: dateTime("Devolução, já no passado"),
+			deliveryMode: DeliveryMode.describe(
+				"DELIVERY (a gente levou) ou PICKUP (cliente buscou)",
+			),
+			siteCity: z.string().nullable().default(null),
+			deliveryFeeCents: cents("Taxa de entrega")
+				.nonnegative()
+				.nullable()
+				.default(null)
+				.describe("Taxa de entrega em centavos; null = a definir"),
+			agreedTotalCents: cents("Valor combinado")
+				.nonnegative()
+				.nullable()
+				.default(null)
+				.describe(
+					"Valor combinado com o cliente, em centavos; null = total pela tabela. Não pode passar do total pela tabela. Ex.: meia diária da carrocinha = 4000",
+				),
+			payment: z
+				.object({
+					amountCents: cents("Valor recebido").positive(),
+					method: PaymentMethod.describe("PIX ou CASH (dinheiro)"),
+					paidAt: dateTime("Quando foi pago (padrão: a devolução)").optional(),
+				})
+				.nullable()
+				.default(null)
+				.describe("O que o cliente já pagou; null = ainda não pagou"),
+			notes: z.string().nullable().default(null),
+			reference: z
+				.string()
+				.optional()
+				.describe("Só para diferenciar dois registros iguais no mesmo dia"),
+		}),
+		write: { destructive: false },
+		run: ({ reference, payment, ...rental }, { api, now }) => {
+			const input = {
+				...rental,
+				payment: payment
+					? { ...payment, paidAt: payment.paidAt ?? rental.endAt }
+					: null,
+			};
+			return api.rentals.recordCompleted({
+				...input,
+				idempotencyKey: idempotencyKey(
+					"registrar_locacao_feita",
+					{ ...input, reference: reference ?? null },
+					businessDay(now()),
+				),
+			});
+		},
+	});
+
+	add({
 		name: "enviar_orcamento",
 		title: "Marcar orçamento como enviado",
 		description:

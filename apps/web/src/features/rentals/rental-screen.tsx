@@ -35,6 +35,7 @@ import {
 	PAYMENT_METHOD_LABELS,
 } from "@/lib/labels";
 import { useCopyQuoteText } from "./copy-quote";
+import { RegisteredAfterChip } from "./registered-after-chip";
 import {
 	CancelDialog,
 	type DepositAction,
@@ -292,13 +293,20 @@ function EquipmentCard({ rental }: { rental: Rental }) {
 					)}
 				</InfoItem>
 			</dl>
-			<p className="text-muted-foreground text-[13px]">
-				{rental.priceFrozenAt
-					? `Preço congelado em ${formatDate(rental.priceFrozenAt)}, quando o sinal entrou.`
-					: "O preço acompanha a tabela até o sinal entrar."}
-			</p>
+			<p className="text-muted-foreground text-[13px]">{priceNote(rental)}</p>
 		</Card>
 	);
+}
+
+function priceNote(rental: Rental): string {
+	if (rental.registeredAfter) {
+		return rental.discountCents > 0
+			? `Valor combinado com o cliente: ${money(rental.totalCents)}, ${money(rental.discountCents)} abaixo da tabela.`
+			: "Valor da tabela no dia do registro.";
+	}
+	return rental.priceFrozenAt
+		? `Preço congelado em ${formatDate(rental.priceFrozenAt)}, quando o sinal entrou.`
+		: "O preço acompanha a tabela até o sinal entrar.";
 }
 
 function SiteCard({ rental }: { rental: Rental }) {
@@ -318,8 +326,15 @@ function SiteCard({ rental }: { rental: Rental }) {
 				<InfoItem label="Quem recebe">
 					{rental.receiverName ?? <ToDefine />}
 				</InfoItem>
-				<InfoItem label="Termo" emphasis={!rental.termSigned}>
-					{rental.termSigned ? "Assinado" : "Assinar na entrega"}
+				<InfoItem
+					label="Termo"
+					emphasis={!rental.termSigned && !rental.registeredAfter}
+				>
+					{rental.termSigned
+						? "Assinado"
+						: rental.registeredAfter
+							? "Sem termo: registrada depois"
+							: "Assinar na entrega"}
 				</InfoItem>
 				{rental.sitePinUrl && (
 					<InfoItem label="Localização">
@@ -499,6 +514,7 @@ function depositText(rental: Rental): string {
 	if (deposit.refundedCents > 0) {
 		return `Devolvida em ${deposit.refundedAt ? formatDate(deposit.refundedAt) : ""}.`;
 	}
+	if (rental.registeredAfter) return "Sem caução: locação registrada depois.";
 	return "Receber na entrega, em Pix ou dinheiro, com recibo. Fica fora do caixa e volta em até 24 horas depois da inspeção.";
 }
 
@@ -792,7 +808,14 @@ export function RentalScreen({ number }: { number: string }) {
 				back={{ to: "/locacoes", label: "Locações" }}
 				title={data.number}
 				titleAddon={
-					<StatusChip kind="rental" status={data.displayStatus} size="lg" />
+					data.registeredAfter ? (
+						<span className="flex flex-wrap items-center gap-2">
+							<StatusChip kind="rental" status={data.displayStatus} size="lg" />
+							<RegisteredAfterChip size="lg" />
+						</span>
+					) : (
+						<StatusChip kind="rental" status={data.displayStatus} size="lg" />
+					)
 				}
 				description={subtitle(data, now)}
 				actions={<RentalActions rental={data} />}
@@ -804,6 +827,13 @@ export function RentalScreen({ number }: { number: string }) {
 						{data.status === "EXPIRED"
 							? "Este orçamento expirou sem sinal e a agenda foi liberada."
 							: `Locação cancelada${data.cancelReason ? `: ${data.cancelReason}` : ""}.`}
+					</AlertDescription>
+				</Alert>
+			) : data.registeredAfter ? (
+				<Alert>
+					<AlertDescription>
+						Locação registrada depois que aconteceu: entrou sem orçamento, sem
+						caução e sem vistoria de saída e de volta.
 					</AlertDescription>
 				</Alert>
 			) : (

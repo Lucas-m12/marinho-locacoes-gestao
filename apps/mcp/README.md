@@ -190,7 +190,7 @@ O modo local lê a senha do Chaves a cada login e faz logout quando o Claude fec
 
 **Consultas (15):** `conferir_conexao`, `resumo_do_dia`, `verificar_disponibilidade`, `agenda`, `listar_equipamentos`, `tabela_de_precos`, `listar_locacoes`, `ver_locacao`, `texto_do_orcamento`, `simular_prorrogacao`, `buscar_clientes`, `ver_cliente`, `resumo_financeiro`, `lancamentos_do_caixa` e `demanda_perdida`.
 
-**Operações (10, modo completo):** `cadastrar_cliente`, `criar_orcamento`, `enviar_orcamento`, `registrar_pagamento`, `confirmar_locacao`, `prorrogar_locacao`, `cancelar_locacao` (destrutiva), `encerrar_locacao` (destrutiva), `registrar_demanda_perdida` e `lancar_no_caixa`.
+**Operações (11, modo completo):** `cadastrar_cliente`, `criar_orcamento`, `registrar_locacao_feita` (locação que já aconteceu e cujo equipamento já voltou, com valor combinado e pagamento, sem vistoria nem caução), `enviar_orcamento`, `registrar_pagamento`, `confirmar_locacao`, `prorrogar_locacao`, `cancelar_locacao` (destrutiva), `encerrar_locacao` (destrutiva), `registrar_demanda_perdida` e `lancar_no_caixa`.
 
 ## Variáveis
 

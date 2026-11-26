@@ -224,6 +224,69 @@ describe("dinheiro", () => {
 		});
 	});
 
+	describe("locação que já aconteceu", () => {
+		const carrocinha = {
+			customerId: "c1",
+			items: [{ kind: "LOT", code: "CARROCINHA" }],
+			startAt: "2026-11-24T08:00:00-03:00",
+			endAt: "2026-11-24T13:00:00-03:00",
+			deliveryMode: "PICKUP",
+			siteCity: "Capela",
+			agreedTotalCents: 4000,
+			payment: { amountCents: 4000, method: "CASH" },
+		};
+
+		it("é operação não destrutiva, fora do modo leitura", async () => {
+			const leitura = await connect("leitura");
+			expect(leitura.tools).not.toContain("registrar_locacao_feita");
+			const { client, tools } = await connect("completo");
+			expect(tools).toContain("registrar_locacao_feita");
+			const tool = (await client.listTools()).tools.find(
+				(entry) => entry.name === "registrar_locacao_feita",
+			);
+			expect(tool?.annotations).toMatchObject({
+				readOnlyHint: false,
+				destructiveHint: false,
+			});
+			expect(tool?.description).toContain("Para locação futura");
+		});
+
+		it("repassa valor combinado e pagamento, com a devolução como data do pagamento", async () => {
+			const { api, call } = await connect("completo");
+			const result = await call("registrar_locacao_feita", carrocinha);
+			expect(result.isError).toBe(false);
+			expect(result.body).toMatchObject({ number: "LOC-0040" });
+			expect(api.state.completedInputs[0]).toMatchObject({
+				customerId: "c1",
+				items: [{ kind: "LOT", code: "CARROCINHA", quantity: 1 }],
+				agreedTotalCents: 4000,
+				deliveryFeeCents: null,
+				notes: null,
+				payment: {
+					amountCents: 4000,
+					method: "CASH",
+					paidAt: "2026-11-24T13:00:00-03:00",
+				},
+			});
+		});
+
+		it("a mesma chamada no mesmo dia usa a mesma chave de idempotência", async () => {
+			const { api, call } = await connect("completo");
+			await call("registrar_locacao_feita", carrocinha);
+			await call("registrar_locacao_feita", carrocinha);
+			await call("registrar_locacao_feita", {
+				...carrocinha,
+				reference: "outra carrocinha",
+			});
+			const [first, repeat, other] = api.state.completedInputs.map(
+				(input) => input.idempotencyKey,
+			);
+			expect(first).toMatch(/^mcp-[0-9a-f]{40}$/);
+			expect(repeat).toBe(first);
+			expect(other).not.toBe(first);
+		});
+	});
+
 	it("operações não existem no modo leitura", async () => {
 		const { api, client } = await connect("leitura");
 		await expect(

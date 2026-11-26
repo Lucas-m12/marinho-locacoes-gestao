@@ -354,6 +354,7 @@ export function buildSeed(now: Date): DemoSeed {
 				: null,
 			cancelReason: null,
 			lateNoticeGiven: false,
+			registeredAfter: false,
 			createdAt: seed.createdAt ?? seed.start,
 			sentAt: seed.status === "QUOTE" ? null : (seed.createdAt ?? seed.start),
 			confirmedAt: frozen(seed.status)

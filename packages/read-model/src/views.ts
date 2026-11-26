@@ -262,6 +262,7 @@ export function rentalListItem(
 		startAt: rental.startAt,
 		endAt: rental.endAt,
 		totalCents: rentalTotalCents(db, rental),
+		registeredAfter: rental.registeredAfter,
 	};
 }
 

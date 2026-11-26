@@ -303,6 +303,7 @@ async function insertDemoData(
 			priceFrozenAt: rental.priceFrozenAt,
 			cancelReason: rental.cancelReason,
 			lateNoticeGiven: rental.lateNoticeGiven,
+			registeredAfter: rental.registeredAfter,
 			sentAt: rental.sentAt,
 			confirmedAt: rental.confirmedAt,
 			separatedAt: rental.separatedAt,

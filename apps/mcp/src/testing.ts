@@ -19,6 +19,7 @@ export function fakeApi() {
 		signInOrigins: [] as (string | null)[],
 		paymentKeys: [] as string[],
 		ledgerInputs: [] as unknown[],
+		completedInputs: [] as Record<string, unknown>[],
 	};
 	const base = os.$context<{ cookie: string | null }>();
 	const authed = base.use(({ context, next }) => {
@@ -87,6 +88,10 @@ export function fakeApi() {
 				const { idempotencyKey } = input as { idempotencyKey: string };
 				state.paymentKeys.push(idempotencyKey);
 				return { ok: true };
+			}),
+			recordCompleted: authed.handler(({ input }) => {
+				state.completedInputs.push(input as Record<string, unknown>);
+				return { number: "LOC-0040", status: "CLOSED", registeredAfter: true };
 			}),
 			createQuote: authed.handler(() => {
 				throw new ORPCError("CONFLICT", {

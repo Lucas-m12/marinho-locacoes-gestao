@@ -1,4 +1,5 @@
 export * from "./availability";
+export * from "./completed-rentals";
 export * from "./customers";
 export * from "./dashboard";
 export * from "./equipment";

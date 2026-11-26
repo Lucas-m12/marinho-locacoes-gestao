@@ -20,6 +20,12 @@ describe("can", () => {
 		expect(can("ATTENDANT", "rentals:separate")).toBe(false);
 	});
 
+	it("gestão e atendimento registram locação que já aconteceu", () => {
+		expect(can("MANAGER", "rentals:record-completed")).toBe(true);
+		expect(can("ATTENDANT", "rentals:record-completed")).toBe(true);
+		expect(can("EQUIPMENT", "rentals:record-completed")).toBe(false);
+	});
+
 	it("todos fazem checklist", () => {
 		expect(can("ATTENDANT", "inspections:run")).toBe(true);
 		expect(can("EQUIPMENT", "inspections:run")).toBe(true);
