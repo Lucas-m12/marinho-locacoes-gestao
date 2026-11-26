@@ -16,6 +16,12 @@ import {
 	UnitStatus,
 } from "../common";
 
+export const CatalogDescription = z
+	.string()
+	.trim()
+	.min(10, "Escreva pelo menos uma frase")
+	.max(1000, "Use até 1.000 caracteres");
+
 export const ChecklistTemplateItem = z.object({
 	id: Id,
 	label: z.string(),
@@ -87,6 +93,8 @@ export const Unit = z.object({
 	replacementValueCents: Cents.nullable(),
 	notes: z.string().nullable(),
 	nicknames: z.array(z.string()),
+	/** Texto público do catálogo (Instagram, Facebook e anúncios). */
+	catalogDescription: z.string().nullable(),
 });
 export type Unit = z.infer<typeof Unit>;
 
@@ -191,6 +199,7 @@ export const UpdateUnitInput = CreateUnitInput.omit({
 		code: ItemCode,
 		dailyPriceCents: NonNegativeCents.nullable().optional(),
 		depositCents: NonNegativeCents.nullable().optional(),
+		catalogDescription: CatalogDescription.nullable().optional(),
 	});
 export type UpdateUnitInput = z.input<typeof UpdateUnitInput>;
 
@@ -235,6 +244,8 @@ export const Lot = z.object({
 	assetCode: z.string().nullable(),
 	turnaroundHours: z.number().int().nonnegative(),
 	checklist: z.array(ChecklistTemplateItem),
+	catalogDescription: z.string().nullable(),
+	catalogPhoto: FileRef.nullable(),
 	freeToday: z.number().int(),
 	reservedToday: z.number().int(),
 	nextBooking: LotNextBooking.nullable(),
@@ -250,6 +261,8 @@ export const UpdateLotInput = z.object({
 	depositCents: NonNegativeCents.nullable().optional(),
 	kitComposition: z.string().trim().nullable().optional(),
 	assetCode: z.string().trim().nullable().optional(),
+	catalogDescription: CatalogDescription.nullable().optional(),
+	catalogPhotoKey: FileKey.nullable().optional(),
 });
 export type UpdateLotInput = z.input<typeof UpdateLotInput>;
 

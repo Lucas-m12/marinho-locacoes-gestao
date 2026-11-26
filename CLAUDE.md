@@ -155,4 +155,5 @@ Enums do Prisma vêm de `packages/domain/src/enums.ts`: depois de mudar um enum,
 - `deploy/`: compose de produção, `Caddyfile`, `.env.example`, `deploy.sh` (deploy e rollback na VPS) e `bootstrap-vps.sh`.
 - `.github/workflows`: `ci.yml` em todo push; `deploy.yml` depois do CI verde na `main` (imagem no GHCR, API na VPS, front com Alchemy no stage `prod`).
 - Variáveis do servidor: só segredos ficam sensíveis no `.env.schema`. O varlock bloqueia respostas que contenham valores sensíveis, e as URLs assinadas do R2 levam o Account ID, o bucket e o Access Key ID.
+- Catálogo público (Meta): `GET /catalogo/feed.csv` (CSV no formato do Gerenciador de Comércio) e `GET /catalogo/fotos/:codigo` (a foto do catálogo, lida do R2 pelo servidor). Sem sessão. Entra só unidade ou lote não arquivado com foto do catálogo (slot `CATALOG` da unidade; `catalogPhotoKey` do lote), texto público (`catalogDescription`) e diária. O CSV sai de `catalogFeedCsv` em `packages/domain`; a consulta fica em `packages/api/src/services/catalog-feed.ts`.
 - Roteiros: `docs/operacao/` (`primeiro-deploy.md`, `rotina.md`, `backup-e-restauracao.md`, `r2.md`).

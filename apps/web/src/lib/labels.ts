@@ -123,6 +123,7 @@ export const UNIT_PHOTO_SLOT_LABELS: Record<UnitPhotoSlot, string> = {
 	BACK: "Verso",
 	PLATE: "Placa",
 	SERIAL: "Nº de série",
+	CATALOG: "Foto do catálogo",
 };
 
 export const CHECKLIST_MEDIA_LABELS: Record<ChecklistMediaSlot, string> = {

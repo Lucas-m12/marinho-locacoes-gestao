@@ -200,6 +200,7 @@ enum UnitPhotoSlot {
   BACK
   PLATE
   SERIAL
+  CATALOG
 
   @@map("unit_photo_slot")
 }

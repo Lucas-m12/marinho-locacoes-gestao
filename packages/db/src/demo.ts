@@ -169,6 +169,8 @@ async function insertDemoData(
 			depositCents: lot.depositCents,
 			kitComposition: lot.kitComposition,
 			assetCode: lot.assetCode,
+			catalogDescription: lot.catalogDescription,
+			catalogPhotoKey: lot.catalogPhotoKey,
 			turnaroundHours: lot.turnaroundHours,
 		})),
 	});
@@ -214,6 +216,7 @@ async function insertDemoData(
 			purchaseCents: unit.purchaseValueCents,
 			replacementCents: unit.replacementValueCents,
 			notes: unit.notes,
+			catalogDescription: unit.catalogDescription,
 			returnedAt: unit.returnedAt,
 		})),
 	});

@@ -1014,6 +1014,44 @@ export function defineScenarios(harness: ScenarioHarness): void {
 		});
 	});
 
+	describe("catálogo", () => {
+		it("o seed traz o texto do catálogo das unidades", async () => {
+			const unit = await clientAs("MANAGER").equipment.getUnit({
+				code: "MAR-002",
+			});
+			expect(unit.catalogDescription).toBe(
+				"Para quebrar piso, contrapiso, parede e concreto sem se acabar no braço. Vai na maleta.",
+			);
+		});
+
+		it("gestão edita o texto da unidade e do lote", async () => {
+			const manager = clientAs("MANAGER");
+			const unit = await manager.equipment.updateUnit({
+				code: "MAR-003",
+				catalogDescription: "  Fura madeira, metal e tijolo.  ",
+			});
+			expect(unit.catalogDescription).toBe("Fura madeira, metal e tijolo.");
+
+			const lots = await manager.equipment.listLots();
+			const scaffold = lots.find((lot) => lot.code === "ANDAIME");
+			expect(scaffold?.catalogDescription).toBeNull();
+			expect(scaffold?.catalogPhoto).toBeNull();
+			const updated = await manager.equipment.updateLot({
+				id: scaffold?.id ?? "",
+				catalogDescription: "Andaime tubular para reboco, pintura e fachada.",
+			});
+			expect(updated.catalogDescription).toBe(
+				"Andaime tubular para reboco, pintura e fachada.",
+			);
+
+			const cleared = await manager.equipment.updateUnit({
+				code: "MAR-003",
+				catalogDescription: null,
+			});
+			expect(cleared.catalogDescription).toBeNull();
+		});
+	});
+
 	describe("texto do orçamento", () => {
 		it("mostra valores e pendências", async () => {
 			const { text } = await clientAs("ATTENDANT").rentals.copyQuoteText({

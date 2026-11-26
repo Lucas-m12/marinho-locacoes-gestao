@@ -1,4 +1,5 @@
 export * from "./availability";
+export * from "./catalog-feed";
 export * from "./codes";
 export * from "./customer-tier";
 export * from "./dailies";

@@ -113,6 +113,7 @@ export const equipment = {
 			purchaseValueCents: input.purchaseValueCents,
 			replacementValueCents: input.replacementValueCents,
 			notes: input.notes,
+			catalogDescription: null,
 			returnedAt: null,
 			photos: [],
 			knownDamages: [],
@@ -201,10 +202,13 @@ export const equipment = {
 	}),
 
 	updateLot: api.equipment.updateLot.handler(({ context, input }) => {
-		requirePermission(context, "catalog:manage");
+		const user = requirePermission(context, "catalog:manage");
 		const db = getDb();
 		const lot = db.lots.find((entry) => entry.id === input.id);
 		if (!lot) throw notFound("lot", input.id);
+		if (input.catalogPhotoKey) {
+			requireUsableFile(db, user.id, input.catalogPhotoKey, ["UNIT_PHOTO"]);
+		}
 		const { id: _id, ...changes } = input;
 		Object.assign(
 			lot,

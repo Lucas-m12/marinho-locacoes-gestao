@@ -165,6 +165,7 @@ export const UNIT_PHOTO_SLOTS = [
 	"BACK",
 	"PLATE",
 	"SERIAL",
+	"CATALOG",
 ] as const;
 export type UnitPhotoSlot = (typeof UNIT_PHOTO_SLOTS)[number];
 
