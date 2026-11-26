@@ -1,6 +1,8 @@
 # Prompt 01 — Telas do sistema Marinho (front-end funcional com mock)
 
 > Leia este arquivo inteiro antes de começar. Depois leia `docs/design/README.md` e os arquivos de `docs/design/`. Trabalhe em fases (seção 10), rode as verificações de cada fase e faça um commit ao fim de cada uma.
+>
+> **Leia também `docs/prompts/01a-ajustes-telas.md` e `docs/decisoes/`.** O 01a substitui o que este arquivo diz sobre login por e-mail (agora é por nome de usuário) e acrescenta estorno de lançamentos, idempotência e exportação CSV. Em caso de conflito, valem o 01a e os ADRs.
 
 ## 1. Contexto
 
