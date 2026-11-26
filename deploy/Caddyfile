@@ -7,8 +7,6 @@
 }
 
 {$API_DOMAIN} {
-	encode zstd gzip
-
 	request_body {
 		max_size 1MB
 	}
@@ -29,5 +27,17 @@
 		format json
 	}
 
-	reverse_proxy server:3000
+	# MCP do Claude: só os IPs de saída da Anthropic chegam ao contêiner mcp;
+	# qualquer outro recebe 404. O contêiner ainda exige o token.
+	@mcp path /mcp /mcp/*
+	handle @mcp {
+		@fora_da_anthropic not remote_ip {$MCP_ALLOWED_IPS:160.79.104.0/21 153.61.208.0/20}
+		respond @fora_da_anthropic 404
+		reverse_proxy mcp:3000
+	}
+
+	handle {
+		encode zstd gzip
+		reverse_proxy server:3000
+	}
 }

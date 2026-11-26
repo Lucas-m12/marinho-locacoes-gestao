@@ -35,6 +35,7 @@ packages/
   ui/          primitivos shadcn (Base UI) + tokens da marca
 apps/server/   Hono: /api/auth/*, /rpc, /health, /api-reference (só fora de produção)
 apps/e2e/      Playwright: fluxos, qualidade, captura visual e regressão; scripts do MinIO e do relatório
+apps/mcp/      MCP do Claude: ferramentas sobre o contrato, usuário `claude`; remoto (contêiner mcp na VPS) e local (stdio)
 apps/web/src/
   data/
     client.ts   escolhe a fonte e exporta `client` e `orpc`
@@ -157,3 +158,11 @@ Enums do Prisma vêm de `packages/domain/src/enums.ts`: depois de mudar um enum,
 - Variáveis do servidor: só segredos ficam sensíveis no `.env.schema`. O varlock bloqueia respostas que contenham valores sensíveis, e as URLs assinadas do R2 levam o Account ID, o bucket e o Access Key ID.
 - Catálogo público (Meta): `GET /catalogo/feed.csv` (CSV no formato do Gerenciador de Comércio) e `GET /catalogo/fotos/:codigo` (a foto do catálogo, lida do R2 pelo servidor). Sem sessão. Entra só unidade ou lote não arquivado com foto do catálogo (slot `CATALOG` da unidade; `catalogPhotoKey` do lote), texto público (`catalogDescription`) e diária. O CSV sai de `catalogFeedCsv` em `packages/domain`; a consulta fica em `packages/api/src/services/catalog-feed.ts`.
 - Roteiros: `docs/operacao/` (`primeiro-deploy.md`, `rotina.md`, `backup-e-restauracao.md`, `r2.md`).
+
+## MCP do Claude
+
+`apps/mcp` expõe ferramentas sobre o contrato, logado na API como o usuário `claude` (papel Atendimento). Remoto: contêiner `mcp` na VPS (perfil `mcp` do compose), em `https://api.marinholocacoes.com/mcp`, com o Caddy filtrando pelos IPs da Anthropic e token no cabeçalho. Ele fica só na rede interna `mcp`, sem o `.env`, e usa o `dist/mcp.js` da mesma imagem do servidor. Local: `src/stdio.ts` no Mac. Modo `leitura` por padrão; as operações só entram com `MARINHO_MCP_MODO=completo`. Instalação, rotina e como cortar o acesso: `apps/mcp/README.md`.
+
+- Ferramenta nova: entrada em Zod com descrição em português, chamada ao cliente do contrato e teste em `apps/mcp/src/mcp.test.ts`. Ferramenta que muda dado leva `write`.
+- Cliente sai sem CPF/CNPJ, endereço e arquivos (`publicCustomer`). Mantenha a lista do que pode sair, não do que não pode.
+- Se um procedimento usado pelo MCP mudar no contrato, o `check-types` do `apps/mcp` acusa.

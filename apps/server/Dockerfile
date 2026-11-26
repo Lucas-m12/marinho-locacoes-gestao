@@ -10,7 +10,8 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
 RUN DATABASE_URL=postgresql://build:build@localhost:5432/build \
     bun run --cwd packages/db db:generate \
- && bun run --cwd apps/server build
+ && bun run --cwd apps/server build \
+ && bun run --cwd apps/mcp build
 
 RUN mkdir -p /prod \
  && cp bun.lock bunfig.toml /prod/ \
@@ -43,6 +44,8 @@ COPY --from=build /prod/apps/server/node_modules ./apps/server/node_modules
 COPY --from=build /prod/packages/db/node_modules ./packages/db/node_modules
 COPY --from=build /app/apps/server/package.json /app/apps/server/.env.schema ./apps/server/
 COPY --from=build /app/apps/server/dist ./apps/server/dist
+# MCP remoto: um arquivo só, sem dependências; roda no contêiner mcp.
+COPY --from=build /app/apps/mcp/dist ./apps/mcp/dist
 COPY --from=build /app/packages/db/package.json /app/packages/db/.env.schema /app/packages/db/prisma.config.ts ./packages/db/
 COPY --from=build /app/packages/db/prisma/schema ./packages/db/prisma/schema
 COPY --from=build /app/packages/db/prisma/migrations ./packages/db/prisma/migrations
