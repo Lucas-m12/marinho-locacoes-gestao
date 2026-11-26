@@ -33,3 +33,16 @@ Estes arquivos são o código-fonte das telas desenhadas no canvas "Marinho — 
 | `mapa/dinheiro-e-painel.dc.html` | Caixa, caução e painel |
 
 Os nomes de clientes, datas e valores são de exemplo. Códigos MAR e diárias vêm do catálogo real. Marcadores entre colchetes (`[CAUÇÃO]`, `[TAXA]`, `[SINAL]`…) são decisões ainda pendentes do negócio.
+
+## Imagens de referência (`referencias/`)
+
+`docs/design/referencias/` tem 40 PNGs: as telas 01 a 13 em desktop (1440 px), tablet (834 px) e celular (390 px), e a tela 14 (Mais) só no celular. São capturas da página inteira, com a barra inferior do celular no fim. Cada arquivo segue o padrão `<nn>-<tela>--<desktop|tablet|celular>.png`, por exemplo `02-painel--celular.png`.
+
+Elas são geradas a partir dos `.dc.html` por `tools/design-reference/` (um renderizador mínimo do formato do canvas, mais um script do Playwright), com a fonte Archivo local. Para gerar de novo depois de mudar um `.dc.html`:
+
+```bash
+bun tools/design-reference/shoot.mjs          # todas
+bun tools/design-reference/shoot.mjs painel   # só as que têm "painel" no nome
+```
+
+As telas mostram o dia de exemplo **segunda-feira, 02/11/2026, de manhã**, com os dados do seed de demonstração.

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Render de referência</title>
+<style>
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; src: url(./fonts/archivo-latin-standard-normal.woff2) format("woff2-variations"); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-stretch: 62% 125%; src: url(./fonts/archivo-latin-ext-standard-normal.woff2) format("woff2-variations"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/*
+ * Renderizador mínimo dos arquivos .dc.html do canvas (Claude Design), só para gerar imagens de referência.
+ * Suporta: {{ caminho }} em texto e atributos, <sc-if value>, <sc-for list as>, <dc-import name ...props>, <helmet>.
+ * Uso: render.html?file=TelaPainel&bp=phone&h=844
+ */
+class DCLogic {
+  constructor(props) { this.props = props || {}; this.state = undefined; }
+  setState(s) { this.state = { ...(this.state || {}), ...s }; }
+  forceUpdate() {}
+}
+const cache = new Map();
+async function loadDC(name) {
+  if (!cache.has(name)) {
+    const txt = await (await fetch(`/docs/design/telas/${name}.dc.html`)).text();
+    const doc = new DOMParser().parseFromString(txt, "text/html");
+    const xdc = doc.querySelector("x-dc");
+    const script = doc.querySelector("script[data-dc-script]");
+    const Comp = new Function("DCLogic", `${script.textContent}\nreturn Component;`)(DCLogic);
+    cache.set(name, { xdc, Comp });
+  }
+  return cache.get(name);
+}
+const HOLE = /\{\{\s*([^}]+?)\s*\}\}/g;
+const WHOLE = /^\s*\{\{\s*([^}]+?)\s*\}\}\s*$/;
+function lookup(path, scope) {
+  const p = path.trim();
+  if (p === "true") return true;
+  if (p === "false") return false;
+  if (/^-?\d+(\.\d+)?$/.test(p)) return Number(p);
+  return p.split(".").reduce((o, k) => (o == null ? undefined : o[k]), scope);
+}
+const interp = (s, scope) => s.replace(HOLE, (_, p) => { const v = lookup(p, scope); return v == null ? "" : String(v); });
+const holeValue = (raw, scope) => { const m = raw.match(WHOLE); return m ? lookup(m[1], scope) : interp(raw, scope); };
+const headSeen = new Set();
+async function renderNode(node, scope, out) {
+  if (node.nodeType === 3) { out.appendChild(document.createTextNode(interp(node.textContent, scope))); return; }
+  if (node.nodeType !== 1) return;
+  const tag = node.localName;
+  if (tag === "helmet") {
+    for (const c of node.children) {
+      if (c.localName === "link" && /googleapis/.test(c.getAttribute("href") || "")) continue;
+      const key = c.outerHTML;
+      if (!headSeen.has(key)) { headSeen.add(key); document.head.appendChild(c.cloneNode(true)); }
+    }
+    return;
+  }
+  if (tag === "sc-if") {
+    if (holeValue(node.getAttribute("value") || "", scope)) for (const c of node.childNodes) await renderNode(c, scope, out);
+    return;
+  }
+  if (tag === "sc-for") {
+    const list = holeValue(node.getAttribute("list") || "", scope) || [];
+    const as = node.getAttribute("as") || "item";
+    for (let i = 0; i < list.length; i++) {
+      const s = Object.create(scope); s[as] = list[i]; s.$index = i;
+      for (const c of node.childNodes) await renderNode(c, s, out);
+    }
+    return;
+  }
+  if (tag === "dc-import") {
+    const props = {};
+    for (const a of node.attributes) {
+      if (a.name === "name" || a.name.startsWith("hint-")) continue;
+      props[a.name.replace(/-([a-z])/g, (_, ch) => ch.toUpperCase())] = holeValue(a.value, scope);
+    }
+    out.appendChild(await renderDC(node.getAttribute("name"), props));
+    return;
+  }
+  const el = node.namespaceURI === "http://www.w3.org/2000/svg"
+    ? document.createElementNS(node.namespaceURI, node.localName)
+    : document.createElement(tag);
+  for (const a of node.attributes) {
+    if (/^on[A-Z]/.test(a.name) || /^on[a-z]+$/.test(a.name)) continue;
+    const v = holeValue(a.value, scope);
+    if (v === false || v == null) continue;
+    el.setAttribute(a.name, v === true ? "" : String(v));
+  }
+  const target = tag === "template" ? el.content : el;
+  for (const c of node.childNodes) await renderNode(c, scope, target);
+  out.appendChild(el);
+}
+async function renderDC(name, props) {
+  const { xdc, Comp } = await loadDC(name);
+  const inst = new Comp(props);
+  const vals = inst.renderVals();
+  const frag = document.createDocumentFragment();
+  for (const c of xdc.childNodes) await renderNode(c, vals, frag);
+  return frag;
+}
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const props = {};
+  if (q.get("bp")) props.bp = q.get("bp");
+  if (q.get("h")) props.h = q.get("h");
+  try {
+    document.getElementById("root").appendChild(await renderDC(q.get("file"), props));
+    await document.fonts.ready;
+    document.body.dataset.ready = "1";
+  } catch (e) {
+    document.body.dataset.error = String(e && e.stack || e);
+  }
+})();
+</script>
+</body>
+</html>

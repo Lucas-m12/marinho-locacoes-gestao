@@ -146,6 +146,17 @@ docker compose exec postgres psql -U marinho -d marinho \
 
 A lista atual está em platform.claude.com/docs/en/api/ip-addresses. Para trocar, ponha no `.env`, separado por espaço, `MCP_ALLOWED_IPS=<faixa> <faixa>` e rode `docker compose up -d caddy`. Sinal de lista errada: o conector não conecta e o `docker compose logs mcp` não mostra nenhuma chamada.
 
+## Agente do WhatsApp (contêiner `mcp-whatsapp`)
+
+O agente da equipe no WhatsApp (OpenClaw, em `/opt/openclaw` na VPS) usa um segundo contêiner com as mesmas ferramentas: `mcp-whatsapp`, no perfil `whatsapp`. Ele tem usuário, token e modo próprios, então dá para deixar o agente só em consulta enquanto o Claude fica em modo completo, e cortar um sem mexer no outro.
+
+- **Sem Caddy:** não tem rota pública. Só o OpenClaw chega nele, pela rede interna `marinho-whatsapp`, em `http://mcp-whatsapp:3000/mcp`.
+- **Usuário `whatsapp`, papel Atendimento:** crie em **Configurações** → **Pessoas**, como o `claude` no passo 1. O histórico mostra "WhatsApp".
+- **Variáveis:** `mcp-whatsapp.env`, no formato de `deploy/mcp-whatsapp.env.example`, com permissão 600.
+- **Ligar:** `COMPOSE_PROFILES=mcp,whatsapp` no `.env` e `docker compose up -d`.
+- **Liberar as operações:** `MARINHO_MCP_MODO=completo` no `mcp-whatsapp.env` e `docker compose up -d mcp-whatsapp`.
+- **Cortar o acesso:** troque o `MCP_TOKEN` do `mcp-whatsapp.env` (e o `MARINHO_MCP_TOKEN` do OpenClaw) ou `docker compose stop mcp-whatsapp`.
+
 ## Modo local (opcional, no Mac)
 
 Para usar no Claude Code ou no Claude Desktop sem passar pela VPS.
