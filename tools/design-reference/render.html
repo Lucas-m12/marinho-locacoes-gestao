@@ -112,7 +112,7 @@ async function renderDC(name, props) {
     await document.fonts.ready;
     document.body.dataset.ready = "1";
   } catch (e) {
-    document.body.dataset.error = String(e && e.stack || e);
+    document.body.dataset.error = String(e?.stack || e);
   }
 })();
 </script>
