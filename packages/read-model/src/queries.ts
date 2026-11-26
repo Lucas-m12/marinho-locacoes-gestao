@@ -1,10 +1,12 @@
 import type { ConflictingItem, FileRef, Lot } from "@marinho-gestao/contract";
 import {
 	availableLotQuantity,
+	blockingBooking,
 	endOfZonedDay,
 	findBookingConflicts,
-	firstFreeFrom,
+	freeFrom,
 	holdsBooking,
+	isRentalOverdue,
 	isUnitAvailable,
 	OCCUPYING_RENTAL_STATUSES,
 	occupiedUntil,
@@ -25,6 +27,8 @@ export type Booking = {
 	start: string;
 	end: string;
 	quantity: number;
+	/** Na obra e já passou da devolução: `end` é "agora", sem garantia. */
+	overdue: boolean;
 	rental: RentalRecord;
 };
 
@@ -73,6 +77,7 @@ export function bookingsFor(
 				start: rental.startAt,
 				end: overdue ? now.toISOString() : rental.endAt,
 				quantity: item.quantity,
+				overdue,
 				rental,
 			},
 		];
@@ -111,6 +116,9 @@ export function usageFor(
 					now,
 				).toISOString(),
 				quantity: item.quantity,
+				overdue:
+					(item.returnDoneAt ?? rental.returnedAt) === null &&
+					isRentalOverdue(rental, now),
 				rental,
 			}));
 	});
@@ -170,23 +178,19 @@ function unitConflict(
 	});
 	if (available) return null;
 
-	const conflicts = findBookingConflicts({
+	const request = {
 		start,
 		end,
 		bookings,
 		turnaroundHours: type.turnaroundHours,
-	});
-	const first = conflicts[0];
+	};
+	const blocking = blockingBooking(request);
 	return {
 		code: unit.code,
 		name: unit.name,
-		rentalNumber: first?.rental.number ?? null,
-		freeFrom: first
-			? firstFreeFrom({
-					bookings,
-					after: first.start,
-					turnaroundHours: type.turnaroundHours,
-				}).toISOString()
+		rentalNumber: blocking?.rental.number ?? null,
+		freeFrom: blocking
+			? (freeFrom(request)?.toISOString() ?? null)
 			: (order?.expectedBackAt ?? null),
 		requestedQuantity: null,
 		freeQuantity: null,
@@ -213,10 +217,18 @@ function lotConflict(
 		turnaroundHours: lot.turnaroundHours,
 	});
 	if (free >= item.quantity) return null;
+	const blocking = blockingBooking({
+		start,
+		end,
+		bookings,
+		turnaroundHours: lot.turnaroundHours,
+		usable: lot.total - lot.inMaintenance - lot.retired,
+		quantity: item.quantity,
+	});
 	return {
 		code: lot.code,
 		name: lot.name,
-		rentalNumber: bookings[0]?.rental.number ?? null,
+		rentalNumber: blocking?.rental.number ?? null,
 		freeFrom: null,
 		requestedQuantity: item.quantity,
 		freeQuantity: free,

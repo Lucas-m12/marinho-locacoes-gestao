@@ -46,6 +46,39 @@ export function fakeApi() {
 		availability: {
 			search: authed.handler(({ input }) => ({ echo: input })),
 		},
+		equipment: {
+			listTypes: authed.handler(() => [
+				{
+					id: "t1",
+					name: "Martelete",
+					nicknames: ["rompedor"],
+					dailyPriceCents: 8000,
+					depositCents: null,
+					turnaroundHours: 12,
+					accessories: [],
+					unitCount: 1,
+				},
+			]),
+			listLots: authed.handler(() => [
+				{
+					id: "l1",
+					code: "ANDAIME",
+					name: "Andaime",
+					nicknames: ["andaimes"],
+					pricing: "PER_PIECE",
+					total: 20,
+					inMaintenance: 0,
+					retired: 0,
+					dailyPriceCents: 200,
+					depositCents: null,
+					kitComposition: null,
+					turnaroundHours: 12,
+					freeToday: 12,
+					reservedToday: 8,
+					nextBooking: null,
+				},
+			]),
+		},
 		customers: {
 			list: authed.handler(() => ({
 				customers: [

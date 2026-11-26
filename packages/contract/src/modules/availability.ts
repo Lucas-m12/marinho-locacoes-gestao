@@ -16,6 +16,8 @@ import {
 export const AvailabilitySearchInput = RentalPeriod.safeExtend({
 	query: z.string().optional(),
 	typeId: Id.optional(),
+	/** Peças pedidas. Só vale para lotes; o padrão é 1. */
+	quantity: z.number().int().min(1).optional(),
 });
 export type AvailabilitySearchInput = z.infer<typeof AvailabilitySearchInput>;
 
@@ -33,6 +35,17 @@ export const AvailabilityBlock = z.enum([
 ]);
 export type AvailabilityBlock = z.infer<typeof AvailabilityBlock>;
 
+/** Locação vista na agenda: a que atrapalha o período ou a próxima marcada. */
+export const AvailabilityRental = z.object({
+	number: RentalNumber,
+	customerName: z.string(),
+	customerCity: z.string().nullable(),
+	startAt: IsoDateTime,
+	endAt: IsoDateTime,
+	status: RentalStatus,
+});
+export type AvailabilityRental = z.infer<typeof AvailabilityRental>;
+
 export const AvailabilityResult = z.object({
 	kind: ItemKind,
 	code: ItemCode,
@@ -47,15 +60,16 @@ export const AvailabilityResult = z.object({
 	totalQuantity: z.number().int().nullable(),
 	freeQuantity: z.number().int().nullable(),
 	block: AvailabilityBlock.nullable(),
-	blockingRental: z
-		.object({
-			number: RentalNumber,
-			customerName: z.string(),
-			endAt: IsoDateTime,
-			status: RentalStatus,
-		})
-		.nullable(),
+	/** A locação que cruza o período e faz faltar; se mais de uma, a que começa antes. */
+	blockingRental: AvailabilityRental.nullable(),
+	/** Saindo na data pedida, até quando dá para ficar: a saída da próxima locação que atrapalha, menos a folga. */
+	freeUntil: IsoDateTime.nullable(),
+	/** Primeiro horário livre depois do conflito, já com a folga e as locações encadeadas. */
 	freeFrom: IsoDateTime.nullable(),
+	/** A primeira locação que segura a agenda a partir da saída pedida. */
+	nextBooking: AvailabilityRental.nullable(),
+	/** Folga entre locações usada nas contas. */
+	turnaroundHours: z.number().int(),
 });
 export type AvailabilityResult = z.infer<typeof AvailabilityResult>;
 

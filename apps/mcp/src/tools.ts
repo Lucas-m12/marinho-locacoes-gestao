@@ -149,7 +149,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): string[] {
 		name: "verificar_disponibilidade",
 		title: "Verificar disponibilidade",
 		description:
-			"Quais equipamentos estão livres entre a saída e a devolução, com diária, caução e total do período. Se estiver ocupado, mostra a locação que bloqueia e quando fica livre. Para andaime e carrocinha (lotes), mostra quantas peças estão livres.",
+			"Para cada unidade e lote no período: se está livre; a locação que atrapalha (número, cliente, cidade, saída e devolução); até quando dá para ficar saindo na data pedida (freeUntil, já com a folga); a partir de quando fica livre (freeFrom); e a próxima locação marcada (nextBooking). Para andaime e carrocinha, passe quantity.",
 		input: z.object({
 			start: dateTime("Saída"),
 			end: dateTime("Devolução"),
@@ -162,6 +162,14 @@ export function registerTools(server: McpServer, deps: ToolDeps): string[] {
 			typeId: Id.optional().describe(
 				"Filtra por tipo (id vindo de tabela_de_precos)",
 			),
+			quantity: z
+				.number()
+				.int()
+				.min(1)
+				.optional()
+				.describe(
+					"Peças pedidas, para andaime e carrocinha (padrão 1). Não vale para unidades MAR-xxx",
+				),
 		}),
 		run: (args, { api }) => api.availability.search(args),
 	});
@@ -712,6 +720,7 @@ function lotSummary(lot: Lot) {
 		reservedToday: lot.reservedToday,
 		nextBooking: lot.nextBooking,
 		kitComposition: lot.kitComposition,
+		turnaroundHours: lot.turnaroundHours,
 	};
 }
 

@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
 	availableLotQuantity,
+	blockingBooking,
 	findBookingConflicts,
-	firstFreeFrom,
+	freeFrom,
+	freeUntil,
 	isBookable,
 	isUnitAvailable,
+	nextBooking,
 	overlaps,
 } from "./availability";
 
@@ -135,31 +138,253 @@ describe("findBookingConflicts", () => {
 			}),
 		).toEqual([hit]);
 	});
+
+	it("ordena pelo início, não pela ordem da lista", () => {
+		const later = { start: at(9), end: at(10), id: "depois" };
+		const earlier = { start: at(6), end: at(8), id: "antes" };
+		expect(
+			findBookingConflicts({
+				start: at(7),
+				end: at(9, 12),
+				bookings: [later, earlier],
+				turnaroundHours: 0,
+			}).map((booking) => booking.id),
+		).toEqual(["antes", "depois"]);
+	});
 });
 
-describe("firstFreeFrom", () => {
-	it("pula reservas em sequência somando a folga", () => {
-		const free = firstFreeFrom({
-			after: at(2),
-			bookings: [
-				{ start: at(1), end: at(3, 17) },
-				{ start: at(3, 20), end: at(5, 17) },
-			],
-			turnaroundHours: 12,
-		});
-		expect(free.toISOString()).toBe(
-			new Date(Date.parse(at(5, 17)) + 12 * 3_600_000).toISOString(),
+const iso = (value: string) => new Date(value).toISOString();
+const isoOf = (value: Date | null) => value?.toISOString() ?? null;
+
+describe("janelas da unidade (folga de 12 h, LOC-A de dom 29/11 08:00 a ter 01/12 08:00)", () => {
+	const locA = {
+		id: "LOC-A",
+		start: "2026-11-29T08:00:00-03:00",
+		end: "2026-12-01T08:00:00-03:00",
+	};
+	const request = (start: string, end: string, bookings = [locA]) => ({
+		start,
+		end,
+		bookings,
+		turnaroundHours: 12,
+	});
+	const unit = { status: "AVAILABLE" as const };
+
+	it("sex 27/11 08:00 a seg 30/11 08:00: indisponível, livre até sáb 20:00 e a partir de ter 20:00", () => {
+		const asked = request(
+			"2026-11-27T08:00:00-03:00",
+			"2026-11-30T08:00:00-03:00",
+		);
+		expect(isUnitAvailable({ ...asked, unit, maintenance: null })).toBe(false);
+		expect(blockingBooking(asked)).toBe(locA);
+		expect(isoOf(freeUntil(asked))).toBe(iso("2026-11-28T20:00:00-03:00"));
+		expect(isoOf(freeFrom(asked))).toBe(iso("2026-12-01T20:00:00-03:00"));
+		expect(nextBooking(asked.bookings, asked.start)).toBe(locA);
+	});
+
+	it("sex 27/11 08:00 a sáb 28/11 08:00: disponível, livre até sáb 20:00 e a próxima é a LOC-A", () => {
+		const asked = request(
+			"2026-11-27T08:00:00-03:00",
+			"2026-11-28T08:00:00-03:00",
+		);
+		expect(isUnitAvailable({ ...asked, unit, maintenance: null })).toBe(true);
+		expect(blockingBooking(asked)).toBeNull();
+		expect(freeFrom(asked)).toBeNull();
+		expect(isoOf(freeUntil(asked))).toBe(iso("2026-11-28T20:00:00-03:00"));
+		expect(nextBooking(asked.bookings, asked.start)).toBe(locA);
+	});
+
+	it("sem locação depois do pedido: freeUntil e nextBooking nulos", () => {
+		const asked = request(
+			"2026-12-02T08:00:00-03:00",
+			"2026-12-04T08:00:00-03:00",
+		);
+		expect(freeUntil(asked)).toBeNull();
+		expect(nextBooking(asked.bookings, asked.start)).toBeNull();
+		expect(freeUntil({ ...asked, bookings: [] })).toBeNull();
+	});
+
+	it("saída dentro da folga antes da próxima: não dá para sair", () => {
+		const asked = request(
+			"2026-11-28T21:00:00-03:00",
+			"2026-11-28T23:00:00-03:00",
+		);
+		expect(freeUntil(asked)).toBeNull();
+		expect(blockingBooking(asked)).toBe(locA);
+	});
+
+	it("saída durante a locação: não dá para sair", () => {
+		expect(
+			freeUntil(
+				request("2026-11-30T08:00:00-03:00", "2026-12-05T08:00:00-03:00"),
+			),
+		).toBeNull();
+	});
+
+	it("a que atrapalha é a que começa antes, não a primeira da lista", () => {
+		const later = {
+			id: "LOC-B",
+			start: "2026-12-03T08:00:00-03:00",
+			end: "2026-12-04T08:00:00-03:00",
+		};
+		const asked = request(
+			"2026-11-27T08:00:00-03:00",
+			"2026-12-05T08:00:00-03:00",
+			[later, locA],
+		);
+		expect(blockingBooking(asked)).toBe(locA);
+		expect(nextBooking(asked.bookings, asked.start)).toBe(locA);
+	});
+
+	it("pula locações encadeadas, inclusive a que começa dentro da folga", () => {
+		const chained = {
+			id: "LOC-B",
+			start: "2026-12-02T02:00:00-03:00",
+			end: "2026-12-03T08:00:00-03:00",
+		};
+		const asked = request(
+			"2026-11-27T08:00:00-03:00",
+			"2026-11-30T08:00:00-03:00",
+			[locA, chained],
+		);
+		expect(isoOf(freeFrom(asked))).toBe(iso("2026-12-03T20:00:00-03:00"));
+		const gap = { ...chained, start: "2026-12-02T09:00:00-03:00" };
+		expect(isoOf(freeFrom({ ...asked, bookings: [locA, gap] }))).toBe(
+			iso("2026-12-01T20:00:00-03:00"),
 		);
 	});
 
-	it("sem reservas devolve o próprio início", () => {
+	it("locação atrasada que atrapalha: sem freeFrom", () => {
+		const now = "2026-11-27T10:00:00-03:00";
+		const overdue = {
+			id: "LOC-ATRASADA",
+			start: "2026-11-20T08:00:00-03:00",
+			end: now,
+			overdue: true,
+		};
+		const asked = request(
+			"2026-11-27T12:00:00-03:00",
+			"2026-11-28T12:00:00-03:00",
+			[overdue],
+		);
+		expect(blockingBooking(asked)).toBe(overdue);
+		expect(freeFrom(asked)).toBeNull();
+		expect(freeUntil(asked)).toBeNull();
+	});
+
+	it("locação atrasada que já não segura a saída não atrapalha a conta", () => {
+		const now = "2026-11-25T10:00:00-03:00";
+		const overdue = {
+			id: "LOC-ATRASADA",
+			start: "2026-11-20T08:00:00-03:00",
+			end: now,
+			overdue: true,
+		};
+		const asked = request(
+			"2026-11-27T08:00:00-03:00",
+			"2026-11-30T08:00:00-03:00",
+			[overdue, locA],
+		);
+		expect(isoOf(freeFrom(asked))).toBe(iso("2026-12-01T20:00:00-03:00"));
+	});
+});
+
+describe("janelas do lote", () => {
+	// 20 peças: A segura 8 do dia 1 ao 15; B segura 12 do dia 5 ao 8.
+	const holdA = { id: "A", start: at(1), end: at(15, 17), quantity: 8 };
+	const holdB = { id: "B", start: at(5), end: at(8, 17), quantity: 12 };
+	const scaffold = (quantity: number, start: string, end: string) => ({
+		start,
+		end,
+		bookings: [holdA, holdB],
+		turnaroundHours: 12,
+		usable: 20,
+		quantity,
+	});
+	const plus12 = (value: string) =>
+		new Date(Date.parse(value) + 12 * 3_600_000).toISOString();
+
+	it("cabe a quantidade pedida: livre até a saída de B menos a folga", () => {
+		const asked = scaffold(12, at(2), at(3));
 		expect(
-			firstFreeFrom({
-				after: at(2),
-				bookings: [],
-				turnaroundHours: 12,
-			}).toISOString(),
-		).toBe(new Date(at(2)).toISOString());
+			availableLotQuantity({
+				...asked,
+				total: 20,
+				inMaintenance: 0,
+				retired: 0,
+			}),
+		).toBe(12);
+		expect(blockingBooking(asked)).toBeNull();
+		expect(freeFrom(asked)).toBeNull();
+		expect(isoOf(freeUntil(asked))).toBe(
+			new Date(Date.parse(at(5)) - 12 * 3_600_000).toISOString(),
+		);
+		expect(nextBooking(asked.bookings, asked.start)).toBe(holdB);
+	});
+
+	it("uma peça a mais: A faz faltar já na saída e só a volta de A libera", () => {
+		const asked = scaffold(13, at(2), at(3));
+		expect(blockingBooking(asked)).toBe(holdA);
+		expect(freeUntil(asked)).toBeNull();
+		expect(isoOf(freeFrom(asked))).toBe(plus12(at(15, 17)));
+	});
+
+	it("as duas cruzam: atrapalha a que começa antes, e a volta de B já basta", () => {
+		const asked = scaffold(1, at(6), at(7));
+		expect(blockingBooking(asked)).toBe(holdA);
+		expect(isoOf(freeFrom(asked))).toBe(plus12(at(8, 17)));
+	});
+
+	it("reserva que não cruza o período não é a culpada", () => {
+		const elsewhere = { id: "C", start: at(20), end: at(21), quantity: 20 };
+		const asked = {
+			...scaffold(1, at(6), at(7)),
+			bookings: [elsewhere, holdB, holdA],
+		};
+		expect(blockingBooking(asked)).toBe(holdA);
+	});
+
+	it("pedido maior que o estoque: ninguém atrapalha e não há data", () => {
+		const asked = scaffold(21, at(2), at(3));
+		expect(blockingBooking(asked)).toBeNull();
+		expect(freeFrom(asked)).toBeNull();
+		expect(freeUntil(asked)).toBeNull();
+	});
+
+	it("atrasada segurando peças: só conta a volta das outras", () => {
+		const overdue = {
+			id: "ATRASADA",
+			start: at(1),
+			end: at(2),
+			quantity: 8,
+			overdue: true,
+		};
+		const rest = { id: "D", start: at(1), end: at(4), quantity: 12 };
+		const asked = (quantity: number) => ({
+			start: at(2, 10),
+			end: at(3),
+			bookings: [overdue, rest],
+			turnaroundHours: 12,
+			usable: 20,
+			quantity,
+		});
+		expect(isoOf(freeFrom(asked(5)))).toBe(plus12(at(4)));
+		expect(freeFrom(asked(13))).toBeNull();
+	});
+
+	it("carrocinha (uma peça) dá o mesmo que uma unidade", () => {
+		const locA = { start: at(29), end: at(31) };
+		const unit = {
+			start: at(27),
+			end: at(30),
+			bookings: [locA],
+			turnaroundHours: 12,
+		};
+		const trailer = { ...unit, usable: 1, quantity: 1 };
+		expect(blockingBooking(trailer)).toBe(blockingBooking(unit));
+		expect(isoOf(freeUntil(trailer))).toBe(isoOf(freeUntil(unit)));
+		expect(isoOf(freeFrom(trailer))).toBe(isoOf(freeFrom(unit)));
+		expect(isoOf(freeFrom(unit))).toBe(plus12(at(31)));
 	});
 });
 
